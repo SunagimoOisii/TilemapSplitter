@@ -102,23 +102,44 @@ public class TilemapSplitterWindow : EditorWindow
                 positions.Add(pos);
         var tiles = new HashSet<Vector3Int>(positions);
 
-        previewCrossTiles.Clear(); previewTTiles.Clear(); previewCornerTiles.Clear(); previewIsolateTiles.Clear(); previewVertTiles.Clear(); previewHorTiles.Clear();
+        ClearPreviewLists();
         foreach (var pos in positions)
-        {
-            bool up = tiles.Contains(pos + Vector3Int.up);
-            bool down = tiles.Contains(pos + Vector3Int.down);
-            bool left = tiles.Contains(pos + Vector3Int.left);
-            bool right = tiles.Contains(pos + Vector3Int.right);
-            int count = (up?1:0)+(down?1:0)+(left?1:0)+(right?1:0);
-            bool anyV = up||down, anyH = left||right;
-            if (count == 4) ApplyClassification(pos, settings[0].option, previewCrossTiles, previewVertTiles, previewHorTiles);
-            else if (count == 3) ApplyClassification(pos, settings[1].option, previewTTiles, previewVertTiles, previewHorTiles);
-            else if (count == 2 && anyV && anyH) ApplyClassification(pos, settings[2].option, previewCornerTiles, previewVertTiles, previewHorTiles);
-            else if (anyV && !anyH) previewVertTiles.Add(pos);
-            else if (anyH && !anyV) previewHorTiles.Add(pos);
-            else if (count == 0) ApplyClassification(pos, settings[3].option, previewIsolateTiles, previewVertTiles, previewHorTiles);
-        }
+            ClassifyTileNeighbors(pos, tiles);
         SceneView.RepaintAll();
+    }
+
+    private void ClearPreviewLists()
+    {
+        previewCrossTiles.Clear();
+        previewTTiles.Clear();
+        previewCornerTiles.Clear();
+        previewIsolateTiles.Clear();
+        previewVertTiles.Clear();
+        previewHorTiles.Clear();
+    }
+
+    private void ClassifyTileNeighbors(Vector3Int pos, HashSet<Vector3Int> tiles)
+    {
+        bool up = tiles.Contains(pos + Vector3Int.up);
+        bool down = tiles.Contains(pos + Vector3Int.down);
+        bool left = tiles.Contains(pos + Vector3Int.left);
+        bool right = tiles.Contains(pos + Vector3Int.right);
+        int count = (up ? 1 : 0) + (down ? 1 : 0) + (left ? 1 : 0) + (right ? 1 : 0);
+        bool anyV = up || down;
+        bool anyH = left || right;
+
+        if (count == 4)
+            ApplyClassification(pos, settings[0].option, previewCrossTiles, previewVertTiles, previewHorTiles);
+        else if (count == 3)
+            ApplyClassification(pos, settings[1].option, previewTTiles, previewVertTiles, previewHorTiles);
+        else if (count == 2 && anyV && anyH)
+            ApplyClassification(pos, settings[2].option, previewCornerTiles, previewVertTiles, previewHorTiles);
+        else if (anyV && !anyH)
+            previewVertTiles.Add(pos);
+        else if (anyH && !anyV)
+            previewHorTiles.Add(pos);
+        else if (count == 0)
+            ApplyClassification(pos, settings[3].option, previewIsolateTiles, previewVertTiles, previewHorTiles);
     }
 
     private void SplitTilemap()
