@@ -9,7 +9,13 @@ using UnityEditor.UIElements;
 
 public class TilemapSplitterWindow : EditorWindow
 {
-    private enum ClassificationOption { Vertical, Horizontal, Corner, Both, Independent, Ignore }
+    private enum ClassificationOption 
+    {
+        Vertical,
+        Horizontal,
+        Independent,
+        Ignore
+    }
 
     private struct ClassificationSetting
     {
@@ -21,12 +27,12 @@ public class TilemapSplitterWindow : EditorWindow
 
     private readonly ClassificationSetting[] settings = new ClassificationSetting[6]
     {
-        new() { option = ClassificationOption.Vertical,     color = Color.red    }, // Cross
-        new() { option = ClassificationOption.Vertical,     color = Color.blue   }, // T-Junction
-        new() { option = ClassificationOption.Vertical,     color = Color.cyan   }, // Corner
-        new() { option = ClassificationOption.Vertical,     color = Color.magenta}, // Isolate
-        new() { option = ClassificationOption.Independent,  preview = true, color = Color.green  }, // Vertical Edge
-        new() { option = ClassificationOption.Independent,  preview = true, color = Color.yellow }  // Horizontal Edge
+        new() { option = ClassificationOption.Vertical, color = Color.red    }, //Cross
+        new() { option = ClassificationOption.Vertical, color = Color.blue   }, //T-Junction
+        new() { option = ClassificationOption.Vertical, color = Color.cyan   }, //Corner
+        new() { option = ClassificationOption.Vertical, color = Color.magenta}, //Isolate
+        new() { option = ClassificationOption.Independent, preview = true, color = Color.green  }, //Vertical Edge
+        new() { option = ClassificationOption.Independent, preview = true, color = Color.yellow }  //Horizontal Edge
     };
 
     private Tilemap original;
@@ -40,36 +46,49 @@ public class TilemapSplitterWindow : EditorWindow
     [MenuItem("Tools/TilemapSplitter")]
     public static void ShowWindow() => GetWindow<TilemapSplitterWindow>("Split Tilemap");
 
-    private void OnEnable() => SceneView.duringSceneGui += OnSceneGUI;
-    private void OnDisable() => SceneView.duringSceneGui -= OnSceneGUI;
-
     public void CreateGUI()
     {
         var root = rootVisualElement;
+
+        //ScrollView, Container Setting
         var scroll = new ScrollView();
+        var container = new VisualElement();
+        container.style.flexDirection = FlexDirection.Column;
+        container.style.paddingLeft   = 10;
+        container.style.paddingRight  = 10;
+        //Add
         root.Add(scroll);
-        var container = new VisualElement { style = { flexDirection = FlexDirection.Column, paddingLeft = 10, paddingTop = 10 } };
         scroll.Add(container);
 
-        var originalField = new ObjectField("元 Tilemap") { objectType = typeof(Tilemap), value = original };
-        container.Add(originalField);
-        var helpBox = new HelpBox("分割対象を選択してください", HelpBoxMessageType.Info);
-        container.Add(helpBox);
+        //SplitTarget Field Setting
+        var originalField = new ObjectField("Split Tilemap") { objectType = typeof(Tilemap), value = original };
+        var helpBox = new HelpBox("Select the subject of the division", HelpBoxMessageType.Info);
         helpBox.visible = (original == null);
-        originalField.RegisterValueChangedCallback(evt => { original = evt.newValue as Tilemap; helpBox.visible = (original == null); UpdatePreview(); });
+        originalField.RegisterValueChangedCallback(evt =>
+        {
+            original = evt.newValue as Tilemap;
+            helpBox.visible = (original == null);
+            UpdatePreview(); 
+        });
+        container.Add(originalField);
+        container.Add(helpBox);
 
         AddSeparator(container);
 
+        //各タイル, エッジの設定項目を設定
+        string messageWhenVerticalOption   = "プレビューは縦タイルの設定で操作可能";
+        string messageWhenHorizontalOption = "プレビューは横タイルの設定で操作可能";
+        string messageWhenIgnoreOption     = "Ignore では何も生成されないのでプレビューもない";
         var infos = new (string title, int index, string helpV, string helpH, string helpI)[]
         {
-            ("交差タイル",   0, "プレビューは縦タイルの設定で操作可能", "プレビューは横タイルの設定で操作可能", "Ignore では何も生成されないのでプレビューもない"),
-            ("T字タイル",   1, "プレビューは縦タイルの設定で操作可能", "プレビューは横タイルの設定で操作可能", "Ignore では何も生成されないのでプレビューもない"),
-            ("角タイル",     2, "プレビューは縦タイルの設定で操作可能", "プレビューは横タイルの設定で操作可能", "Ignore では何も生成されないのでプレビューもない"),
-            ("孤立タイル",   3, "プレビューは縦タイルの設定で操作可能", "プレビューは横タイルの設定で操作可能", "Ignore では何も生成されないのでプレビューもない"),
-            ("縦エッジ",     4, null, null, null),
-            ("横エッジ",     5, null, null, null)
+            ("交差タイル", 0, messageWhenVerticalOption, messageWhenHorizontalOption, messageWhenIgnoreOption),
+            ("T字タイル",  1, messageWhenVerticalOption, messageWhenHorizontalOption, messageWhenIgnoreOption),
+            ("角タイル",   2, messageWhenVerticalOption, messageWhenHorizontalOption, messageWhenIgnoreOption),
+            ("孤立タイル", 3, messageWhenVerticalOption, messageWhenHorizontalOption, messageWhenIgnoreOption),
+            ("縦エッジ",   4, null, null, null),
+            ("横エッジ",   5, null, null, null)
         };
-
+        //追加
         foreach (var info in infos)
         {
             int idx = info.index;
@@ -87,7 +106,16 @@ public class TilemapSplitterWindow : EditorWindow
 
         AddSeparator(container);
 
-        var splitButton = new Button(() => { if (original == null) { EditorUtility.DisplayDialog("エラー", "元 Tilemap が設定されていません。", "OK"); return; } SplitTilemap(); }) { text = "分割実行" };
+        var splitButton = new Button(() =>
+        {
+            if (original == null)
+            {
+                EditorUtility.DisplayDialog("エラー", "元 Tilemap が設定されていません。", "OK");
+                return;
+            }
+            SplitTilemap();
+        });
+        splitButton.text = "Execute Splitting";
         splitButton.style.marginTop = 10;
         container.Add(splitButton);
     }
@@ -95,16 +123,21 @@ public class TilemapSplitterWindow : EditorWindow
     private void UpdatePreview()
     {
         if (original == null) return;
+
         var bounds = original.cellBounds;
         var positions = new List<Vector3Int>();
         foreach (var pos in bounds.allPositionsWithin)
-            if (original.GetTile(pos) != null)
-                positions.Add(pos);
+        {
+            if (original.GetTile(pos) != null) positions.Add(pos);
+        }
         var tiles = new HashSet<Vector3Int>(positions);
 
         ClearPreviewLists();
         foreach (var pos in positions)
+        {
             ClassifyTileNeighbors(pos, tiles);
+        }
+
         SceneView.RepaintAll();
     }
 
@@ -120,26 +153,48 @@ public class TilemapSplitterWindow : EditorWindow
 
     private void ClassifyTileNeighbors(Vector3Int pos, HashSet<Vector3Int> tiles)
     {
-        bool up = tiles.Contains(pos + Vector3Int.up);
-        bool down = tiles.Contains(pos + Vector3Int.down);
-        bool left = tiles.Contains(pos + Vector3Int.left);
+        //各方向, 縦横にタイルが隣接しているか
+        //隣接タイル数を算出する
+        bool up    = tiles.Contains(pos + Vector3Int.up);
+        bool down  = tiles.Contains(pos + Vector3Int.down);
+        bool left  = tiles.Contains(pos + Vector3Int.left);
         bool right = tiles.Contains(pos + Vector3Int.right);
-        int count = (up ? 1 : 0) + (down ? 1 : 0) + (left ? 1 : 0) + (right ? 1 : 0);
-        bool anyV = up || down;
-        bool anyH = left || right;
+        bool anyV  = up || down;
+        bool anyH  = left || right;
+        int count  = (up ? 1 : 0) + (down ? 1 : 0) + (left ? 1 : 0) + (right ? 1 : 0);
 
-        if (count == 4)
-            ApplyClassification(pos, settings[0].option, previewCrossTiles, previewVertTiles, previewHorTiles);
-        else if (count == 3)
-            ApplyClassification(pos, settings[1].option, previewTTiles, previewVertTiles, previewHorTiles);
-        else if (count == 2 && anyV && anyH)
-            ApplyClassification(pos, settings[2].option, previewCornerTiles, previewVertTiles, previewHorTiles);
-        else if (anyV && !anyH)
+        if (count == 4) //交差タイル
+        {
+            ApplyClassification(pos, settings[0].option, previewCrossTiles,
+                previewVertTiles, previewHorTiles);
+        }
+        else if (count == 3) //T字
+        {
+            ApplyClassification(pos, settings[1].option, previewTTiles,
+                previewVertTiles, previewHorTiles);
+        }
+        else if (count == 2 && //角
+                 anyV &&
+                 anyH)
+        {
+            ApplyClassification(pos, settings[2].option, previewCornerTiles,
+                previewVertTiles, previewHorTiles);
+        }
+        else if (anyV && //縦
+                 anyH == false)
+        {
             previewVertTiles.Add(pos);
-        else if (anyH && !anyV)
+        }
+        else if (anyH && //横
+                 anyV == false)
+        {
             previewHorTiles.Add(pos);
-        else if (count == 0)
-            ApplyClassification(pos, settings[3].option, previewIsolateTiles, previewVertTiles, previewHorTiles);
+        }
+        else if (count == 0) //孤立
+        {
+            ApplyClassification(pos, settings[3].option, previewIsolateTiles,
+                previewVertTiles, previewHorTiles);
+        }
     }
 
     private void SplitTilemap()
@@ -153,29 +208,6 @@ public class TilemapSplitterWindow : EditorWindow
         if (settings[5].option == ClassificationOption.Independent)
             CreateTiles(ClassificationOption.Horizontal, "HorizontalEdge", previewHorTiles, settings[5].layer);
         CreateTiles(settings[3].option, "IsolateTiles", previewIsolateTiles, settings[3].layer);
-    }
-
-    private void OnSceneGUI(SceneView sv)
-    {
-        if (original == null) return;
-        if (settings[0].preview) DrawPreviewList(previewCrossTiles, settings[0].color);
-        if (settings[1].preview) DrawPreviewList(previewTTiles, settings[1].color);
-        if (settings[2].preview) DrawPreviewList(previewCornerTiles, settings[2].color);
-        if (settings[3].preview) DrawPreviewList(previewIsolateTiles, settings[3].color);
-        if (settings[4].preview) DrawPreviewList(previewVertTiles, settings[4].color);
-        if (settings[5].preview) DrawPreviewList(previewHorTiles, settings[5].color);
-    }
-
-    private void DrawPreviewList(List<Vector3Int> list, Color col)
-    {
-        Handles.color = new Color(col.r, col.g, col.b, 0.4f);
-        float cellSize = original.cellSize.x;
-        foreach (var pos in list)
-        {
-            Vector3 worldPos = original.CellToWorld(pos) + new Vector3(cellSize/2, cellSize/2);
-            Rect rect = new(worldPos.x - cellSize/2, worldPos.y - cellSize/2, cellSize, cellSize);
-            Handles.DrawSolidRectangleWithOutline(rect, Handles.color, Color.clear);
-        }
     }
 
     private static void AddSeparator(VisualElement parent)
@@ -202,11 +234,11 @@ public class TilemapSplitterWindow : EditorWindow
     {
         var fold = new Foldout { text = title };
         fold.style.unityFontStyleAndWeight = FontStyle.Bold;
-        var enumField = new EnumField("生成設定", getOption());
+        var enumField = new EnumField("Where to add an obj", getOption());
         fold.Add(enumField);
         if (getLayer != null)
         {
-            var layerField = new LayerField("レイヤー", getLayer());
+            var layerField = new LayerField("Layer", getLayer());
             fold.Add(layerField);
             layerField.RegisterValueChangedCallback(evt => setLayer(evt.newValue));
         }
@@ -214,10 +246,10 @@ public class TilemapSplitterWindow : EditorWindow
         ColorField colField = null;
         if (getPreview != null && getColor != null)
         {
-            previewToggle = new Toggle("プレビュー") { value = getPreview() };
+            previewToggle = new Toggle("Preview") { value = getPreview() };
             previewToggle.RegisterValueChangedCallback(evt => { setPreview(evt.newValue); UpdatePreview(); });
             fold.Add(previewToggle);
-            colField = new ColorField("色") { value = getColor() };
+            colField = new ColorField("Preview Color") { value = getColor() };
             colField.RegisterValueChangedCallback(evt => setColor(evt.newValue));
             fold.Add(colField);
         }
@@ -245,16 +277,15 @@ public class TilemapSplitterWindow : EditorWindow
         if (!string.IsNullOrEmpty(msg)) fold.Add(new HelpBox(msg, HelpBoxMessageType.Info));
     }
 
-    private static void ApplyClassification(Vector3Int pos, ClassificationOption opt, List<Vector3Int> indep, List<Vector3Int> vList, List<Vector3Int> hList)
+    private static void ApplyClassification(Vector3Int pos, ClassificationOption opt, 
+        List<Vector3Int> indep, List<Vector3Int> vList, List<Vector3Int> hList)
     {
         switch (opt)
         {
-            case ClassificationOption.Vertical: vList?.Add(pos); break;
-            case ClassificationOption.Horizontal: hList?.Add(pos); break;
-            case ClassificationOption.Corner: indep?.Add(pos); break;
-            case ClassificationOption.Both: vList?.Add(pos); hList?.Add(pos); break;
+            case ClassificationOption.Vertical:    vList?.Add(pos); break;
+            case ClassificationOption.Horizontal:  hList?.Add(pos); break;
             case ClassificationOption.Independent: indep?.Add(pos); break;
-            case ClassificationOption.Ignore: break;
+            case ClassificationOption.Ignore:                       break;
         }
     }
 
@@ -271,6 +302,38 @@ public class TilemapSplitterWindow : EditorWindow
         renderer.sortingOrder = orig.sortingOrder;
         var tm = obj.GetComponent<Tilemap>();
         foreach (var p in data) tm.SetTile(p, original.GetTile(p));
+
         Undo.RegisterCreatedObjectUndo(obj, "Create " + name);
     }
+
+    #region 分割プレビュー機能
+
+    private void OnEnable() => SceneView.duringSceneGui += OnSceneGUI;
+    private void OnDisable() => SceneView.duringSceneGui -= OnSceneGUI;
+
+    private void OnSceneGUI(SceneView sv)
+    {
+        if (original == null) return;
+
+        if (settings[0].preview) DrawPreviewList(previewCrossTiles, settings[0].color);
+        if (settings[1].preview) DrawPreviewList(previewTTiles, settings[1].color);
+        if (settings[2].preview) DrawPreviewList(previewCornerTiles, settings[2].color);
+        if (settings[3].preview) DrawPreviewList(previewIsolateTiles, settings[3].color);
+        if (settings[4].preview) DrawPreviewList(previewVertTiles, settings[4].color);
+        if (settings[5].preview) DrawPreviewList(previewHorTiles, settings[5].color);
+    }
+
+    private void DrawPreviewList(List<Vector3Int> list, Color col)
+    {
+        Handles.color = new Color(col.r, col.g, col.b, 0.4f);
+        float cellSize = original.cellSize.x;
+        foreach (var pos in list)
+        {
+            Vector3 worldPos = original.CellToWorld(pos) + new Vector3(cellSize/2, cellSize/2);
+            Rect rect = new(worldPos.x - cellSize/2, worldPos.y - cellSize/2, cellSize, cellSize);
+            Handles.DrawSolidRectangleWithOutline(rect, Handles.color, Color.clear);
+        }
+    }
+
+    #endregion
 }
