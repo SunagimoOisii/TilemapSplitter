@@ -11,33 +11,23 @@ public class TilemapSplitterWindow : EditorWindow
 {
     private enum ClassificationOption { Vertical, Horizontal, Corner, Both, Independent, Ignore }
 
-    private ClassificationOption crossOption = ClassificationOption.Vertical;
-    private ClassificationOption tOption = ClassificationOption.Vertical;
-    private ClassificationOption cornerOption = ClassificationOption.Vertical;
-    private ClassificationOption isolateOption = ClassificationOption.Vertical;
-    private bool generateVerticalEdge = true;
-    private bool generateHorizontalEdge = true;
+    private struct ClassificationSetting
+    {
+        public ClassificationOption option;
+        public int layer;
+        public bool preview;
+        public Color color;
+    }
 
-    private int crossLayer;
-    private int tLayer;
-    private int cornerLayer;
-    private int isolateLayer;
-    private int verticalLayer;
-    private int horizontalLayer;
-
-    private bool previewCross;
-    private bool previewT;
-    private bool previewCorner;
-    private bool previewIsolate;
-    private bool previewVertical;
-    private bool previewHorizontal;
-
-    private Color colorCross = Color.red;
-    private Color colorT = Color.blue;
-    private Color colorCorner = Color.cyan;
-    private Color colorIsolate = Color.magenta;
-    private Color colorVertical = Color.green;
-    private Color colorHorizontal = Color.yellow;
+    private readonly ClassificationSetting[] settings = new ClassificationSetting[6]
+    {
+        new() { option = ClassificationOption.Vertical,     color = Color.red    }, // Cross
+        new() { option = ClassificationOption.Vertical,     color = Color.blue   }, // T-Junction
+        new() { option = ClassificationOption.Vertical,     color = Color.cyan   }, // Corner
+        new() { option = ClassificationOption.Vertical,     color = Color.magenta}, // Isolate
+        new() { option = ClassificationOption.Independent,  preview = true, color = Color.green  }, // Vertical Edge
+        new() { option = ClassificationOption.Independent,  preview = true, color = Color.yellow }  // Horizontal Edge
+    };
 
     private Tilemap original;
     private readonly List<Vector3Int> previewCrossTiles   = new();
@@ -61,46 +51,43 @@ public class TilemapSplitterWindow : EditorWindow
         var container = new VisualElement { style = { flexDirection = FlexDirection.Column, paddingLeft = 10, paddingTop = 10 } };
         scroll.Add(container);
 
-        var originalField = new ObjectField("å≥ Tilemap") { objectType = typeof(Tilemap), value = original };
+        var originalField = new ObjectField("ÂÖÉ Tilemap") { objectType = typeof(Tilemap), value = original };
         container.Add(originalField);
-        var helpBox = new HelpBox("ï™äÑëŒè€ÇëIëÇµÇƒÇ≠ÇæÇ≥Ç¢", HelpBoxMessageType.Info);
+        var helpBox = new HelpBox("ÂàÜÂâ≤ÂØæË±°„ÇíÈÅ∏Êäû„Åó„Å¶„Åè„Å†„Åï„ÅÑ", HelpBoxMessageType.Info);
         container.Add(helpBox);
         helpBox.visible = (original == null);
         originalField.RegisterValueChangedCallback(evt => { original = evt.newValue as Tilemap; helpBox.visible = (original == null); UpdatePreview(); });
 
         AddSeparator(container);
 
-        CreateFoldout(container, "åç∑É^ÉCÉã", () => crossOption, v => crossOption = v, () => crossLayer, v => crossLayer = v,
-            () => previewCross, v => previewCross = v, () => colorCross, v => colorCross = v,
-            "ÉvÉåÉrÉÖÅ[ÇÕècÉ^ÉCÉãÇÃê›íËÇ≈ëÄçÏâ¬î\", "ÉvÉåÉrÉÖÅ[ÇÕâ°É^ÉCÉãÇÃê›íËÇ≈ëÄçÏâ¬î\", "Ignore Ç≈ÇÕâΩÇ‡ê∂ê¨Ç≥ÇÍÇ»Ç¢ÇÃÇ≈ÉvÉåÉrÉÖÅ[Ç‡Ç»Ç¢");
+        var infos = new (string title, int index, string helpV, string helpH, string helpI)[]
+        {
+            ("‰∫§Â∑Æ„Çø„Ç§„É´",   0, "„Éó„É¨„Éì„É•„Éº„ÅØÁ∏¶„Çø„Ç§„É´„ÅÆË®≠ÂÆö„ÅßÊìç‰ΩúÂèØËÉΩ", "„Éó„É¨„Éì„É•„Éº„ÅØÊ®™„Çø„Ç§„É´„ÅÆË®≠ÂÆö„ÅßÊìç‰ΩúÂèØËÉΩ", "Ignore „Åß„ÅØ‰Ωï„ÇÇÁîüÊàê„Åï„Çå„Å™„ÅÑ„ÅÆ„Åß„Éó„É¨„Éì„É•„Éº„ÇÇ„Å™„ÅÑ"),
+            ("TÂ≠ó„Çø„Ç§„É´",   1, "„Éó„É¨„Éì„É•„Éº„ÅØÁ∏¶„Çø„Ç§„É´„ÅÆË®≠ÂÆö„ÅßÊìç‰ΩúÂèØËÉΩ", "„Éó„É¨„Éì„É•„Éº„ÅØÊ®™„Çø„Ç§„É´„ÅÆË®≠ÂÆö„ÅßÊìç‰ΩúÂèØËÉΩ", "Ignore „Åß„ÅØ‰Ωï„ÇÇÁîüÊàê„Åï„Çå„Å™„ÅÑ„ÅÆ„Åß„Éó„É¨„Éì„É•„Éº„ÇÇ„Å™„ÅÑ"),
+            ("Ëßí„Çø„Ç§„É´",     2, "„Éó„É¨„Éì„É•„Éº„ÅØÁ∏¶„Çø„Ç§„É´„ÅÆË®≠ÂÆö„ÅßÊìç‰ΩúÂèØËÉΩ", "„Éó„É¨„Éì„É•„Éº„ÅØÊ®™„Çø„Ç§„É´„ÅÆË®≠ÂÆö„ÅßÊìç‰ΩúÂèØËÉΩ", "Ignore „Åß„ÅØ‰Ωï„ÇÇÁîüÊàê„Åï„Çå„Å™„ÅÑ„ÅÆ„Åß„Éó„É¨„Éì„É•„Éº„ÇÇ„Å™„ÅÑ"),
+            ("Â≠§Á´ã„Çø„Ç§„É´",   3, "„Éó„É¨„Éì„É•„Éº„ÅØÁ∏¶„Çø„Ç§„É´„ÅÆË®≠ÂÆö„ÅßÊìç‰ΩúÂèØËÉΩ", "„Éó„É¨„Éì„É•„Éº„ÅØÊ®™„Çø„Ç§„É´„ÅÆË®≠ÂÆö„ÅßÊìç‰ΩúÂèØËÉΩ", "Ignore „Åß„ÅØ‰Ωï„ÇÇÁîüÊàê„Åï„Çå„Å™„ÅÑ„ÅÆ„Åß„Éó„É¨„Éì„É•„Éº„ÇÇ„Å™„ÅÑ"),
+            ("Á∏¶„Ç®„ÉÉ„Ç∏",     4, null, null, null),
+            ("Ê®™„Ç®„ÉÉ„Ç∏",     5, null, null, null)
+        };
 
-        CreateFoldout(container, "TéöÉ^ÉCÉã", () => tOption, v => tOption = v, () => tLayer, v => tLayer = v,
-            () => previewT, v => previewT = v, () => colorT, v => colorT = v,
-            "ÉvÉåÉrÉÖÅ[ÇÕècÉ^ÉCÉãÇÃê›íËÇ≈ëÄçÏâ¬î\", "ÉvÉåÉrÉÖÅ[ÇÕâ°É^ÉCÉãÇÃê›íËÇ≈ëÄçÏâ¬î\", "Ignore Ç≈ÇÕâΩÇ‡ê∂ê¨Ç≥ÇÍÇ»Ç¢ÇÃÇ≈ÉvÉåÉrÉÖÅ[Ç‡Ç»Ç¢");
-
-        CreateFoldout(container, "äpÉ^ÉCÉã", () => cornerOption, v => cornerOption = v, () => cornerLayer, v => cornerLayer = v,
-            () => previewCorner, v => previewCorner = v, () => colorCorner, v => colorCorner = v,
-            "ÉvÉåÉrÉÖÅ[ÇÕècÉ^ÉCÉãÇÃê›íËÇ≈ëÄçÏâ¬î\", "ÉvÉåÉrÉÖÅ[ÇÕâ°É^ÉCÉãÇÃê›íËÇ≈ëÄçÏâ¬î\", "Ignore Ç≈ÇÕâΩÇ‡ê∂ê¨Ç≥ÇÍÇ»Ç¢ÇÃÇ≈ÉvÉåÉrÉÖÅ[Ç‡Ç»Ç¢");
-
-        CreateFoldout(container, "å«óßÉ^ÉCÉã", () => isolateOption, v => isolateOption = v, () => isolateLayer, v => isolateLayer = v,
-            () => previewIsolate, v => previewIsolate = v, () => colorIsolate, v => colorIsolate = v,
-            "ÉvÉåÉrÉÖÅ[ÇÕècÉ^ÉCÉãÇÃê›íËÇ≈ëÄçÏâ¬î\", "ÉvÉåÉrÉÖÅ[ÇÕâ°É^ÉCÉãÇÃê›íËÇ≈ëÄçÏâ¬î\", "Ignore Ç≈ÇÕâΩÇ‡ê∂ê¨Ç≥ÇÍÇ»Ç¢ÇÃÇ≈ÉvÉåÉrÉÖÅ[Ç‡Ç»Ç¢");
-
-        AddSeparator(container);
-
-        CreateFoldout(container, "ècÉGÉbÉW", () => generateVerticalEdge ? ClassificationOption.Independent : ClassificationOption.Ignore,
-            v => generateVerticalEdge = (v == ClassificationOption.Independent), () => verticalLayer, v => verticalLayer = v,
-            () => previewVertical, v => previewVertical = v, () => colorVertical, v => colorVertical = v,
-            null, null, null);
-
-        CreateFoldout(container, "â°ÉGÉbÉW", () => generateHorizontalEdge ? ClassificationOption.Independent : ClassificationOption.Ignore,
-            v => generateHorizontalEdge = (v == ClassificationOption.Independent), () => horizontalLayer, v => horizontalLayer = v,
-            () => previewHorizontal, v => previewHorizontal = v, () => colorHorizontal, v => colorHorizontal = v,
-            null, null, null);
+        foreach (var info in infos)
+        {
+            int idx = info.index;
+            CreateFoldout(container, info.title,
+                () => settings[idx].option,
+                v => settings[idx].option = v,
+                () => settings[idx].layer,
+                v => settings[idx].layer = v,
+                () => settings[idx].preview,
+                v => settings[idx].preview = v,
+                () => settings[idx].color,
+                v => settings[idx].color = v,
+                info.helpV, info.helpH, info.helpI);
+        }
 
         AddSeparator(container);
 
-        var splitButton = new Button(() => { if (original == null) { EditorUtility.DisplayDialog("ÉGÉâÅ[", "å≥ Tilemap Ç™ê›íËÇ≥ÇÍÇƒÇ¢Ç‹ÇπÇÒÅB", "OK"); return; } SplitTilemap(); }) { text = "ï™äÑé¿çs" };
+        var splitButton = new Button(() => { if (original == null) { EditorUtility.DisplayDialog("„Ç®„É©„Éº", "ÂÖÉ Tilemap „ÅåË®≠ÂÆö„Åï„Çå„Å¶„ÅÑ„Åæ„Åõ„Çì„ÄÇ", "OK"); return; } SplitTilemap(); }) { text = "ÂàÜÂâ≤ÂÆüË°å" };
         splitButton.style.marginTop = 10;
         container.Add(splitButton);
     }
@@ -124,12 +111,12 @@ public class TilemapSplitterWindow : EditorWindow
             bool right = tiles.Contains(pos + Vector3Int.right);
             int count = (up?1:0)+(down?1:0)+(left?1:0)+(right?1:0);
             bool anyV = up||down, anyH = left||right;
-            if (count == 4) ApplyClassification(pos, crossOption, previewCrossTiles, previewVertTiles, previewHorTiles);
-            else if (count == 3) ApplyClassification(pos, tOption, previewTTiles, previewVertTiles, previewHorTiles);
-            else if (count == 2 && anyV && anyH) ApplyClassification(pos, cornerOption, previewCornerTiles, previewVertTiles, previewHorTiles);
+            if (count == 4) ApplyClassification(pos, settings[0].option, previewCrossTiles, previewVertTiles, previewHorTiles);
+            else if (count == 3) ApplyClassification(pos, settings[1].option, previewTTiles, previewVertTiles, previewHorTiles);
+            else if (count == 2 && anyV && anyH) ApplyClassification(pos, settings[2].option, previewCornerTiles, previewVertTiles, previewHorTiles);
             else if (anyV && !anyH) previewVertTiles.Add(pos);
             else if (anyH && !anyV) previewHorTiles.Add(pos);
-            else if (count == 0) ApplyClassification(pos, isolateOption, previewIsolateTiles, previewVertTiles, previewHorTiles);
+            else if (count == 0) ApplyClassification(pos, settings[3].option, previewIsolateTiles, previewVertTiles, previewHorTiles);
         }
         SceneView.RepaintAll();
     }
@@ -137,23 +124,25 @@ public class TilemapSplitterWindow : EditorWindow
     private void SplitTilemap()
     {
         UpdatePreview();
-        CreateTiles(crossOption, "CrossTiles", previewCrossTiles, crossLayer);
-        CreateTiles(tOption, "TJunctionTiles", previewTTiles, tLayer);
-        CreateTiles(cornerOption, "CornerTiles", previewCornerTiles, cornerLayer);
-        if (generateVerticalEdge) CreateTiles(ClassificationOption.Vertical, "VerticalEdge", previewVertTiles, verticalLayer);
-        if (generateHorizontalEdge) CreateTiles(ClassificationOption.Horizontal, "HorizontalEdge", previewHorTiles, horizontalLayer);
-        CreateTiles(isolateOption, "IsolateTiles", previewIsolateTiles, isolateLayer);
+        CreateTiles(settings[0].option, "CrossTiles", previewCrossTiles, settings[0].layer);
+        CreateTiles(settings[1].option, "TJunctionTiles", previewTTiles, settings[1].layer);
+        CreateTiles(settings[2].option, "CornerTiles", previewCornerTiles, settings[2].layer);
+        if (settings[4].option == ClassificationOption.Independent)
+            CreateTiles(ClassificationOption.Vertical, "VerticalEdge", previewVertTiles, settings[4].layer);
+        if (settings[5].option == ClassificationOption.Independent)
+            CreateTiles(ClassificationOption.Horizontal, "HorizontalEdge", previewHorTiles, settings[5].layer);
+        CreateTiles(settings[3].option, "IsolateTiles", previewIsolateTiles, settings[3].layer);
     }
 
     private void OnSceneGUI(SceneView sv)
     {
         if (original == null) return;
-        if (previewCross) DrawPreviewList(previewCrossTiles, colorCross);
-        if (previewT) DrawPreviewList(previewTTiles, colorT);
-        if (previewCorner) DrawPreviewList(previewCornerTiles, colorCorner);
-        if (previewIsolate) DrawPreviewList(previewIsolateTiles, colorIsolate);
-        if (previewVertical) DrawPreviewList(previewVertTiles, colorVertical);
-        if (previewHorizontal) DrawPreviewList(previewHorTiles, colorHorizontal);
+        if (settings[0].preview) DrawPreviewList(previewCrossTiles, settings[0].color);
+        if (settings[1].preview) DrawPreviewList(previewTTiles, settings[1].color);
+        if (settings[2].preview) DrawPreviewList(previewCornerTiles, settings[2].color);
+        if (settings[3].preview) DrawPreviewList(previewIsolateTiles, settings[3].color);
+        if (settings[4].preview) DrawPreviewList(previewVertTiles, settings[4].color);
+        if (settings[5].preview) DrawPreviewList(previewHorTiles, settings[5].color);
     }
 
     private void DrawPreviewList(List<Vector3Int> list, Color col)
@@ -192,11 +181,11 @@ public class TilemapSplitterWindow : EditorWindow
     {
         var fold = new Foldout { text = title };
         fold.style.unityFontStyleAndWeight = FontStyle.Bold;
-        var enumField = new EnumField("ê∂ê¨ê›íË", getOption());
+        var enumField = new EnumField("ÁîüÊàêË®≠ÂÆö", getOption());
         fold.Add(enumField);
         if (getLayer != null)
         {
-            var layerField = new LayerField("ÉåÉCÉÑÅ[", getLayer());
+            var layerField = new LayerField("„É¨„Ç§„É§„Éº", getLayer());
             fold.Add(layerField);
             layerField.RegisterValueChangedCallback(evt => setLayer(evt.newValue));
         }
@@ -204,10 +193,10 @@ public class TilemapSplitterWindow : EditorWindow
         ColorField colField = null;
         if (getPreview != null && getColor != null)
         {
-            previewToggle = new Toggle("ÉvÉåÉrÉÖÅ[") { value = getPreview() };
+            previewToggle = new Toggle("„Éó„É¨„Éì„É•„Éº") { value = getPreview() };
             previewToggle.RegisterValueChangedCallback(evt => { setPreview(evt.newValue); UpdatePreview(); });
             fold.Add(previewToggle);
-            colField = new ColorField("êF") { value = getColor() };
+            colField = new ColorField("Ëâ≤") { value = getColor() };
             colField.RegisterValueChangedCallback(evt => setColor(evt.newValue));
             fold.Add(colField);
         }
