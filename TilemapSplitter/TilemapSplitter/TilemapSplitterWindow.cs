@@ -37,7 +37,7 @@ public class TilemapSplitterWindow : EditorWindow
     private readonly List<Vector3Int> previewVertTiles    = new();
     private readonly List<Vector3Int> previewHorTiles     = new();
 
-    [MenuItem("Tools/TimemapSplitter")]
+    [MenuItem("Tools/TilemapSplitter")]
     public static void ShowWindow() => GetWindow<TilemapSplitterWindow>("Split Tilemap");
 
     private void OnEnable() => SceneView.duringSceneGui += OnSceneGUI;
