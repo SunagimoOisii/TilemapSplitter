@@ -1,3 +1,5 @@
+#nullable disable
+
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor;
@@ -38,15 +40,15 @@ public class TilemapSplitterWindow : EditorWindow
     private Color colorHorizontal = Color.yellow;
 
     private Tilemap original;
-    private List<Vector3Int> previewCrossTiles = new List<Vector3Int>();
-    private List<Vector3Int> previewTTiles = new List<Vector3Int>();
-    private List<Vector3Int> previewCornerTiles = new List<Vector3Int>();
-    private List<Vector3Int> previewIsolateTiles = new List<Vector3Int>();
-    private List<Vector3Int> previewVertTiles = new List<Vector3Int>();
-    private List<Vector3Int> previewHorTiles = new List<Vector3Int>();
+    private readonly List<Vector3Int> previewCrossTiles   = new();
+    private readonly List<Vector3Int> previewTTiles       = new();
+    private readonly List<Vector3Int> previewCornerTiles  = new();
+    private readonly List<Vector3Int> previewIsolateTiles = new();
+    private readonly List<Vector3Int> previewVertTiles    = new();
+    private readonly List<Vector3Int> previewHorTiles     = new();
 
-    [MenuItem("ツール/タイルマップ分割ウィンドウ")]
-    public static void ShowWindow() => GetWindow<TilemapSplitterWindow>("タイルマップ分割");
+    [MenuItem("Tools/TimemapSplitter")]
+    public static void ShowWindow() => GetWindow<TilemapSplitterWindow>("Split Tilemap");
 
     private void OnEnable() => SceneView.duringSceneGui += OnSceneGUI;
     private void OnDisable() => SceneView.duringSceneGui -= OnSceneGUI;
@@ -161,7 +163,7 @@ public class TilemapSplitterWindow : EditorWindow
         foreach (var pos in list)
         {
             Vector3 worldPos = original.CellToWorld(pos) + new Vector3(cellSize/2, cellSize/2);
-            Rect rect = new Rect(worldPos.x - cellSize/2, worldPos.y - cellSize/2, cellSize, cellSize);
+            Rect rect = new(worldPos.x - cellSize/2, worldPos.y - cellSize/2, cellSize, cellSize);
             Handles.DrawSolidRectangleWithOutline(rect, Handles.color, Color.clear);
         }
     }
