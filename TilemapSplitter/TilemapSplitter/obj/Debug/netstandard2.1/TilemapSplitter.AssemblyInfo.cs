@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TilemapSplitter")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f8ea2cc26b6a89ebd27f648d15eab5c261f97bae")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3ecdcf466ced3e8f0492e47c775a05d7fc93efb5")]
 [assembly: System.Reflection.AssemblyProductAttribute("TilemapSplitter")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TilemapSplitter")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor;
 using UnityEngine.Tilemaps;
+using System;
 using System.Collections.Generic;
 using UnityEditor.UIElements;
 
@@ -40,8 +41,6 @@ public class TilemapSplitterWindow : EditorWindow
     private Color colorHorizontal = Color.yellow;
 
     private Tilemap original;
-
-    // プレビュー用タイルリスト
     private List<Vector3Int> previewCrossTiles = new List<Vector3Int>();
     private List<Vector3Int> previewTTiles = new List<Vector3Int>();
     private List<Vector3Int> previewCornerTiles = new List<Vector3Int>();
@@ -52,15 +51,8 @@ public class TilemapSplitterWindow : EditorWindow
     [MenuItem("ツール/タイルマップ分割ウィンドウ")]
     public static void ShowWindow() => GetWindow<TilemapSplitterWindow>("タイルマップ分割");
 
-    // Sceneビューでプレビュー描画登録
-    private void OnEnable()
-    {
-        SceneView.duringSceneGui += OnSceneGUI;
-    }
-    private void OnDisable()
-    {
-        SceneView.duringSceneGui -= OnSceneGUI;
-    }
+    private void OnEnable() => SceneView.duringSceneGui += OnSceneGUI;
+    private void OnDisable() => SceneView.duringSceneGui -= OnSceneGUI;
 
     // UI Toolkitエントリポイント
     public void CreateGUI()
@@ -68,118 +60,73 @@ public class TilemapSplitterWindow : EditorWindow
         var root = rootVisualElement;
         var scroll = new ScrollView();
         root.Add(scroll);
-        var container = new VisualElement
-        {
-            style =
-            {
-                flexDirection = FlexDirection.Column,
-                paddingLeft = 10,
-                paddingTop = 10
-            }
-        };
+        var container = new VisualElement { style = { flexDirection = FlexDirection.Column, paddingLeft = 10, paddingTop = 10 } };
         scroll.Add(container);
 
-        // 分割対象 Tilemap の選択
+        // 元 Tilemap 選択
         var originalField = new ObjectField("元 Tilemap") { objectType = typeof(Tilemap), value = original };
         container.Add(originalField);
         var helpBox = new HelpBox("分割対象を選択してください", HelpBoxMessageType.Info);
         container.Add(helpBox);
         helpBox.visible = (original == null);
-        originalField.RegisterValueChangedCallback(evt =>
-        {
-            original = evt.newValue as Tilemap;
-            helpBox.visible = (original == null);
-        });
+        originalField.RegisterValueChangedCallback(evt => { original = evt.newValue as Tilemap; helpBox.visible = (original == null); UpdatePreview(); });
 
-        // 区切り線
         AddSeparator(container);
-        // 縦エッジ設定
-        var vToggle = new Toggle("縦エッジを生成する") { value = generateVerticalEdge };
-        container.Add(vToggle);
-        vToggle.RegisterValueChangedCallback(evt => generateVerticalEdge = evt.newValue);
-        var vLayerField = new LayerField("縦エッジ レイヤー", verticalLayer);
-        container.Add(vLayerField);
-        vLayerField.RegisterValueChangedCallback(evt => verticalLayer = evt.newValue);
+        CreateFoldout(container, "交差タイル",
+            () => crossOption, v => { crossOption = v; UpdatePreview(); },
+            () => crossLayer, v => crossLayer = v,
+            () => previewCross, v => { previewCross = v; UpdatePreview(); },
+            () => colorCross, v => colorCross = v,
+            "プレビューは縦タイルの設定で操作可能",
+            "プレビューは横タイルの設定で操作可能",
+            "Ignore では何も生成されないのでプレビューもない");
+        CreateFoldout(container, "T字タイル",
+            () => tOption, v => { tOption = v; UpdatePreview(); },
+            () => tLayer, v => tLayer = v,
+            () => previewT, v => { previewT = v; UpdatePreview(); },
+            () => colorT, v => colorT = v,
+            "プレビューは縦タイルの設定で操作可能",
+            "プレビューは横タイルの設定で操作可能",
+            "Ignore では何も生成されないのでプレビューもない");
+        CreateFoldout(container, "角タイル",
+            () => cornerOption, v => { cornerOption = v; UpdatePreview(); },
+            () => cornerLayer, v => cornerLayer = v,
+            () => previewCorner, v => { previewCorner = v; UpdatePreview(); },
+            () => colorCorner, v => colorCorner = v,
+            "プレビューは縦タイルの設定で操作可能",
+            "プレビューは横タイルの設定で操作可能",
+            "Ignore では何も生成されないのでプレビューもない");
+        CreateFoldout(container, "孤立タイル",
+            () => isolateOption, v => { isolateOption = v; UpdatePreview(); },
+            () => isolateLayer, v => isolateLayer = v,
+            () => previewIsolate, v => { previewIsolate = v; UpdatePreview(); },
+            () => colorIsolate, v => colorIsolate = v,
+            "プレビューは縦タイルの設定で操作可能",
+            "プレビューは横タイルの設定で操作可能",
+            "Ignore では何も生成されないのでプレビューもない");
 
-        // 横エッジ設定
-        var hToggle = new Toggle("横エッジを生成する") { value = generateHorizontalEdge };
-        container.Add(hToggle);
-        hToggle.RegisterValueChangedCallback(evt => generateHorizontalEdge = evt.newValue);
-        var hLayerField = new LayerField("横エッジ レイヤー", horizontalLayer);
-        container.Add(hLayerField);
-        hLayerField.RegisterValueChangedCallback(evt => horizontalLayer = evt.newValue);
-
-        // 区切り線
         AddSeparator(container);
-        // タイル分類設定
-        CreateEnumWithLayer(container, "交差タイルの扱い", crossOption, val => crossOption = val, crossLayer, val => crossLayer = val, "交差タイル レイヤー");
-        CreateEnumWithLayer(container, "T字タイルの扱い", tOption, val => tOption = val, tLayer, val => tLayer = val, "T字タイル レイヤー");
-        CreateEnumWithLayer(container, "角タイルの扱い", cornerOption, val => cornerOption = val, cornerLayer, val => cornerLayer = val, "角タイル レイヤー");
-        CreateEnumWithLayer(container, "孤立タイルの扱い", isolateOption, val => isolateOption = val, isolateLayer, val => isolateLayer = val, "孤立タイル レイヤー");
+        CreateFoldout(container, "縦エッジ",
+            () => generateVerticalEdge ? ClassificationOption.Independent : ClassificationOption.Ignore,
+            v => generateVerticalEdge = (v == ClassificationOption.Independent),
+            () => verticalLayer, v => verticalLayer = v,
+            () => previewVertical, v => { previewVertical = v; UpdatePreview(); },
+            () => colorVertical, v => colorVertical = v,
+            null, null, null);
+        CreateFoldout(container, "横エッジ",
+            () => generateHorizontalEdge ? ClassificationOption.Independent : ClassificationOption.Ignore,
+            v => generateHorizontalEdge = (v == ClassificationOption.Independent),
+            () => horizontalLayer, v => horizontalLayer = v,
+            () => previewHorizontal, v => { previewHorizontal = v; UpdatePreview(); },
+            () => colorHorizontal, v => colorHorizontal = v,
+            null, null, null);
 
-        // 区切り線
         AddSeparator(container);
-        // プレビュー設定
-        container.Add(new Label("プレビュー設定"));
-        var pc = new Toggle("交差プレビュー") { value = previewCross };
-        container.Add(pc);
-        pc.RegisterValueChangedCallback(evt => { previewCross = evt.newValue; UpdatePreview(); });
-        var cc = new ColorField("交差色") { value = colorCross };
-        container.Add(cc);
-        cc.RegisterValueChangedCallback(evt => colorCross = evt.newValue);
-
-        var pt = new Toggle("T字プレビュー") { value = previewT };
-        container.Add(pt);
-        pt.RegisterValueChangedCallback(evt => { previewT = evt.newValue; UpdatePreview(); });
-        var tc = new ColorField("T字色") { value = colorT };
-        container.Add(tc);
-        tc.RegisterValueChangedCallback(evt => colorT = evt.newValue);
-
-        var pco = new Toggle("角プレビュー") { value = previewCorner };
-        container.Add(pco);
-        pco.RegisterValueChangedCallback(evt => { previewCorner = evt.newValue; UpdatePreview(); });
-        var coco = new ColorField("角色") { value = colorCorner };
-        container.Add(coco);
-        coco.RegisterValueChangedCallback(evt => colorCorner = evt.newValue);
-
-        var pi = new Toggle("孤立プレビュー") { value = previewIsolate };
-        container.Add(pi);
-        pi.RegisterValueChangedCallback(evt => { previewIsolate = evt.newValue; UpdatePreview(); });
-        var ic = new ColorField("孤立色") { value = colorIsolate };
-        container.Add(ic);
-        ic.RegisterValueChangedCallback(evt => colorIsolate = evt.newValue);
-
-        var pv = new Toggle("縦エッジプレビュー") { value = previewVertical };
-        container.Add(pv);
-        pv.RegisterValueChangedCallback(evt => { previewVertical = evt.newValue; UpdatePreview(); });
-        var vc = new ColorField("縦エッジ色") { value = colorVertical };
-        container.Add(vc);
-        vc.RegisterValueChangedCallback(evt => colorVertical = evt.newValue);
-
-        var ph = new Toggle("横エッジプレビュー") { value = previewHorizontal };
-        container.Add(ph);
-        ph.RegisterValueChangedCallback(evt => { previewHorizontal = evt.newValue; UpdatePreview(); });
-        var hc = new ColorField("横エッジ色") { value = colorHorizontal };
-        container.Add(hc);
-        hc.RegisterValueChangedCallback(evt => colorHorizontal = evt.newValue);
-
-        // 区切り線
-        AddSeparator(container);
-        // 実行ボタン
-        var splitButton = new Button(() =>
-        {
-            if (original == null)
-            {
-                EditorUtility.DisplayDialog("エラー", "元 Tilemap が設定されていません。", "OK");
-                return;
-            }
-            SplitTilemap();
-        }) { text = "分割実行" };
+        var splitButton = new Button(() => { if (original == null) { EditorUtility.DisplayDialog("エラー", "元 Tilemap が設定されていません。", "OK"); return; } SplitTilemap(); }) { text = "分割実行" };
         splitButton.style.marginTop = 10;
         container.Add(splitButton);
     }
 
-    // 分類結果をプレビュー用リストに設定
     private void UpdatePreview()
     {
         if (original == null) return;
@@ -189,6 +136,7 @@ public class TilemapSplitterWindow : EditorWindow
             if (original.GetTile(pos) != null)
                 positions.Add(pos);
         var tiles = new HashSet<Vector3Int>(positions);
+
         previewCrossTiles.Clear(); previewTTiles.Clear(); previewCornerTiles.Clear(); previewIsolateTiles.Clear(); previewVertTiles.Clear(); previewHorTiles.Clear();
         foreach (var pos in positions)
         {
@@ -208,7 +156,6 @@ public class TilemapSplitterWindow : EditorWindow
         SceneView.RepaintAll();
     }
 
-    // 実際の分割処理
     private void SplitTilemap()
     {
         UpdatePreview();
@@ -220,7 +167,6 @@ public class TilemapSplitterWindow : EditorWindow
         CreateTiles(isolateOption, "IsolateTiles", previewIsolateTiles, isolateLayer);
     }
 
-    // Sceneビューにプレビューオーバーレイ描画
     private void OnSceneGUI(SceneView sv)
     {
         if (original == null) return;
@@ -232,20 +178,18 @@ public class TilemapSplitterWindow : EditorWindow
         if (previewHorizontal) DrawPreviewList(previewHorTiles, colorHorizontal);
     }
 
-    // プレビュー描画用メソッド
     private void DrawPreviewList(List<Vector3Int> list, Color col)
     {
         Handles.color = new Color(col.r, col.g, col.b, 0.4f);
         float cellSize = original.cellSize.x;
         foreach (var pos in list)
         {
-            Vector3 worldPos = original.CellToWorld(pos) + new Vector3(cellSize / 2, cellSize / 2);
+            Vector3 worldPos = original.CellToWorld(pos) + new Vector3(cellSize/2, cellSize/2);
             Rect rect = new Rect(worldPos.x - cellSize/2, worldPos.y - cellSize/2, cellSize, cellSize);
             Handles.DrawSolidRectangleWithOutline(rect, Handles.color, Color.clear);
         }
     }
 
-    // 区切り線を追加
     private static void AddSeparator(VisualElement parent)
     {
         var separator = new VisualElement
@@ -261,53 +205,74 @@ public class TilemapSplitterWindow : EditorWindow
         parent.Add(separator);
     }
 
-    // EnumField＋LayerField生成ヘルパー
-    private static void CreateEnumWithLayer(VisualElement parent, string label, ClassificationOption currentOption, System.Action<ClassificationOption> setOption, int currentLayer, System.Action<int> setLayer, string layerLabel)
+    private void CreateFoldout(VisualElement parent, string title,
+        Func<ClassificationOption> getOption, Action<ClassificationOption> setOption,
+        Func<int> getLayer, Action<int> setLayer,
+        Func<bool> getPreview, Action<bool> setPreview,
+        Func<Color> getColor, Action<Color> setColor,
+        string helpVert, string helpHorz, string helpIgnore)
     {
-        var enumField = new EnumField(label, currentOption);
-        parent.Add(enumField);
-        var layerContainer = new VisualElement();
-        var layerField = new LayerField(layerLabel, currentLayer);
-        layerContainer.Add(layerField);
-        layerContainer.visible = (currentOption == ClassificationOption.Independent);
-        parent.Add(layerContainer);
-
+        var fold = new Foldout { text = title };
+        fold.style.unityFontStyleAndWeight = FontStyle.Bold;
+        var enumField = new EnumField("生成設定", getOption());
+        fold.Add(enumField);
         enumField.RegisterValueChangedCallback(evt =>
         {
-            var option = (ClassificationOption)evt.newValue;
-            setOption(option);
-            layerContainer.visible = (option == ClassificationOption.Independent);
+            var opt = (ClassificationOption)evt.newValue;
+            setOption(opt);
+            UpdatePreview();
+            ApplyHelp(fold, opt, helpVert, helpHorz, helpIgnore);
+            // プレビューUI 再表示
+            var prevToggle = fold.Query<Toggle>().First();
+var colField = fold.Query<ColorField>().First();
+            bool show = opt == ClassificationOption.Independent;
+            if (prevToggle != null) prevToggle.visible = show;
+            if (colField != null) colField.visible = show;
         });
-        layerField.RegisterValueChangedCallback(evt => setLayer(evt.newValue));
+        if (getLayer != null)
+        {
+            var layerField = new LayerField("レイヤー", getLayer());
+            fold.Add(layerField);
+            layerField.RegisterValueChangedCallback(evt => setLayer(evt.newValue));
+        }
+        var opt = getOption();
+        ApplyHelp(fold, opt, helpVert, helpHorz, helpIgnore);
+        // プレビューUI
+        if (getPreview != null && getColor != null)
+        {
+            var toggle = new Toggle("プレビュー") { value = getPreview(), visible = (opt == ClassificationOption.Independent) };
+            toggle.RegisterValueChangedCallback(evt => { setPreview(evt.newValue); UpdatePreview(); });
+            fold.Add(toggle);
+            var colorField = new ColorField("色") { value = getColor(), visible = (opt == ClassificationOption.Independent) };
+            colorField.RegisterValueChangedCallback(evt => setColor(evt.newValue));
+            fold.Add(colorField);
+        }
+        parent.Add(fold);
     }
 
-    // 分類判定ヘルパー
+    private void ApplyHelp(Foldout fold, ClassificationOption opt, string helpVert, string helpHorz, string helpIgnore)
+    {
+        var existing = fold.Q<HelpBox>(); if (existing != null) fold.Remove(existing);
+        string msg = null;
+        if (opt == ClassificationOption.Vertical) msg = helpVert;
+        else if (opt == ClassificationOption.Horizontal) msg = helpHorz;
+        else if (opt == ClassificationOption.Ignore) msg = helpIgnore;
+        if (!string.IsNullOrEmpty(msg)) fold.Add(new HelpBox(msg, HelpBoxMessageType.Info));
+    }
+
     private static void ApplyClassification(Vector3Int pos, ClassificationOption opt, List<Vector3Int> independent, List<Vector3Int> vList, List<Vector3Int> hList)
     {
         switch (opt)
         {
-            case ClassificationOption.Vertical:
-                vList?.Add(pos);
-                break;
-            case ClassificationOption.Horizontal:
-                hList?.Add(pos);
-                break;
-            case ClassificationOption.Corner:
-                independent?.Add(pos);
-                break;
-            case ClassificationOption.Both:
-                vList?.Add(pos);
-                hList?.Add(pos);
-                break;
-            case ClassificationOption.Independent:
-                independent?.Add(pos);
-                break;
-            case ClassificationOption.Ignore:
-                break;
+            case ClassificationOption.Vertical: vList?.Add(pos); break;
+            case ClassificationOption.Horizontal: hList?.Add(pos); break;
+            case ClassificationOption.Corner: independent?.Add(pos); break;
+            case ClassificationOption.Both: vList?.Add(pos); hList?.Add(pos); break;
+            case ClassificationOption.Independent: independent?.Add(pos); break;
+            case ClassificationOption.Ignore: break;
         }
     }
 
-    // Tilemapオブジェクト生成
     private void CreateTiles(ClassificationOption opt, string name, List<Vector3Int> data, int layer)
     {
         if (data == null || data.Count == 0) return;
