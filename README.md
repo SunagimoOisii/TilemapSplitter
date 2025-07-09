@@ -2,7 +2,7 @@
 Unity 用 Tilemap 分割ツールです。タイルの接続状態を解析し、条件に応じて複数の Tilemap に分割します。
 
 ## 主な機能
-- メニュー **Tools/TimemapSplitter** から専用ウィンドウを起動
+- メニュー **Tools/TilemapSplitter** から専用ウィンドウを起動
 - タイルの上下左右接続数に基づき以下のように分類
   - 十字形 (Cross)
   - T 字形 (T Junction)
@@ -14,7 +14,7 @@ Unity 用 Tilemap 分割ツールです。タイルの接続状態を解析し�
 
 ## 使い方
 1. Unity プロジェクトに本リポジトリを導入
-2. メニューから **Tools/TimemapSplitter** を選択
+2. メニューから **Tools/TilemapSplitter** を選択
 3. `Tilemap` フィールドに分割したい元の Tilemap を指定
 4. 各分類の設定やプレビュー色を調整
 5. `Split` ボタンを押すと、分類に応じた Tilemap が生成されます
