@@ -30,7 +30,7 @@ public class TilemapSplitterWindow : EditorWindow
 
     private const string DefaultTag = "Untagged";
 
-    private struct ClassificationSetting
+    private class ClassificationSetting
     {
         public ClassificationOption option;
         public int layer;
@@ -117,7 +117,7 @@ public class TilemapSplitterWindow : EditorWindow
         };
         foreach (var info in infos)
         {
-            CreateFoldout(container, info.title, ref GetSetting(info.type));
+            CreateFoldout(container, info.title, GetSetting(info.type));
         }
 
         AddSeparator(container);
@@ -148,7 +148,7 @@ public class TilemapSplitterWindow : EditorWindow
         parent.Add(separator);
     }
 
-    private (Toggle previewToggle, ColorField colorField) AddCommonFields(Foldout fold, ref ClassificationSetting setting)
+    private (Toggle previewToggle, ColorField colorField) AddCommonFields(Foldout fold, ClassificationSetting setting)
     {
         var layerField = new LayerField("Layer", setting.layer);
         layerField.RegisterValueChangedCallback(evt => setting.layer = evt.newValue);
@@ -180,25 +180,25 @@ public class TilemapSplitterWindow : EditorWindow
         var fold = new Foldout { text = title };
         fold.style.unityFontStyleAndWeight = FontStyle.Bold;
 
-        AddCommonFields(fold, ref setting);
+        AddCommonFields(fold, setting);
 
         parent.Add(fold);
     }
 
-    private void CreateFoldout(VisualElement parent, string title, ref ClassificationSetting setting)
+    private void CreateFoldout(VisualElement parent, string title, ClassificationSetting setting)
     {
         var fold = new Foldout { text = title };
         fold.style.unityFontStyleAndWeight = FontStyle.Bold;
 
         //タグ設定
-        var tagField = new TagField("Tag", getTag());
-        tagField.RegisterValueChangedCallback(evt => setTag(evt.newValue));
+        var tagField = new TagField("Tag", DefaultTag);
+        tagField.RegisterValueChangedCallback(evt => setting.tag = evt.newValue);
         fold.Add(tagField);
 
         var enumField = new EnumFlagsField("Which obj to add to", setting.option);
         fold.Add(enumField);
 
-        var (previewToggle, colField) = AddCommonFields(fold, ref setting);
+        var (previewToggle, colField) = AddCommonFields(fold, setting);
 
         enumField.RegisterValueChangedCallback(evt =>
         {
