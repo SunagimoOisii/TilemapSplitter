@@ -334,12 +334,16 @@ public class TilemapSplitterWindow : EditorWindow
 
     private void DrawPreviewList(List<Vector3Int> list, Color col)
     {
-        Handles.color = new Color(col.r,col.g,col.b,0.4f);
-        float cellSize = original.cellSize.x;
+        Handles.color = new Color(col.r, col.g, col.b, 0.4f);
+        var cellSize = original.cellSize;
         foreach(var pos in list)
         {
-            Vector3 worldPos = original.CellToWorld(pos)+new Vector3(cellSize/2,cellSize/2);
-            Rect rect = new(worldPos.x-cellSize/2,worldPos.y-cellSize/2,cellSize,cellSize);
+            Vector3 worldPos = original.CellToWorld(pos) + new Vector3(cellSize.x / 2f, cellSize.y / 2f);
+            Rect rect = new Rect(
+                worldPos.x - cellSize.x / 2f,
+                worldPos.y - cellSize.y / 2f,
+                cellSize.x,
+                cellSize.y);
             Handles.DrawSolidRectangleWithOutline(rect, Handles.color, Color.clear);
         }
     }
