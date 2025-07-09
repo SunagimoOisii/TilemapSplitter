@@ -95,7 +95,7 @@ public class TilemapSplitterWindow : EditorWindow
         var infos = new (string title, int index)[]
         {
             ("Cross",      2),
-            ("T-Junciton", 3),
+            ("T-Junction", 3),
             ("Corner",     4),
             ("Isolate",    5),
         };
