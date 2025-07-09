@@ -28,12 +28,12 @@ public class TilemapSplitterWindow : EditorWindow
 
     private readonly ClassificationSetting[] settings = new ClassificationSetting[6]
     {
-        new() { /* option fixed to Vertical */   preview = true, color = Color.green  }, //Vertical Edge
-        new() { /* option fixed to Horizontal */ preview = true, color = Color.yellow }, //Horizontal Edge
-        new() { option = ClassificationOption.VerticalEdge, color = Color.red     }, //Cross
-        new() { option = ClassificationOption.VerticalEdge, color = Color.blue    }, //T-Junction
-        new() { option = ClassificationOption.VerticalEdge, color = Color.cyan    }, //Corner
-        new() { option = ClassificationOption.VerticalEdge, color = Color.magenta }  //Isolate
+        new() { option =ClassificationOption.VerticalEdge,  preview = true, color = Color.green  }, //Vertical Edge
+        new() { option =ClassificationOption.HorizontalEdge,preview = true, color = Color.yellow }, //Horizontal Edge
+        new() { option = ClassificationOption.Independent, color = Color.red     }, //Cross
+        new() { option = ClassificationOption.Independent, color = Color.blue    }, //T-Junction
+        new() { option = ClassificationOption.Independent, color = Color.cyan    }, //Corner
+        new() { option = ClassificationOption.Independent, color = Color.magenta }  //Isolate
     };
 
     private Tilemap original;
@@ -182,8 +182,8 @@ public class TilemapSplitterWindow : EditorWindow
         }
         else
         {
-            CreateTiles(ClassificationOption.VerticalEdge,   "VerticalEdge",   previewVertTiles, settings[0].layer);
-            CreateTiles(ClassificationOption.HorizontalEdge, "HorizontalEdge", previewHorTiles,  settings[1].layer);
+            CreateTiles(settings[0].option, "VerticalEdge",   previewVertTiles, settings[0].layer);
+            CreateTiles(settings[1].option, "HorizontalEdge", previewHorTiles,  settings[1].layer);
         }
 
         CreateTiles(settings[5].option, "IsolateTiles", previewIsolateTiles, settings[5].layer);
@@ -223,7 +223,7 @@ public class TilemapSplitterWindow : EditorWindow
         var fold = new Foldout { text = title };
         fold.style.unityFontStyleAndWeight = FontStyle.Bold;
 
-        var enumField = new EnumFlagsField("Where to add an obj", getOption());
+        var enumField = new EnumFlagsField("Which obj to add to", getOption());
         fold.Add(enumField);
 
         var layerField = new LayerField("Layer", getLayer());
