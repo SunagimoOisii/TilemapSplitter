@@ -29,12 +29,12 @@ public class TilemapSplitterWindow : EditorWindow
     // 設定配列：Cross, T-Junction, Corner, Isolate, VerticalEdge, HorizontalEdge
     private readonly ClassificationSetting[] settings = new ClassificationSetting[6]
     {
+        new() { /* option fixed to Vertical */          preview = true, color = Color.green  }, // Vertical Edge
+        new() { /* option fixed to Horizontal */        preview = true, color = Color.yellow },  // Horizontal Edge
         new() { option = ClassificationOption.Vertical,    color = Color.red     }, // Cross
         new() { option = ClassificationOption.Vertical,    color = Color.blue    }, // T-Junction
         new() { option = ClassificationOption.Vertical,    color = Color.cyan    }, // Corner
-        new() { option = ClassificationOption.Vertical,    color = Color.magenta }, // Isolate
-        new() { /* option fixed to Vertical */          preview = true, color = Color.green  }, // Vertical Edge
-        new() { /* option fixed to Horizontal */        preview = true, color = Color.yellow }  // Horizontal Edge
+        new() { option = ClassificationOption.Vertical,    color = Color.magenta }  // Isolate
     };
 
     private Tilemap original;
@@ -65,9 +65,11 @@ public class TilemapSplitterWindow : EditorWindow
         scroll.Add(container);
 
         // Split Target Field 設定
-        var originalField = new ObjectField("Split Tilemap") { objectType = typeof(Tilemap), value = original };
         var helpBox = new HelpBox("Select the subject of the division", HelpBoxMessageType.Info);
         helpBox.visible = (original == null);
+        var originalField = new ObjectField("Split Tilemap");
+        originalField.objectType = typeof(Tilemap);
+        originalField.value      = original;
         originalField.RegisterValueChangedCallback(evt =>
         {
             original = evt.newValue as Tilemap;
@@ -84,6 +86,11 @@ public class TilemapSplitterWindow : EditorWindow
         mergeToggle.RegisterValueChangedCallback(evt => mergeEdges = evt.newValue);
         container.Add(mergeToggle);
 
+        // 縦エッジ設定
+        CreateEdgeFoldout(container, "Vertical Edge", 0);
+        // 横エッジ設定
+        CreateEdgeFoldout(container, "Horizontal Edge", 1);
+
         AddSeparator(container);
 
         // 各タイルの設定項目
@@ -92,10 +99,10 @@ public class TilemapSplitterWindow : EditorWindow
         string helpI = "Ignore では何も生成されないのでプレビューもない";
         var infos = new (string title, int index, string helpV, string helpH, string helpI)[]
         {
-            ("交差タイル",   0, helpV, helpH, helpI),
-            ("T字タイル",    1, helpV, helpH, helpI),
-            ("角タイル",     2, helpV, helpH, helpI),
-            ("孤立タイル",   3, helpV, helpH, helpI),
+            ("交差タイル",   2, helpV, helpH, helpI),
+            ("T字タイル",    3, helpV, helpH, helpI),
+            ("角タイル",     4, helpV, helpH, helpI),
+            ("孤立タイル",   5, helpV, helpH, helpI),
         };
         foreach (var info in infos)
         {
@@ -111,11 +118,6 @@ public class TilemapSplitterWindow : EditorWindow
                 v => settings[idx].color = v,
                 info.helpV, info.helpH, info.helpI);
         }
-
-        // 縦エッジ設定
-        CreateEdgeFoldout(container, "縦エッジ", 4);
-        // 横エッジ設定
-        CreateEdgeFoldout(container, "横エッジ", 5);
 
         AddSeparator(container);
 
@@ -197,40 +199,40 @@ public class TilemapSplitterWindow : EditorWindow
         int count  = (up ? 1 : 0) + (down ? 1 : 0) + (left ? 1 : 0) + (right ? 1 : 0);
 
         if (count == 4) // 交差タイル
-            ApplyClassification(pos, settings[0].option, previewCrossTiles, previewVertTiles, previewHorTiles);
+            ApplyClassification(pos, settings[2].option, previewCrossTiles, previewVertTiles, previewHorTiles);
         else if (count == 3) // T字タイル
-            ApplyClassification(pos, settings[1].option, previewTTiles, previewVertTiles, previewHorTiles);
+            ApplyClassification(pos, settings[3].option, previewTTiles, previewVertTiles, previewHorTiles);
         else if (count == 2 && anyV && anyH) // 角タイル
-            ApplyClassification(pos, settings[2].option, previewCornerTiles, previewVertTiles, previewHorTiles);
+            ApplyClassification(pos, settings[4].option, previewCornerTiles, previewVertTiles, previewHorTiles);
         else if (anyV && !anyH) // 縦エッジ
             previewVertTiles.Add(pos);
         else if (anyH && !anyV) // 横エッジ
             previewHorTiles.Add(pos);
         else if (count == 0) // 孤立タイル
-            ApplyClassification(pos, settings[3].option, previewIsolateTiles, previewVertTiles, previewHorTiles);
+            ApplyClassification(pos, settings[5].option, previewIsolateTiles, previewVertTiles, previewHorTiles);
     }
 
     private void SplitTilemap()
     {
         UpdatePreview();
-        CreateTiles(settings[0].option, "CrossTiles",    previewCrossTiles,   settings[0].layer);
-        CreateTiles(settings[1].option, "TJunctionTiles", previewTTiles,       settings[1].layer);
-        CreateTiles(settings[2].option, "CornerTiles",    previewCornerTiles,  settings[2].layer);
+        CreateTiles(settings[2].option, "CrossTiles",    previewCrossTiles,   settings[2].layer);
+        CreateTiles(settings[3].option, "TJunctionTiles", previewTTiles,       settings[3].layer);
+        CreateTiles(settings[4].option, "CornerTiles",    previewCornerTiles,  settings[4].layer);
 
         if (mergeEdges)
         {
             // 縦横エッジを統合
             var merged = new List<Vector3Int>(previewVertTiles);
             merged.AddRange(previewHorTiles);
-            CreateTiles(ClassificationOption.Independent, "EdgeTiles", merged, settings[4].layer);
+            CreateTiles(ClassificationOption.Independent, "EdgeTiles", merged, settings[0].layer);
         }
         else
         {
-            CreateTiles(ClassificationOption.Vertical,   "VerticalEdge",   previewVertTiles,   settings[4].layer);
-            CreateTiles(ClassificationOption.Horizontal, "HorizontalEdge", previewHorTiles,    settings[5].layer);
+            CreateTiles(ClassificationOption.Vertical,   "VerticalEdge",   previewVertTiles,   settings[0].layer);
+            CreateTiles(ClassificationOption.Horizontal, "HorizontalEdge", previewHorTiles,    settings[1].layer);
         }
 
-        CreateTiles(settings[3].option, "IsolateTiles", previewIsolateTiles, settings[3].layer);
+        CreateTiles(settings[5].option, "IsolateTiles", previewIsolateTiles, settings[5].layer);
     }
 
     private static void AddSeparator(VisualElement parent)
@@ -324,12 +326,12 @@ public class TilemapSplitterWindow : EditorWindow
     private void OnSceneGUI(SceneView sv)
     {
         if (original == null) return;
-        if (settings[0].preview) DrawPreviewList(previewCrossTiles,   settings[0].color);
-        if (settings[1].preview) DrawPreviewList(previewTTiles,       settings[1].color);
-        if (settings[2].preview) DrawPreviewList(previewCornerTiles,  settings[2].color);
-        if (settings[3].preview) DrawPreviewList(previewIsolateTiles, settings[3].color);
-        if (settings[4].preview) DrawPreviewList(previewVertTiles,    settings[4].color);
-        if (settings[5].preview) DrawPreviewList(previewHorTiles,     settings[5].color);
+        if (settings[0].preview) DrawPreviewList(previewVertTiles,    settings[0].color);
+        if (settings[1].preview) DrawPreviewList(previewHorTiles,     settings[1].color);
+        if (settings[2].preview) DrawPreviewList(previewCrossTiles,   settings[2].color);
+        if (settings[3].preview) DrawPreviewList(previewTTiles,       settings[3].color);
+        if (settings[4].preview) DrawPreviewList(previewCornerTiles,  settings[4].color);
+        if (settings[5].preview) DrawPreviewList(previewIsolateTiles, settings[5].color);
     }
 
     private void DrawPreviewList(List<Vector3Int> list, Color col)
