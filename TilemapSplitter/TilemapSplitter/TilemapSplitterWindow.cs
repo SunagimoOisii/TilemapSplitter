@@ -29,7 +29,7 @@ public class TilemapSplitterWindow : EditorWindow
     private readonly ClassificationSetting[] settings = new ClassificationSetting[6]
     {
         new() { /* option fixed to Vertical */   preview = true, color = Color.green  }, //Vertical Edge
-        new() { /* option fixed to Horizontal */ preview = true, color = Color.yellow },  //Horizontal Edge
+        new() { /* option fixed to Horizontal */ preview = true, color = Color.yellow }, //Horizontal Edge
         new() { option = ClassificationOption.VerticalEdge, color = Color.red     }, //Cross
         new() { option = ClassificationOption.VerticalEdge, color = Color.blue    }, //T-Junction
         new() { option = ClassificationOption.VerticalEdge, color = Color.cyan    }, //Corner
@@ -44,7 +44,7 @@ public class TilemapSplitterWindow : EditorWindow
     private readonly List<Vector3Int> previewVertTiles    = new();
     private readonly List<Vector3Int> previewHorTiles     = new();
 
-    // 縦・横エッジを同一オブジェクトにまとめるかどうか
+    //縦, 横エッジを同一オブジェクトにまとめるかどうか
     private bool mergeEdges = false;
 
     [MenuItem("Tools/TilemapSplitter")]
@@ -80,25 +80,24 @@ public class TilemapSplitterWindow : EditorWindow
 
         AddSeparator(container);
 
-        // 縦/横エッジ統合チェックボックス
-        var mergeToggle = new Toggle("Merge VerticalEdge/HorizontalEdge Edges") { value = mergeEdges };
+        //縦, 横エッジ統合チェックボックス
+        var mergeToggle = new Toggle("Merge VerticalEdge, HorizontalEdge") { value = mergeEdges };
         mergeToggle.RegisterValueChangedCallback(evt => mergeEdges = evt.newValue);
         container.Add(mergeToggle);
 
-        // 縦エッジ設定
+        //縦, 横エッジ設定
         CreateEdgeFoldout(container, "VerticalEdge Edge", 0);
-        // 横エッジ設定
         CreateEdgeFoldout(container, "HorizontalEdge Edge", 1);
 
         AddSeparator(container);
 
-        // 各タイルの設定項目
+        //各タイルの設定項目
         var infos = new (string title, int index)[]
         {
-            ("交差タイル",   2),
-            ("T字タイル", 3),
-            ("角タイル", 4),
-            ("孤立タイル", 5),
+            ("Cross",      2),
+            ("T-Junciton", 3),
+            ("Corner",     4),
+            ("Isolate",    5),
         };
         foreach (var info in infos)
         {
@@ -121,7 +120,7 @@ public class TilemapSplitterWindow : EditorWindow
         {
             if (original == null)
             {
-                EditorUtility.DisplayDialog("エラー", "元 Tilemap が設定されていません。", "OK");
+                EditorUtility.DisplayDialog("Error", "The split target isn't set", "OK");
                 return;
             }
             SplitTilemap();
@@ -143,46 +142,22 @@ public class TilemapSplitterWindow : EditorWindow
         fold.Add(layerField);
 
         // プレビュー設定
-        var previewToggle = new Toggle("Preview") { value = settings[idx].preview };
-        previewToggle.RegisterValueChangedCallback(evt => { settings[idx].preview = evt.newValue; UpdatePreview(); });
+        var previewToggle = new Toggle("Preview");
+        previewToggle.value = settings[idx].preview;
+        previewToggle.RegisterValueChangedCallback(evt => 
+        { 
+            settings[idx].preview = evt.newValue;
+            UpdatePreview();
+        });
         fold.Add(previewToggle);
 
         // プレビュー色設定
-        var colField = new ColorField("Preview Color") { value = settings[idx].color };
+        var colField = new ColorField("Preview Color");
+        colField.value = settings[idx].color;
         colField.RegisterValueChangedCallback(evt => settings[idx].color = evt.newValue);
         fold.Add(colField);
 
         parent.Add(fold);
-    }
-
-    private void UpdatePreview()
-    {
-        if (original == null) return;
-
-        var positions = new List<Vector3Int>();
-        foreach (var pos in original.cellBounds.allPositionsWithin)
-        {
-            if (original.GetTile(pos) != null) positions.Add(pos);
-        }
-        var tiles = new HashSet<Vector3Int>(positions);
-
-        ClearPreviewLists();
-        foreach (var pos in positions)
-        {
-            ClassifyTileNeighbors(pos, tiles);
-        }
-
-        SceneView.RepaintAll();
-    }
-
-    private void ClearPreviewLists()
-    {
-        previewCrossTiles.Clear();
-        previewTTiles.Clear();
-        previewCornerTiles.Clear();
-        previewIsolateTiles.Clear();
-        previewVertTiles.Clear();
-        previewHorTiles.Clear();
     }
 
     private void ClassifyTileNeighbors(Vector3Int pos, HashSet<Vector3Int> tiles)
@@ -387,6 +362,32 @@ public class TilemapSplitterWindow : EditorWindow
                 cellSize.y);
             Handles.DrawSolidRectangleWithOutline(rect, Handles.color, Color.clear);
         }
+    }
+
+    private void UpdatePreview()
+    {
+        if (original == null) return;
+
+        var positions = new List<Vector3Int>();
+        foreach (var pos in original.cellBounds.allPositionsWithin)
+        {
+            if (original.GetTile(pos) != null) positions.Add(pos);
+        }
+
+        previewCrossTiles.Clear();
+        previewTTiles.Clear();
+        previewCornerTiles.Clear();
+        previewIsolateTiles.Clear();
+        previewVertTiles.Clear();
+        previewHorTiles.Clear();
+
+        var tiles = new HashSet<Vector3Int>(positions);
+        foreach (var pos in positions)
+        {
+            ClassifyTileNeighbors(pos, tiles);
+        }
+
+        SceneView.RepaintAll();
     }
 
     #endregion
