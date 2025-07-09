@@ -102,8 +102,8 @@ public class TilemapSplitterWindow : EditorWindow
         container.Add(mergeToggle);
 
         //縦, 横エッジ設定
-        CreateEdgeFoldout(container, "VerticalEdge Edge", SettingType.VerticalEdge);
-        CreateEdgeFoldout(container, "HorizontalEdge Edge", SettingType.HorizontalEdge);
+        CreateEdgeFoldout(container, "VerticalEdge",   SettingType.VerticalEdge);
+        CreateEdgeFoldout(container, "HorizontalEdge", SettingType.HorizontalEdge);
 
         AddSeparator(container);
 
