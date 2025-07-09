@@ -18,6 +18,16 @@ public class TilemapSplitterWindow : EditorWindow
         Independent     = 1 << 2,  // 4
     }
 
+    private enum SettingType
+    {
+        VerticalEdge = 0,
+        HorizontalEdge,
+        Cross,
+        TJunction,
+        Corner,
+        Isolate,
+    }
+
     private struct ClassificationSetting
     {
         public ClassificationOption option;
@@ -36,6 +46,9 @@ public class TilemapSplitterWindow : EditorWindow
         new() { option = ClassificationOption.Independent, color = Color.cyan    }, //Corner
         new() { option = ClassificationOption.Independent, color = Color.magenta }  //Isolate
     };
+
+    private ref ClassificationSetting GetSetting(SettingType type)
+        => ref settings[(int)type];
 
     private Tilemap original;
     private readonly List<Vector3Int> previewCrossTiles   = new();
@@ -87,28 +100,22 @@ public class TilemapSplitterWindow : EditorWindow
         container.Add(mergeToggle);
 
         //縦, 横エッジ設定
-        CreateEdgeFoldout(container, "VerticalEdge Edge", 0);
-        CreateEdgeFoldout(container, "HorizontalEdge Edge", 1);
+        CreateEdgeFoldout(container, "VerticalEdge Edge", SettingType.VerticalEdge);
+        CreateEdgeFoldout(container, "HorizontalEdge Edge", SettingType.HorizontalEdge);
 
         AddSeparator(container);
 
         //各タイルの設定項目
-        var infos = new (string title, int index)[]
+        var infos = new (string title, SettingType type)[]
         {
-            ("Cross",      2),
-            ("T-Junction", 3),
-            ("Corner",     4),
-            ("Isolate",    5),
+            ("Cross",      SettingType.Cross),
+            ("T-Junction", SettingType.TJunction),
+            ("Corner",     SettingType.Corner),
+            ("Isolate",    SettingType.Isolate),
         };
         foreach (var info in infos)
         {
-            int idx = info.index;
-            CreateFoldout(container, info.title, //各要素の get, set 時の処理を入れる
-                () => settings[idx].option,  v => settings[idx].option  = v,  //ClassificationOption
-                () => settings[idx].layer,   v => settings[idx].layer   = v,  //Layer
-                v => settings[idx].tag     = v,                               //Tag
-                () => settings[idx].preview, v => settings[idx].preview = v,  //Preview
-                () => settings[idx].color,   v => settings[idx].color   = v); //Color
+            CreateFoldout(container, info.title, ref GetSetting(info.type));
         }
 
         AddSeparator(container);
@@ -139,90 +146,68 @@ public class TilemapSplitterWindow : EditorWindow
         parent.Add(separator);
     }
 
-    //縦, 横エッジ専用の Foldout 作成
-    private void CreateEdgeFoldout(VisualElement parent, string title, int idx)
+    private (Toggle previewToggle, ColorField colorField) AddCommonFields(Foldout fold, ref ClassificationSetting setting)
     {
-        var fold = new Foldout { text = title };
-        fold.style.unityFontStyleAndWeight = FontStyle.Bold;
-
-        // レイヤー設定
-        var layerField = new LayerField("Layer", settings[idx].layer);
-        layerField.RegisterValueChangedCallback(evt => settings[idx].layer = evt.newValue);
+        var layerField = new LayerField("Layer", setting.layer);
+        layerField.RegisterValueChangedCallback(evt => setting.layer = evt.newValue);
         fold.Add(layerField);
 
-        //タグ設定
         var tagField = new TagField("Tag", "Untagged");
-        tagField.RegisterValueChangedCallback(evt => settings[idx].tag = evt.newValue);
+        tagField.RegisterValueChangedCallback(evt => setting.tag = evt.newValue);
         fold.Add(tagField);
 
-        // プレビュー設定
-        var previewToggle = new Toggle("Preview");
-        previewToggle.value = settings[idx].preview;
-        previewToggle.RegisterValueChangedCallback(evt => 
-        { 
-            settings[idx].preview = evt.newValue;
+        var previewToggle = new Toggle("Preview") { value = setting.preview };
+        previewToggle.RegisterValueChangedCallback(evt =>
+        {
+            setting.preview = evt.newValue;
             UpdatePreview();
         });
         fold.Add(previewToggle);
 
-        // プレビュー色設定
-        var colField = new ColorField("Preview Color");
-        colField.value = settings[idx].color;
-        colField.RegisterValueChangedCallback(evt => settings[idx].color = evt.newValue);
+        var colField = new ColorField("Preview Color") { value = setting.color };
+        colField.RegisterValueChangedCallback(evt => setting.color = evt.newValue);
         fold.Add(colField);
+
+        return (previewToggle, colField);
+    }
+
+    //縦, 横エッジ専用の Foldout 作成
+    private void CreateEdgeFoldout(VisualElement parent, string title, SettingType type)
+    {
+        ref var setting = ref GetSetting(type);
+        var fold = new Foldout { text = title };
+        fold.style.unityFontStyleAndWeight = FontStyle.Bold;
+
+        AddCommonFields(fold, ref setting);
 
         parent.Add(fold);
     }
 
-    private void CreateFoldout(VisualElement parent, string title,
-        Func<ClassificationOption> getOption, Action<ClassificationOption> setOption,
-        Func<int> getLayer, Action<int> setLayer,
-        Action<string> setTag,
-        Func<bool> getPreview, Action<bool> setPreview,
-        Func<Color> getColor, Action<Color> setColor)
+    private void CreateFoldout(VisualElement parent, string title, ref ClassificationSetting setting)
     {
         var fold = new Foldout { text = title };
         fold.style.unityFontStyleAndWeight = FontStyle.Bold;
 
-        var enumField = new EnumFlagsField("Which obj to add to", getOption());
+        var enumField = new EnumFlagsField("Which obj to add to", setting.option);
         fold.Add(enumField);
 
-        var layerField = new LayerField("Layer", getLayer());
-        layerField.RegisterValueChangedCallback(evt => setLayer(evt.newValue));
-        fold.Add(layerField);
+        var (previewToggle, colField) = AddCommonFields(fold, ref setting);
 
-        //タグ設定
-        var tagField = new TagField("Tag", "Untagged");
-        tagField.RegisterValueChangedCallback(evt => setTag(evt.newValue));
-        fold.Add(tagField);
-
-        var previewToggle = new Toggle("Preview") { value = getPreview() };
-        previewToggle.RegisterValueChangedCallback(evt => 
+        enumField.RegisterValueChangedCallback(evt =>
         {
-            setPreview(evt.newValue);
+            setting.option = (ClassificationOption)evt.newValue;
             UpdatePreview();
-        });
-        fold.Add(previewToggle);
-
-        var colField = new ColorField("Preview Color") { value = getColor() };
-        colField.RegisterValueChangedCallback(evt => setColor(evt.newValue));
-        fold.Add(colField);
-
-        enumField.RegisterValueChangedCallback(evt => 
-        {
-            setOption((ClassificationOption)evt.newValue);
-            UpdatePreview();
-            UpdateUI(getOption, fold, previewToggle, colField);
+            UpdateUI(setting, fold, previewToggle, colField);
         });
 
-        UpdateUI(getOption, fold, previewToggle, colField);
+        UpdateUI(setting, fold, previewToggle, colField);
         parent.Add(fold);
     }
 
-    void UpdateUI(Func<ClassificationOption> getOption, Foldout fold,
+    void UpdateUI(ClassificationSetting setting, Foldout fold,
         Toggle previewToggle, ColorField colField)
     {
-        var opt = getOption();
+        var opt = setting.option;
         
         var exist = fold.Q<HelpBox>();
         if (exist != null) fold.Remove(exist);
@@ -247,30 +232,31 @@ public class TilemapSplitterWindow : EditorWindow
     private void SplitTilemap()
     {
         UpdatePreview();
-        CreateTiles(settings[2].option, "CrossTiles", previewCrossTiles,
-            settings[2].layer, settings[2].tag);
-        CreateTiles(settings[3].option, "TJunctionTiles", previewTTiles,
-            settings[3].layer, settings[3].tag);
-        CreateTiles(settings[4].option, "CornerTiles",    previewCornerTiles,
-            settings[4].layer, settings[4].tag);
+        CreateTiles(GetSetting(SettingType.Cross).option, "CrossTiles", previewCrossTiles,
+            GetSetting(SettingType.Cross).layer, GetSetting(SettingType.Cross).tag);
+        CreateTiles(GetSetting(SettingType.TJunction).option, "TJunctionTiles", previewTTiles,
+            GetSetting(SettingType.TJunction).layer, GetSetting(SettingType.TJunction).tag);
+        CreateTiles(GetSetting(SettingType.Corner).option, "CornerTiles",    previewCornerTiles,
+            GetSetting(SettingType.Corner).layer, GetSetting(SettingType.Corner).tag);
 
         if (mergeEdges) //縦横エッジ統合
         {
             var merged = new List<Vector3Int>(previewVertTiles);
             merged.AddRange(previewHorTiles);
-            CreateTiles(ClassificationOption.Independent, "EdgeTiles", merged, 
-                settings[0].layer, settings[0].tag);
+            CreateTiles(ClassificationOption.Independent, "EdgeTiles", merged,
+                GetSetting(SettingType.VerticalEdge).layer,
+                GetSetting(SettingType.VerticalEdge).tag);
         }
         else
         {
-            CreateTiles(settings[0].option, "VerticalEdge",   previewVertTiles, 
-                settings[0].layer, settings[0].tag);
-            CreateTiles(settings[1].option, "HorizontalEdge", previewHorTiles,  
-                settings[1].layer, settings[1].tag);
+            CreateTiles(GetSetting(SettingType.VerticalEdge).option, "VerticalEdge",   previewVertTiles,
+                GetSetting(SettingType.VerticalEdge).layer, GetSetting(SettingType.VerticalEdge).tag);
+            CreateTiles(GetSetting(SettingType.HorizontalEdge).option, "HorizontalEdge", previewHorTiles,
+                GetSetting(SettingType.HorizontalEdge).layer, GetSetting(SettingType.HorizontalEdge).tag);
         }
 
-        CreateTiles(settings[5].option, "IsolateTiles", previewIsolateTiles, 
-            settings[5].layer, settings[5].tag);
+        CreateTiles(GetSetting(SettingType.Isolate).option, "IsolateTiles", previewIsolateTiles,
+            GetSetting(SettingType.Isolate).layer, GetSetting(SettingType.Isolate).tag);
     }
 
     private void CreateTiles(ClassificationOption opt, string name, List<Vector3Int> data, 
