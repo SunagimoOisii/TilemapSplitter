@@ -28,6 +28,8 @@ public class TilemapSplitterWindow : EditorWindow
         Isolate,
     }
 
+    private const string DefaultTag = "Untagged";
+
     private struct ClassificationSetting
     {
         public ClassificationOption option;
@@ -39,12 +41,12 @@ public class TilemapSplitterWindow : EditorWindow
 
     private readonly ClassificationSetting[] settings = new ClassificationSetting[6]
     {
-        new() { option =ClassificationOption.VerticalEdge,  preview = true, color = Color.green  }, //Vertical Edge
-        new() { option =ClassificationOption.HorizontalEdge,preview = true, color = Color.yellow }, //Horizontal Edge
-        new() { option = ClassificationOption.Independent, color = Color.red     }, //Cross
-        new() { option = ClassificationOption.Independent, color = Color.blue    }, //T-Junction
-        new() { option = ClassificationOption.Independent, color = Color.cyan    }, //Corner
-        new() { option = ClassificationOption.Independent, color = Color.magenta }  //Isolate
+        new() { option =ClassificationOption.VerticalEdge, tag = DefaultTag, preview = true, color = Color.green  }, //Vertical Edge
+        new() { option =ClassificationOption.HorizontalEdge, tag = DefaultTag, preview = true, color = Color.yellow }, //Horizontal Edge
+        new() { option = ClassificationOption.Independent, tag = DefaultTag, color = Color.red }, //Cross
+        new() { option = ClassificationOption.Independent, tag = DefaultTag, color = Color.blue }, //T-Junction
+        new() { option = ClassificationOption.Independent, tag = DefaultTag, color = Color.cyan }, //Corner
+        new() { option = ClassificationOption.Independent, tag = DefaultTag, color = Color.magenta }  //Isolate
     };
 
     private ref ClassificationSetting GetSetting(SettingType type)
@@ -188,6 +190,11 @@ public class TilemapSplitterWindow : EditorWindow
         var fold = new Foldout { text = title };
         fold.style.unityFontStyleAndWeight = FontStyle.Bold;
 
+        //タグ設定
+        var tagField = new TagField("Tag", getTag());
+        tagField.RegisterValueChangedCallback(evt => setTag(evt.newValue));
+        fold.Add(tagField);
+
         var enumField = new EnumFlagsField("Which obj to add to", setting.option);
         fold.Add(enumField);
 
@@ -273,7 +280,7 @@ public class TilemapSplitterWindow : EditorWindow
         var obj = new GameObject(name, typeof(Tilemap), typeof(TilemapRenderer));
         obj.transform.SetParent(original.transform.parent, false);
         obj.layer = layer;
-        obj.tag   = tag;
+        obj.tag   = string.IsNullOrEmpty(tag) ? DefaultTag : tag;
 
         var renderer = obj.GetComponent<TilemapRenderer>();
         if (original.TryGetComponent<TilemapRenderer>(out var oriRenderer))
