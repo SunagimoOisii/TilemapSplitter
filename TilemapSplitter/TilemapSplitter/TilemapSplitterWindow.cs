@@ -257,31 +257,30 @@ public class TilemapSplitterWindow : EditorWindow
         UpdatePreview();
         UpdateFoldoutTitles();
 
-        CreateTiles(GetSetting(SettingType.Cross).option, CrossTileName, previewCrossTiles,
-            GetSetting(SettingType.Cross).layer, GetSetting(SettingType.Cross).tag);
-        CreateTiles(GetSetting(SettingType.TJunction).option, TJunctionTileName, previewTTiles,
-            GetSetting(SettingType.TJunction).layer, GetSetting(SettingType.TJunction).tag);
-        CreateTiles(GetSetting(SettingType.Corner).option, CornerTileName, previewCornerTiles,
-            GetSetting(SettingType.Corner).layer, GetSetting(SettingType.Corner).tag);
+        //エッジ, タイルごとの設定取得
+        var v       = GetSetting(SettingType.VerticalEdge);
+        var h       = GetSetting(SettingType.HorizontalEdge);
+        var cross   = GetSetting(SettingType.Cross);
+        var t       = GetSetting(SettingType.TJunction);
+        var corner  = GetSetting(SettingType.Corner);
+        var isolate = GetSetting(SettingType.Isolate);
 
+        //各エッジ, タイルオブジェクトを作成
         if (canMergeEdges) //縦横エッジ統合
         {
             var merged = new List<Vector3Int>(previewVertTiles);
             merged.AddRange(previewHorTiles);
-            CreateTiles(ClassificationOption.Independent, "EdgeTiles", merged,
-                GetSetting(SettingType.VerticalEdge).layer,
-                GetSetting(SettingType.VerticalEdge).tag);
+            CreateTiles(ClassificationOption.Independent, "EdgeTiles", merged, v.layer, v.tag);
         }
         else
         {
-            CreateTiles(GetSetting(SettingType.VerticalEdge).option, VerticalEdgeName,   previewVertTiles,
-                GetSetting(SettingType.VerticalEdge).layer, GetSetting(SettingType.VerticalEdge).tag);
-            CreateTiles(GetSetting(SettingType.HorizontalEdge).option, HorizontalEdgeName, previewHorTiles,
-                GetSetting(SettingType.HorizontalEdge).layer, GetSetting(SettingType.HorizontalEdge).tag);
+            CreateTiles(v.option, VerticalEdgeName,   previewVertTiles, v.layer, v.tag);
+            CreateTiles(h.option, HorizontalEdgeName, previewHorTiles,  h.layer, h.tag);
         }
-
-        CreateTiles(GetSetting(SettingType.Isolate).option, IsolateTileName, previewIsolateTiles,
-            GetSetting(SettingType.Isolate).layer, GetSetting(SettingType.Isolate).tag);
+        CreateTiles(cross.option,   CrossTileName,     previewCrossTiles,   cross.layer,   cross.tag);
+        CreateTiles(t.option,       TJunctionTileName, previewTTiles,       t.layer,       t.tag);
+        CreateTiles(corner.option,  CornerTileName,    previewCornerTiles,  corner.layer,  corner.tag);
+        CreateTiles(isolate.option, IsolateTileName,   previewIsolateTiles, isolate.layer, isolate.tag);
     }
 
     private void UpdateFoldoutTitles()
