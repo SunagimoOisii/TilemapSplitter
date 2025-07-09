@@ -190,11 +190,6 @@ public class TilemapSplitterWindow : EditorWindow
         var fold = new Foldout { text = title };
         fold.style.unityFontStyleAndWeight = FontStyle.Bold;
 
-        //タグ設定
-        var tagField = new TagField("Tag", DefaultTag);
-        tagField.RegisterValueChangedCallback(evt => setting.tag = evt.newValue);
-        fold.Add(tagField);
-
         var enumField = new EnumFlagsField("Which obj to add to", setting.option);
         fold.Add(enumField);
 
