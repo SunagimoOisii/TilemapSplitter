@@ -28,29 +28,34 @@ public class TilemapSplitterWindow : EditorWindow
         Isolate,
     }
 
-    private const string DefaultTag = "Untagged";
-
     private class ClassificationSetting
     {
         public ClassificationOption option;
         public int layer;
-        public string tag;
-        public bool preview;
+        public string tag = "Untagged";
+        public bool preview = true;
         public Color color;
     }
 
     private readonly ClassificationSetting[] settings = new ClassificationSetting[6]
     {
-        new() { option = ClassificationOption.VerticalEdge,   tag = DefaultTag, preview = true, color = Color.green  }, //Vertical Edge
-        new() { option = ClassificationOption.HorizontalEdge, tag = DefaultTag, preview = true, color = Color.yellow }, //Horizontal Edge
-        new() { option = ClassificationOption.Independent,    tag = DefaultTag, color = Color.red },     //Cross
-        new() { option = ClassificationOption.Independent,    tag = DefaultTag, color = Color.blue },    //T-Junction
-        new() { option = ClassificationOption.Independent,    tag = DefaultTag, color = Color.cyan },    //Corner
-        new() { option = ClassificationOption.Independent,    tag = DefaultTag, color = Color.magenta }  //Isolate
+        new() { option = ClassificationOption.VerticalEdge,  color = Color.green  },  //Vertical Edge
+        new() { option = ClassificationOption.HorizontalEdge,color = Color.yellow },  //Horizontal Edge
+        new() { option = ClassificationOption.Independent,   color = Color.red },     //Cross
+        new() { option = ClassificationOption.Independent,   color = Color.blue },    //T-Junction
+        new() { option = ClassificationOption.Independent,   color = Color.cyan },    //Corner
+        new() { option = ClassificationOption.Independent,   color = Color.magenta }  //Isolate
     };
 
-    private ref ClassificationSetting GetSetting(SettingType type)
-        => ref settings[(int)type];
+    private ref ClassificationSetting GetSetting(SettingType t) => ref settings[(int)t];
+
+    //各生成タイル数表示のために使用する
+    private Foldout verticalEdgeFO;
+    private Foldout horizontalEdgeFO;
+    private Foldout crossFO;
+    private Foldout tJunctionFO;
+    private Foldout cornerFO;
+    private Foldout isolateFO;
 
     private Tilemap original;
     private readonly List<Vector3Int> previewCrossTiles   = new();
@@ -104,9 +109,9 @@ public class TilemapSplitterWindow : EditorWindow
         container.Add(mergeToggle);
         container.Add(mergeHB);
 
-        //縦, 横エッジ設定
-        CreateEdgeFoldout(container, "VerticalEdge",   SettingType.VerticalEdge);
-        CreateEdgeFoldout(container, "HorizontalEdge", SettingType.HorizontalEdge);
+        //縦, 横エッジ Foldout 設定
+        verticalEdgeFO   = CreateEdgeFoldout(container, "VerticalEdge",   SettingType.VerticalEdge);
+        horizontalEdgeFO = CreateEdgeFoldout(container, "HorizontalEdge", SettingType.HorizontalEdge);
 
         AddSeparator(container);
 
@@ -120,7 +125,14 @@ public class TilemapSplitterWindow : EditorWindow
         };
         foreach (var info in infos)
         {
-            CreateFoldout(container, info.title, GetSetting(info.type));
+            var fold = CreateFoldout(container, info.title, GetSetting(info.type));
+            switch (info.type)
+            {
+                case SettingType.Cross:      crossFO      = fold; break;
+                case SettingType.TJunction:  tJunctionFO  = fold; break;
+                case SettingType.Corner:     cornerFO     = fold; break;
+                case SettingType.Isolate:    isolateFO    = fold; break;
+            }
         }
 
         AddSeparator(container);
@@ -151,7 +163,8 @@ public class TilemapSplitterWindow : EditorWindow
         parent.Add(separator);
     }
 
-    private (Toggle previewToggle, ColorField colorField) AddCommonFields(Foldout fold, ClassificationSetting setting)
+    private (Toggle previewToggle, ColorField colorField) AddCommonFields(Foldout fold, 
+        ClassificationSetting setting)
     {
         var layerField = new LayerField("Layer", setting.layer);
         layerField.RegisterValueChangedCallback(evt => setting.layer = evt.newValue);
@@ -177,7 +190,7 @@ public class TilemapSplitterWindow : EditorWindow
     }
 
     //縦, 横エッジ専用の Foldout 作成
-    private void CreateEdgeFoldout(VisualElement parent, string title, SettingType type)
+    private Foldout CreateEdgeFoldout(VisualElement parent, string title, SettingType type)
     {
         ref var setting = ref GetSetting(type);
         var fold = new Foldout { text = title };
@@ -186,9 +199,10 @@ public class TilemapSplitterWindow : EditorWindow
         AddCommonFields(fold, setting);
 
         parent.Add(fold);
+        return fold;
     }
 
-    private void CreateFoldout(VisualElement parent, string title, ClassificationSetting setting)
+    private Foldout CreateFoldout(VisualElement parent, string title, ClassificationSetting setting)
     {
         var fold = new Foldout { text = title };
         fold.style.unityFontStyleAndWeight = FontStyle.Bold;
@@ -207,6 +221,7 @@ public class TilemapSplitterWindow : EditorWindow
 
         UpdateUI(setting, fold, previewToggle, colField);
         parent.Add(fold);
+        return fold;
     }
 
     void UpdateUI(ClassificationSetting setting, Foldout fold,
@@ -237,6 +252,8 @@ public class TilemapSplitterWindow : EditorWindow
     private void SplitTilemap()
     {
         UpdatePreview();
+        UpdateFoldoutTitles();
+
         CreateTiles(GetSetting(SettingType.Cross).option, "CrossTiles", previewCrossTiles,
             GetSetting(SettingType.Cross).layer, GetSetting(SettingType.Cross).tag);
         CreateTiles(GetSetting(SettingType.TJunction).option, "TJunctionTiles", previewTTiles,
@@ -264,6 +281,16 @@ public class TilemapSplitterWindow : EditorWindow
             GetSetting(SettingType.Isolate).layer, GetSetting(SettingType.Isolate).tag);
     }
 
+    private void UpdateFoldoutTitles()
+    {
+        if (verticalEdgeFO   != null) verticalEdgeFO.text   = $"VerticalEdge (Count:{previewVertTiles.Count})";
+        if (horizontalEdgeFO != null) horizontalEdgeFO.text = $"HorizontalEdge (Count:{previewHorTiles.Count})";
+        if (crossFO          != null) crossFO.text          = $"Cross (Count:{previewCrossTiles.Count})";
+        if (tJunctionFO      != null) tJunctionFO.text      = $"T-Junction (Count:{previewTTiles.Count})";
+        if (cornerFO         != null) cornerFO.text         = $"Corner (Count:{previewCornerTiles.Count})";
+        if (isolateFO        != null) isolateFO.text        = $"Isolate (Count:{previewIsolateTiles.Count})";
+    }
+
     private void CreateTiles(ClassificationOption opt, string name, List<Vector3Int> data, 
         int layer, string tag)
     {
@@ -278,7 +305,7 @@ public class TilemapSplitterWindow : EditorWindow
         var obj = new GameObject(name, typeof(Tilemap), typeof(TilemapRenderer));
         obj.transform.SetParent(original.transform.parent, false);
         obj.layer = layer;
-        obj.tag   = string.IsNullOrEmpty(tag) ? DefaultTag : tag;
+        obj.tag   = tag;
 
         var renderer = obj.GetComponent<TilemapRenderer>();
         if (original.TryGetComponent<TilemapRenderer>(out var oriRenderer))
@@ -360,6 +387,7 @@ public class TilemapSplitterWindow : EditorWindow
         }
 
         SceneView.RepaintAll();
+        UpdateFoldoutTitles();
     }
 
     private void ClassifyTileNeighbors(Vector3Int pos, HashSet<Vector3Int> tiles)
