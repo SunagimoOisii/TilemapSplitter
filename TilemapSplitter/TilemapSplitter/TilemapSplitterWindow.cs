@@ -22,6 +22,7 @@ public class TilemapSplitterWindow : EditorWindow
     {
         public ClassificationOption option;
         public int layer;
+        public string tag;
         public bool preview;
         public Color color;
     }
@@ -103,10 +104,11 @@ public class TilemapSplitterWindow : EditorWindow
         {
             int idx = info.index;
             CreateFoldout(container, info.title, //各要素の get, set 時の処理を入れる
-                () => settings[idx].option,  v => settings[idx].option = v,  //ClassificationOption
-                () => settings[idx].layer,   v => settings[idx].layer = v,   //Layer
-                () => settings[idx].preview, v => settings[idx].preview = v, //Preview
-                () => settings[idx].color,   v => settings[idx].color = v);  //Color
+                () => settings[idx].option,  v => settings[idx].option  = v,  //ClassificationOption
+                () => settings[idx].layer,   v => settings[idx].layer   = v,  //Layer
+                v => settings[idx].tag     = v,                               //Tag
+                () => settings[idx].preview, v => settings[idx].preview = v,  //Preview
+                () => settings[idx].color,   v => settings[idx].color   = v); //Color
         }
 
         AddSeparator(container);
@@ -148,6 +150,11 @@ public class TilemapSplitterWindow : EditorWindow
         layerField.RegisterValueChangedCallback(evt => settings[idx].layer = evt.newValue);
         fold.Add(layerField);
 
+        //タグ設定
+        var tagField = new TagField("Tag", "Untagged");
+        tagField.RegisterValueChangedCallback(evt => settings[idx].tag = evt.newValue);
+        fold.Add(tagField);
+
         // プレビュー設定
         var previewToggle = new Toggle("Preview");
         previewToggle.value = settings[idx].preview;
@@ -167,60 +174,10 @@ public class TilemapSplitterWindow : EditorWindow
         parent.Add(fold);
     }
 
-    private void SplitTilemap()
-    {
-        UpdatePreview();
-        CreateTiles(settings[2].option, "CrossTiles",     previewCrossTiles,  settings[2].layer);
-        CreateTiles(settings[3].option, "TJunctionTiles", previewTTiles,      settings[3].layer);
-        CreateTiles(settings[4].option, "CornerTiles",    previewCornerTiles, settings[4].layer);
-
-        if (mergeEdges) //縦横エッジ統合
-        {
-            var merged = new List<Vector3Int>(previewVertTiles);
-            merged.AddRange(previewHorTiles);
-            CreateTiles(ClassificationOption.Independent, "EdgeTiles", merged, settings[0].layer);
-        }
-        else
-        {
-            CreateTiles(settings[0].option, "VerticalEdge",   previewVertTiles, settings[0].layer);
-            CreateTiles(settings[1].option, "HorizontalEdge", previewHorTiles,  settings[1].layer);
-        }
-
-        CreateTiles(settings[5].option, "IsolateTiles", previewIsolateTiles, settings[5].layer);
-    }
-
-    private void CreateTiles(ClassificationOption opt, string name, List<Vector3Int> data, int layer)
-    {
-        if (data == null ||
-            data.Count == 0) return;
-
-        bool requiresIndependent = (name == "CrossTiles") || (name == "TJunctionTiles") ||
-                                   (name == "CornerTiles") || (name == "IsolateTiles");
-        if (requiresIndependent &&
-            opt.HasFlag(ClassificationOption.Independent) == false) return;
-
-        var obj = new GameObject(name, typeof(Tilemap), typeof(TilemapRenderer));
-        obj.transform.SetParent(original.transform.parent, false);
-        obj.layer = layer;
-
-        var renderer = obj.GetComponent<TilemapRenderer>();
-        if (original.TryGetComponent<TilemapRenderer>(out var oriRenderer))
-        {
-            renderer.sortingLayerID = oriRenderer.sortingLayerID;
-            renderer.sortingOrder   = oriRenderer.sortingOrder;
-        }
-        else Debug.LogWarning("Since TilemapRenderer is not attached to the split target," +
-            "the TilemapRenderer of the generated object was generated with the default settings.");
-
-        var tm = obj.GetComponent<Tilemap>();
-        foreach(var p in data) tm.SetTile(p, original.GetTile(p));
-
-        Undo.RegisterCreatedObjectUndo(obj, "Create " + name);
-    }
-
     private void CreateFoldout(VisualElement parent, string title,
         Func<ClassificationOption> getOption, Action<ClassificationOption> setOption,
         Func<int> getLayer, Action<int> setLayer,
+        Action<string> setTag,
         Func<bool> getPreview, Action<bool> setPreview,
         Func<Color> getColor, Action<Color> setColor)
     {
@@ -233,6 +190,11 @@ public class TilemapSplitterWindow : EditorWindow
         var layerField = new LayerField("Layer", getLayer());
         layerField.RegisterValueChangedCallback(evt => setLayer(evt.newValue));
         fold.Add(layerField);
+
+        //タグ設定
+        var tagField = new TagField("Tag", "Untagged");
+        tagField.RegisterValueChangedCallback(evt => setTag(evt.newValue));
+        fold.Add(tagField);
 
         var previewToggle = new Toggle("Preview") { value = getPreview() };
         previewToggle.RegisterValueChangedCallback(evt => 
@@ -280,6 +242,66 @@ public class TilemapSplitterWindow : EditorWindow
         bool isVisible = opt.HasFlag(ClassificationOption.Independent);
         previewToggle.visible = isVisible;
         colField.visible      = isVisible;
+    }
+
+    private void SplitTilemap()
+    {
+        UpdatePreview();
+        CreateTiles(settings[2].option, "CrossTiles", previewCrossTiles,
+            settings[2].layer, settings[2].tag);
+        CreateTiles(settings[3].option, "TJunctionTiles", previewTTiles,
+            settings[3].layer, settings[3].tag);
+        CreateTiles(settings[4].option, "CornerTiles",    previewCornerTiles,
+            settings[4].layer, settings[4].tag);
+
+        if (mergeEdges) //縦横エッジ統合
+        {
+            var merged = new List<Vector3Int>(previewVertTiles);
+            merged.AddRange(previewHorTiles);
+            CreateTiles(ClassificationOption.Independent, "EdgeTiles", merged, 
+                settings[0].layer, settings[0].tag);
+        }
+        else
+        {
+            CreateTiles(settings[0].option, "VerticalEdge",   previewVertTiles, 
+                settings[0].layer, settings[0].tag);
+            CreateTiles(settings[1].option, "HorizontalEdge", previewHorTiles,  
+                settings[1].layer, settings[1].tag);
+        }
+
+        CreateTiles(settings[5].option, "IsolateTiles", previewIsolateTiles, 
+            settings[5].layer, settings[5].tag);
+    }
+
+    private void CreateTiles(ClassificationOption opt, string name, List<Vector3Int> data, 
+        int layer, string tag)
+    {
+        if (data == null ||
+            data.Count == 0) return;
+
+        bool requiresIndependent = (name == "CrossTiles") || (name == "TJunctionTiles") ||
+                                   (name == "CornerTiles") || (name == "IsolateTiles");
+        if (requiresIndependent &&
+            opt.HasFlag(ClassificationOption.Independent) == false) return;
+
+        var obj = new GameObject(name, typeof(Tilemap), typeof(TilemapRenderer));
+        obj.transform.SetParent(original.transform.parent, false);
+        obj.layer = layer;
+        obj.tag   = tag;
+
+        var renderer = obj.GetComponent<TilemapRenderer>();
+        if (original.TryGetComponent<TilemapRenderer>(out var oriRenderer))
+        {
+            renderer.sortingLayerID = oriRenderer.sortingLayerID;
+            renderer.sortingOrder   = oriRenderer.sortingOrder;
+        }
+        else Debug.LogWarning("Since TilemapRenderer is not attached to the split target," +
+            "the TilemapRenderer of the generated object was generated with the default settings.");
+
+        var tm = obj.GetComponent<Tilemap>();
+        foreach(var p in data) tm.SetTile(p, original.GetTile(p));
+
+        Undo.RegisterCreatedObjectUndo(obj, "Create " + name);
     }
 
     private static void ApplyClassification(Vector3Int pos, ClassificationOption opt,
