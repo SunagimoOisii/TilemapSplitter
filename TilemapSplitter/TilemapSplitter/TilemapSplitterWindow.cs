@@ -54,7 +54,7 @@ public class TilemapSplitterWindow : EditorWindow
     {
         var root = rootVisualElement;
 
-        // ScrollView, Container 設定
+        //ScrollView, Container 設定
         var scroll = new ScrollView();
         var container = new VisualElement();
         container.style.flexDirection = FlexDirection.Column;
@@ -63,7 +63,7 @@ public class TilemapSplitterWindow : EditorWindow
         root.Add(scroll);
         scroll.Add(container);
 
-        // Split Target Field 設定
+        //Split Target Field 設定
         var helpBox = new HelpBox("Select the subject of the division", HelpBoxMessageType.Info);
         var originalField = new ObjectField("Split Tilemap");
         helpBox.visible = (original == null);
@@ -102,20 +102,16 @@ public class TilemapSplitterWindow : EditorWindow
         foreach (var info in infos)
         {
             int idx = info.index;
-            CreateFoldout(container, info.title,
-                () => settings[idx].option,
-                v => settings[idx].option = v,
-                () => settings[idx].layer,
-                v => settings[idx].layer = v,
-                () => settings[idx].preview,
-                v => settings[idx].preview = v,
-                () => settings[idx].color,
-                v => settings[idx].color = v);
+            CreateFoldout(container, info.title, //各要素の get, set 時の処理を入れる
+                () => settings[idx].option,  v => settings[idx].option = v,  //ClassificationOption
+                () => settings[idx].layer,   v => settings[idx].layer = v,   //Layer
+                () => settings[idx].preview, v => settings[idx].preview = v, //Preview
+                () => settings[idx].color,   v => settings[idx].color = v);  //Color
         }
 
         AddSeparator(container);
 
-        // 分割実行ボタン
+        //Execute Button
         var splitButton = new Button(() =>
         {
             if (original == null)
@@ -130,7 +126,18 @@ public class TilemapSplitterWindow : EditorWindow
         container.Add(splitButton);
     }
 
-    // 縦/横エッジ専用のFoldout作成
+    private static void AddSeparator(VisualElement parent)
+    {
+        var separator = new VisualElement();
+        separator.style.borderBottomWidth = 1;
+        separator.style.borderBottomColor = Color.gray;
+        separator.style.marginTop         = 5;
+        separator.style.marginBottom      = 5;
+
+        parent.Add(separator);
+    }
+
+    //縦, 横エッジ専用の Foldout 作成
     private void CreateEdgeFoldout(VisualElement parent, string title, int idx)
     {
         var fold = new Foldout { text = title };
@@ -160,51 +167,6 @@ public class TilemapSplitterWindow : EditorWindow
         parent.Add(fold);
     }
 
-    private void ClassifyTileNeighbors(Vector3Int pos, HashSet<Vector3Int> tiles)
-    {
-        //各方向隣接チェック
-        bool up    = tiles.Contains(pos + Vector3Int.up);
-        bool down  = tiles.Contains(pos + Vector3Int.down);
-        bool left  = tiles.Contains(pos + Vector3Int.left);
-        bool right = tiles.Contains(pos + Vector3Int.right);
-        bool anyV  = up   || down;
-        bool anyH  = left || right;
-        int count  = (up ? 1 : 0) + (down ? 1 : 0) + (left ? 1 : 0) + (right ? 1 : 0);
-
-        if (count == 4) //交差タイル
-        {
-            ApplyClassification(pos, settings[2].option, previewCrossTiles,
-                previewVertTiles, previewHorTiles);
-        }
-        else if (count == 3) //T字タイル
-        {
-            ApplyClassification(pos, settings[3].option, previewTTiles,
-                previewVertTiles, previewHorTiles);
-        }
-        else if (count == 2 && //角タイル
-                 anyV &&
-                 anyH)
-        {
-            ApplyClassification(pos, settings[4].option, previewCornerTiles,
-                previewVertTiles, previewHorTiles);
-        }
-        else if (anyV && //縦エッジ
-                 anyH == false)
-        {
-            previewVertTiles.Add(pos);
-        }
-        else if (anyH && //横エッジ
-                 anyV == false)
-        {
-            previewHorTiles.Add(pos);
-        }
-        else if (count == 0) //孤立タイル
-        {
-            ApplyClassification(pos, settings[5].option, previewIsolateTiles,
-                previewVertTiles, previewHorTiles);
-        }
-    }
-
     private void SplitTilemap()
     {
         UpdatePreview();
@@ -225,85 +187,6 @@ public class TilemapSplitterWindow : EditorWindow
         }
 
         CreateTiles(settings[5].option, "IsolateTiles", previewIsolateTiles, settings[5].layer);
-    }
-
-    private static void AddSeparator(VisualElement parent)
-    {
-        var separator = new VisualElement
-        {
-            style =
-            {
-                borderBottomWidth = 1,
-                borderBottomColor = Color.gray,
-                marginTop = 5,
-                marginBottom = 5
-            }
-        };
-        parent.Add(separator);
-    }
-
-    private void CreateFoldout(VisualElement parent, string title,
-        Func<ClassificationOption> getOption, Action<ClassificationOption> setOption,
-        Func<int> getLayer, Action<int> setLayer,
-        Func<bool> getPreview, Action<bool> setPreview,
-        Func<Color> getColor, Action<Color> setColor)
-    {
-        var fold = new Foldout { text = title };
-        fold.style.unityFontStyleAndWeight = FontStyle.Bold;
-        var enumField = new EnumFlagsField("Where to add an obj", getOption());
-        fold.Add(enumField);
-        var layerField = new LayerField("Layer", getLayer());
-        layerField.RegisterValueChangedCallback(evt => setLayer(evt.newValue));
-        fold.Add(layerField);
-        var previewToggle = new Toggle("Preview") { value = getPreview() };
-        previewToggle.RegisterValueChangedCallback(evt => { setPreview(evt.newValue); UpdatePreview(); });
-        fold.Add(previewToggle);
-        var colField = new ColorField("Preview Color") { value = getColor() };
-        colField.RegisterValueChangedCallback(evt => setColor(evt.newValue));
-        fold.Add(colField);
-
-        Action updateUI = () =>
-        {
-            var opt = getOption();
-            ApplyHelp(fold, opt);
-            bool show = opt.HasFlag(ClassificationOption.Independent);
-            previewToggle.visible = show;
-            colField.visible = show;
-        };
-        enumField.RegisterValueChangedCallback(evt => 
-        {
-            setOption((ClassificationOption)evt.newValue);
-            UpdatePreview();
-            updateUI();
-        });
-
-        updateUI();
-        parent.Add(fold);
-    }
-
-    private static void ApplyHelp(Foldout fold, ClassificationOption opt)
-    {
-        var exist = fold.Q<HelpBox>();
-        if (exist != null) fold.Remove(exist);
-
-        string msg = null;
-        string helpV = "The preview complies with VerticalEdge settings.";
-        string helpH = "The preview complies with HorizontalEdge settings.";
-        if (opt.HasFlag(ClassificationOption.VerticalEdge))        msg = helpV;
-        else if (opt.HasFlag(ClassificationOption.HorizontalEdge)) msg = helpH;
-
-        if (string.IsNullOrEmpty(msg) == false)
-        {
-            fold.Add(new HelpBox(msg, HelpBoxMessageType.Info));
-        }
-    }
-
-    private static void ApplyClassification(Vector3Int pos, ClassificationOption opt,
-        List<Vector3Int> indep, List<Vector3Int> vList, List<Vector3Int> hList)
-    {
-        if (opt.HasFlag(ClassificationOption.VerticalEdge))    vList?.Add(pos);
-        if (opt.HasFlag(ClassificationOption.HorizontalEdge))  hList?.Add(pos);
-        if (opt.HasFlag(ClassificationOption.Independent))     indep?.Add(pos);
     }
 
     private void CreateTiles(ClassificationOption opt, string name, List<Vector3Int> data, int layer)
@@ -329,6 +212,80 @@ public class TilemapSplitterWindow : EditorWindow
         foreach(var p in data) tm.SetTile(p, original.GetTile(p));
 
         Undo.RegisterCreatedObjectUndo(obj, "Create " + name);
+    }
+
+    private void CreateFoldout(VisualElement parent, string title,
+        Func<ClassificationOption> getOption, Action<ClassificationOption> setOption,
+        Func<int> getLayer, Action<int> setLayer,
+        Func<bool> getPreview, Action<bool> setPreview,
+        Func<Color> getColor, Action<Color> setColor)
+    {
+        var fold = new Foldout { text = title };
+        fold.style.unityFontStyleAndWeight = FontStyle.Bold;
+
+        var enumField = new EnumFlagsField("Where to add an obj", getOption());
+        fold.Add(enumField);
+
+        var layerField = new LayerField("Layer", getLayer());
+        layerField.RegisterValueChangedCallback(evt => setLayer(evt.newValue));
+        fold.Add(layerField);
+
+        var previewToggle = new Toggle("Preview") { value = getPreview() };
+        previewToggle.RegisterValueChangedCallback(evt => 
+        {
+            setPreview(evt.newValue);
+            UpdatePreview();
+        });
+        fold.Add(previewToggle);
+
+        var colField = new ColorField("Preview Color") { value = getColor() };
+        colField.RegisterValueChangedCallback(evt => setColor(evt.newValue));
+        fold.Add(colField);
+
+        enumField.RegisterValueChangedCallback(evt => 
+        {
+            setOption((ClassificationOption)evt.newValue);
+            UpdatePreview();
+            updateUI();
+        });
+
+        updateUI();
+        parent.Add(fold);
+
+        void updateUI()
+        {
+            var opt = getOption();
+            ApplyHelp(fold, opt);
+
+            bool show = opt.HasFlag(ClassificationOption.Independent);
+            previewToggle.visible = show;
+            colField.visible = show;
+        }
+    }
+
+    private static void ApplyHelp(Foldout fold, ClassificationOption opt)
+    {
+        var exist = fold.Q<HelpBox>();
+        if (exist != null) fold.Remove(exist);
+
+        string msg = null;
+        string helpV = "The preview complies with VerticalEdge settings.";
+        string helpH = "The preview complies with HorizontalEdge settings.";
+        if (opt.HasFlag(ClassificationOption.VerticalEdge))        msg = helpV;
+        else if (opt.HasFlag(ClassificationOption.HorizontalEdge)) msg = helpH;
+
+        if (string.IsNullOrEmpty(msg) == false)
+        {
+            fold.Add(new HelpBox(msg, HelpBoxMessageType.Info));
+        }
+    }
+
+    private static void ApplyClassification(Vector3Int pos, ClassificationOption opt,
+        List<Vector3Int> indep, List<Vector3Int> vList, List<Vector3Int> hList)
+    {
+        if (opt.HasFlag(ClassificationOption.VerticalEdge))    vList?.Add(pos);
+        if (opt.HasFlag(ClassificationOption.HorizontalEdge))  hList?.Add(pos);
+        if (opt.HasFlag(ClassificationOption.Independent))     indep?.Add(pos);
     }
 
     #region 分割プレビュー機能
@@ -388,6 +345,51 @@ public class TilemapSplitterWindow : EditorWindow
         }
 
         SceneView.RepaintAll();
+    }
+
+    private void ClassifyTileNeighbors(Vector3Int pos, HashSet<Vector3Int> tiles)
+    {
+        //各方向隣接チェック
+        bool up    = tiles.Contains(pos + Vector3Int.up);
+        bool down  = tiles.Contains(pos + Vector3Int.down);
+        bool left  = tiles.Contains(pos + Vector3Int.left);
+        bool right = tiles.Contains(pos + Vector3Int.right);
+        bool anyV  = up   || down;
+        bool anyH  = left || right;
+        int count  = (up ? 1 : 0) + (down ? 1 : 0) + (left ? 1 : 0) + (right ? 1 : 0);
+
+        if (count == 4) //交差タイル
+        {
+            ApplyClassification(pos, settings[2].option, previewCrossTiles,
+                previewVertTiles, previewHorTiles);
+        }
+        else if (count == 3) //T字タイル
+        {
+            ApplyClassification(pos, settings[3].option, previewTTiles,
+                previewVertTiles, previewHorTiles);
+        }
+        else if (count == 2 && //角タイル
+                 anyV &&
+                 anyH)
+        {
+            ApplyClassification(pos, settings[4].option, previewCornerTiles,
+                previewVertTiles, previewHorTiles);
+        }
+        else if (anyV && //縦エッジ
+                 anyH == false)
+        {
+            previewVertTiles.Add(pos);
+        }
+        else if (anyH && //横エッジ
+                 anyV == false)
+        {
+            previewHorTiles.Add(pos);
+        }
+        else if (count == 0) //孤立タイル
+        {
+            ApplyClassification(pos, settings[5].option, previewIsolateTiles,
+                previewVertTiles, previewHorTiles);
+        }
     }
 
     #endregion
