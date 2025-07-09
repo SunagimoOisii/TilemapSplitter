@@ -47,7 +47,7 @@ public class TilemapSplitterWindow : EditorWindow
         new() { option = ClassificationOption.Independent,   color = Color.magenta }  //Isolate
     };
 
-    private ref ClassificationSetting GetSetting(SettingType t) => ref settings[(int)t];
+    private ClassificationSetting GetSetting(SettingType t) => settings[(int)t];
 
     //各生成タイル数表示のために使用する
     private Foldout verticalEdgeFO;
@@ -191,7 +191,7 @@ public class TilemapSplitterWindow : EditorWindow
     //縦, 横エッジ専用の Foldout 作成
     private Foldout CreateEdgeFoldout(VisualElement parent, string title, SettingType type)
     {
-        ref var setting = ref GetSetting(type);
+        var setting = GetSetting(type);
         var fold = new Foldout { text = title };
         fold.style.unityFontStyleAndWeight = FontStyle.Bold;
 
