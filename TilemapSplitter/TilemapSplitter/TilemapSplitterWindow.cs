@@ -132,10 +132,10 @@ public class TilemapSplitterWindow : EditorWindow
             var fold = CreateFoldout(container, info.title, GetSetting(info.type));
             switch (info.type)
             {
-                case SettingType.Cross:      crossFO      = fold; break;
-                case SettingType.TJunction:  tJunctionFO  = fold; break;
-                case SettingType.Corner:     cornerFO     = fold; break;
-                case SettingType.Isolate:    isolateFO    = fold; break;
+                case SettingType.Cross:     crossFO     = fold; break;
+                case SettingType.TJunction: tJunctionFO = fold; break;
+                case SettingType.Corner:    cornerFO    = fold; break;
+                case SettingType.Isolate:   isolateFO   = fold; break;
             }
             AddSeparator(container);
         }
@@ -285,12 +285,19 @@ public class TilemapSplitterWindow : EditorWindow
 
     private void UpdateFoldoutTitles()
     {
-        if (verticalEdgeFO   != null) verticalEdgeFO.text   = $"{VerticalEdgeName} (Count:{previewVertTiles.Count})";
-        if (horizontalEdgeFO != null) horizontalEdgeFO.text = $"{HorizontalEdgeName} (Count:{previewHorTiles.Count})";
-        if (crossFO          != null) crossFO.text          = $"{CrossTileName} (Count:{previewCrossTiles.Count})";
-        if (tJunctionFO      != null) tJunctionFO.text      = $"{TJunctionTileName} (Count:{previewTTiles.Count})";
-        if (cornerFO         != null) cornerFO.text         = $"{CornerTileName} (Count:{previewCornerTiles.Count})";
-        if (isolateFO        != null) isolateFO.text        = $"{IsolateTileName} (Count:{previewIsolateTiles.Count})";
+        var list = new (Foldout f, string name, int count)[]
+        {
+            (verticalEdgeFO,   VerticalEdgeName,   previewVertTiles.Count),
+            (horizontalEdgeFO, HorizontalEdgeName, previewHorTiles.Count),
+            (crossFO,          CrossTileName,      previewCrossTiles.Count),
+            (tJunctionFO,      TJunctionTileName,  previewTTiles.Count),
+            (cornerFO,         CornerTileName,     previewCornerTiles.Count),
+            (isolateFO,        IsolateTileName,    previewIsolateTiles.Count),
+        };
+        foreach (var (f, name, count) in list)
+        {
+            f.text = $"{name} (Count:{count})";
+        }
     }
 
     private void CreateTiles(ClassificationOption opt, string name, List<Vector3Int> data, 
