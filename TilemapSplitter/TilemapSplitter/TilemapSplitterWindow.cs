@@ -1,5 +1,3 @@
-#nullable disable
-
 using System;
 using System.Collections.Generic;
 using UnityEditor;
@@ -364,6 +362,51 @@ public class TilemapSplitterWindow : EditorWindow
         Undo.RegisterCreatedObjectUndo(obj, "Create " + name);
     }
 
+    private void ClassifyTileNeighbors(Vector3Int pos, HashSet<Vector3Int> tiles)
+    {
+        //各方向隣接チェック
+        bool up    = tiles.Contains(pos + Vector3Int.up);
+        bool down  = tiles.Contains(pos + Vector3Int.down);
+        bool left  = tiles.Contains(pos + Vector3Int.left);
+        bool right = tiles.Contains(pos + Vector3Int.right);
+        bool anyV  = up   || down;
+        bool anyH  = left || right;
+        int count  = (up ? 1 : 0) + (down ? 1 : 0) + (left ? 1 : 0) + (right ? 1 : 0);
+
+        if (count == 4) //交差タイル
+        {
+            ApplyClassification(pos, settings[2].option, previewCrossTiles,
+                previewVertTiles, previewHorTiles);
+        }
+        else if (count == 3) //T字タイル
+        {
+            ApplyClassification(pos, settings[3].option, previewTTiles,
+                previewVertTiles, previewHorTiles);
+        }
+        else if (count == 2 && //角タイル
+                 anyV &&
+                 anyH)
+        {
+            ApplyClassification(pos, settings[4].option, previewCornerTiles,
+                previewVertTiles, previewHorTiles);
+        }
+        else if (anyV && //縦エッジ
+                 anyH == false)
+        {
+            previewVertTiles.Add(pos);
+        }
+        else if (anyH && //横エッジ
+                 anyV == false)
+        {
+            previewHorTiles.Add(pos);
+        }
+        else if (count == 0) //孤立タイル
+        {
+            ApplyClassification(pos, settings[5].option, previewIsolateTiles,
+                previewVertTiles, previewHorTiles);
+        }
+    }
+
     private static void ApplyClassification(Vector3Int pos, ClassificationOption opt,
         List<Vector3Int> indep, List<Vector3Int> vList, List<Vector3Int> hList)
     {
@@ -400,7 +443,7 @@ public class TilemapSplitterWindow : EditorWindow
 
     private void MarkDirty() => EditorUtility.SetDirty(settingsAsset);
 
-    #region 分割プレビュー機能
+    #region プレビュー機能
 
     private void OnEnable()
     {
@@ -467,51 +510,6 @@ public class TilemapSplitterWindow : EditorWindow
 
         SceneView.RepaintAll();
         UpdateFoldoutTitles();
-    }
-
-    private void ClassifyTileNeighbors(Vector3Int pos, HashSet<Vector3Int> tiles)
-    {
-        //各方向隣接チェック
-        bool up    = tiles.Contains(pos + Vector3Int.up);
-        bool down  = tiles.Contains(pos + Vector3Int.down);
-        bool left  = tiles.Contains(pos + Vector3Int.left);
-        bool right = tiles.Contains(pos + Vector3Int.right);
-        bool anyV  = up   || down;
-        bool anyH  = left || right;
-        int count  = (up ? 1 : 0) + (down ? 1 : 0) + (left ? 1 : 0) + (right ? 1 : 0);
-
-        if (count == 4) //交差タイル
-        {
-            ApplyClassification(pos, settings[2].option, previewCrossTiles,
-                previewVertTiles, previewHorTiles);
-        }
-        else if (count == 3) //T字タイル
-        {
-            ApplyClassification(pos, settings[3].option, previewTTiles,
-                previewVertTiles, previewHorTiles);
-        }
-        else if (count == 2 && //角タイル
-                 anyV &&
-                 anyH)
-        {
-            ApplyClassification(pos, settings[4].option, previewCornerTiles,
-                previewVertTiles, previewHorTiles);
-        }
-        else if (anyV && //縦エッジ
-                 anyH == false)
-        {
-            previewVertTiles.Add(pos);
-        }
-        else if (anyH && //横エッジ
-                 anyV == false)
-        {
-            previewHorTiles.Add(pos);
-        }
-        else if (count == 0) //孤立タイル
-        {
-            ApplyClassification(pos, settings[5].option, previewIsolateTiles,
-                previewVertTiles, previewHorTiles);
-        }
     }
 
     #endregion
