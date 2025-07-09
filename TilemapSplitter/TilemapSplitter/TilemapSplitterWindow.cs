@@ -18,6 +18,8 @@ public class TilemapSplitterWindow : EditorWindow
         Independent     = 1 << 2,  // 4
     }
 
+    private const string DefaultTag = "Untagged";
+
     private struct ClassificationSetting
     {
         public ClassificationOption option;
@@ -29,12 +31,12 @@ public class TilemapSplitterWindow : EditorWindow
 
     private readonly ClassificationSetting[] settings = new ClassificationSetting[6]
     {
-        new() { option =ClassificationOption.VerticalEdge,  preview = true, color = Color.green  }, //Vertical Edge
-        new() { option =ClassificationOption.HorizontalEdge,preview = true, color = Color.yellow }, //Horizontal Edge
-        new() { option = ClassificationOption.Independent, color = Color.red     }, //Cross
-        new() { option = ClassificationOption.Independent, color = Color.blue    }, //T-Junction
-        new() { option = ClassificationOption.Independent, color = Color.cyan    }, //Corner
-        new() { option = ClassificationOption.Independent, color = Color.magenta }  //Isolate
+        new() { option =ClassificationOption.VerticalEdge, tag = DefaultTag, preview = true, color = Color.green  }, //Vertical Edge
+        new() { option =ClassificationOption.HorizontalEdge, tag = DefaultTag, preview = true, color = Color.yellow }, //Horizontal Edge
+        new() { option = ClassificationOption.Independent, tag = DefaultTag, color = Color.red }, //Cross
+        new() { option = ClassificationOption.Independent, tag = DefaultTag, color = Color.blue }, //T-Junction
+        new() { option = ClassificationOption.Independent, tag = DefaultTag, color = Color.cyan }, //Corner
+        new() { option = ClassificationOption.Independent, tag = DefaultTag, color = Color.magenta }  //Isolate
     };
 
     private Tilemap original;
@@ -106,7 +108,7 @@ public class TilemapSplitterWindow : EditorWindow
             CreateFoldout(container, info.title, //各要素の get, set 時の処理を入れる
                 () => settings[idx].option,  v => settings[idx].option  = v,  //ClassificationOption
                 () => settings[idx].layer,   v => settings[idx].layer   = v,  //Layer
-                v => settings[idx].tag     = v,                               //Tag
+                () => settings[idx].tag,     v => settings[idx].tag     = v,                               //Tag
                 () => settings[idx].preview, v => settings[idx].preview = v,  //Preview
                 () => settings[idx].color,   v => settings[idx].color   = v); //Color
         }
@@ -151,7 +153,7 @@ public class TilemapSplitterWindow : EditorWindow
         fold.Add(layerField);
 
         //タグ設定
-        var tagField = new TagField("Tag", "Untagged");
+        var tagField = new TagField("Tag", settings[idx].tag);
         tagField.RegisterValueChangedCallback(evt => settings[idx].tag = evt.newValue);
         fold.Add(tagField);
 
@@ -177,7 +179,7 @@ public class TilemapSplitterWindow : EditorWindow
     private void CreateFoldout(VisualElement parent, string title,
         Func<ClassificationOption> getOption, Action<ClassificationOption> setOption,
         Func<int> getLayer, Action<int> setLayer,
-        Action<string> setTag,
+        Func<string> getTag, Action<string> setTag,
         Func<bool> getPreview, Action<bool> setPreview,
         Func<Color> getColor, Action<Color> setColor)
     {
@@ -192,7 +194,7 @@ public class TilemapSplitterWindow : EditorWindow
         fold.Add(layerField);
 
         //タグ設定
-        var tagField = new TagField("Tag", "Untagged");
+        var tagField = new TagField("Tag", getTag());
         tagField.RegisterValueChangedCallback(evt => setTag(evt.newValue));
         fold.Add(tagField);
 
@@ -287,7 +289,7 @@ public class TilemapSplitterWindow : EditorWindow
         var obj = new GameObject(name, typeof(Tilemap), typeof(TilemapRenderer));
         obj.transform.SetParent(original.transform.parent, false);
         obj.layer = layer;
-        obj.tag   = tag;
+        obj.tag   = string.IsNullOrEmpty(tag) ? DefaultTag : tag;
 
         var renderer = obj.GetComponent<TilemapRenderer>();
         if (original.TryGetComponent<TilemapRenderer>(out var oriRenderer))
