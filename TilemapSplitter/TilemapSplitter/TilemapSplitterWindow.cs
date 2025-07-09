@@ -111,8 +111,8 @@ public class TilemapSplitterWindow : EditorWindow
 
         //縦, 横エッジ Foldout 設定
         verticalEdgeFO   = CreateEdgeFoldout(container, "VerticalEdge",   SettingType.VerticalEdge);
+        AddSeparator(container);
         horizontalEdgeFO = CreateEdgeFoldout(container, "HorizontalEdge", SettingType.HorizontalEdge);
-
         AddSeparator(container);
 
         //各タイルの設定項目
@@ -133,9 +133,8 @@ public class TilemapSplitterWindow : EditorWindow
                 case SettingType.Corner:     cornerFO     = fold; break;
                 case SettingType.Isolate:    isolateFO    = fold; break;
             }
+            AddSeparator(container);
         }
-
-        AddSeparator(container);
 
         //Execute Button
         var splitButton = new Button(() =>
