@@ -41,12 +41,12 @@ public class TilemapSplitterWindow : EditorWindow
 
     private readonly ClassificationSetting[] settings = new ClassificationSetting[6]
     {
-        new() { option =ClassificationOption.VerticalEdge, tag = DefaultTag, preview = true, color = Color.green  }, //Vertical Edge
-        new() { option =ClassificationOption.HorizontalEdge, tag = DefaultTag, preview = true, color = Color.yellow }, //Horizontal Edge
-        new() { option = ClassificationOption.Independent, tag = DefaultTag, color = Color.red }, //Cross
-        new() { option = ClassificationOption.Independent, tag = DefaultTag, color = Color.blue }, //T-Junction
-        new() { option = ClassificationOption.Independent, tag = DefaultTag, color = Color.cyan }, //Corner
-        new() { option = ClassificationOption.Independent, tag = DefaultTag, color = Color.magenta }  //Isolate
+        new() { option = ClassificationOption.VerticalEdge,   tag = DefaultTag, preview = true, color = Color.green  }, //Vertical Edge
+        new() { option = ClassificationOption.HorizontalEdge, tag = DefaultTag, preview = true, color = Color.yellow }, //Horizontal Edge
+        new() { option = ClassificationOption.Independent,    tag = DefaultTag, color = Color.red },     //Cross
+        new() { option = ClassificationOption.Independent,    tag = DefaultTag, color = Color.blue },    //T-Junction
+        new() { option = ClassificationOption.Independent,    tag = DefaultTag, color = Color.cyan },    //Corner
+        new() { option = ClassificationOption.Independent,    tag = DefaultTag, color = Color.magenta }  //Isolate
     };
 
     private ref ClassificationSetting GetSetting(SettingType type)
@@ -157,7 +157,7 @@ public class TilemapSplitterWindow : EditorWindow
         layerField.RegisterValueChangedCallback(evt => setting.layer = evt.newValue);
         fold.Add(layerField);
 
-        var tagField = new TagField("Tag", "Untagged");
+        var tagField = new TagField("Tag", setting.tag);
         tagField.RegisterValueChangedCallback(evt => setting.tag = evt.newValue);
         fold.Add(tagField);
 
