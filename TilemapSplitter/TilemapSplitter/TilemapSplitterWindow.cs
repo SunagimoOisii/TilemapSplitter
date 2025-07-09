@@ -8,45 +8,64 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 using UnityEngine.UIElements;
 
-public class TilemapSplitterWindow : EditorWindow
+[Flags]
+public enum ClassificationOption
 {
-    [Flags]
-    private enum ClassificationOption
-    {
-        VerticalEdge    = 1 << 0,
-        HorizontalEdge  = 1 << 1,
-        Independent     = 1 << 2,
-    }
+    VerticalEdge   = 1 << 0,
+    HorizontalEdge = 1 << 1,
+    Independent    = 1 << 2,
+}
 
-    private enum SettingType
-    {
-        VerticalEdge = 0,
-        HorizontalEdge,
-        Cross,
-        TJunction,
-        Corner,
-        Isolate,
-    }
+public enum SettingType
+{
+    VerticalEdge = 0,
+    HorizontalEdge,
+    Cross,
+    TJunction,
+    Corner,
+    Isolate,
+}
 
-    private class ClassificationSetting
-    {
-        public ClassificationOption option;
-        public int    layer;
-        public string tag        = "Untagged";
-        public bool   canPreview = true;
-        public Color  color;
-    }
+[Serializable]
+public class ClassificationSetting
+{
+    public ClassificationOption option;
+    public int layer;
+    public string tag = "Untagged";
+    public bool canPreview = true;
+    public Color color = Color.white;
+}
 
-    private readonly ClassificationSetting[] settings = new ClassificationSetting[6]
+[CreateAssetMenu(fileName = "TilemapSplitterSettings", menuName = "TilemapSplitter/Settings")]
+public class TilemapSplitterSettings : ScriptableObject
+{
+    public ClassificationSetting[] settings = new ClassificationSetting[6];
+    public bool canMergeEdges;
+
+    public static TilemapSplitterSettings CreateDefault()
     {
-        new() { option = ClassificationOption.VerticalEdge,  color = Color.green  },  //Vertical Edge
-        new() { option = ClassificationOption.HorizontalEdge,color = Color.yellow },  //Horizontal Edge
-        new() { option = ClassificationOption.Independent,   color = Color.red },     //Cross
-        new() { option = ClassificationOption.Independent,   color = Color.blue },    //T-Junction
-        new() { option = ClassificationOption.Independent,   color = Color.cyan },    //Corner
-        new() { option = ClassificationOption.Independent,   color = Color.magenta }  //Isolate
-    };
+        var asset = CreateInstance<TilemapSplitterSettings>();
+        asset.settings = new ClassificationSetting[6]
+        {
+            new() { option = ClassificationOption.VerticalEdge,   color = Color.green   },
+            new() { option = ClassificationOption.HorizontalEdge, color = Color.yellow  },
+            new() { option = ClassificationOption.Independent,    color = Color.red     },
+            new() { option = ClassificationOption.Independent,    color = Color.blue    },
+            new() { option = ClassificationOption.Independent,    color = Color.cyan    },
+            new() { option = ClassificationOption.Independent,    color = Color.magenta },
+        };
+        return asset;
+    }
+}
+
+public class TilemapSplitterWindow : EditorWindow
+
+{
+    private const string SettingsAssetPath = "Assets/TilemapSplitter/TilemapSplitterSettings.asset";
+    private TilemapSplitterSettings settingsAsset;
+    private ClassificationSetting[] settings => settingsAsset.settings;
     private ClassificationSetting GetSetting(SettingType t) => settings[(int)t];
+
 
     //各生成タイル数表示のために使用
     private Foldout verticalEdgeFO;
@@ -111,7 +130,11 @@ public class TilemapSplitterWindow : EditorWindow
         var mergeToggle = new Toggle("Merge VerticalEdge, HorizontalEdge") { value = canMergeEdges };
         var mergeHB = new HelpBox("When merging, VerticalEdge settings take precedence",
             HelpBoxMessageType.Info);
-        mergeToggle.RegisterValueChangedCallback(evt => canMergeEdges = evt.newValue);
+        mergeToggle.RegisterValueChangedCallback(evt =>
+        {
+            canMergeEdges = evt.newValue;
+            MarkDirty();
+        });
         container.Add(mergeToggle);
         container.Add(mergeHB);
 
@@ -172,11 +195,19 @@ public class TilemapSplitterWindow : EditorWindow
         ClassificationSetting setting)
     {
         var layerField = new LayerField("Layer", setting.layer);
-        layerField.RegisterValueChangedCallback(evt => setting.layer = evt.newValue);
+        layerField.RegisterValueChangedCallback(evt =>
+        {
+            setting.layer = evt.newValue;
+            MarkDirty();
+        });
         fold.Add(layerField);
 
         var tagField = new TagField("Tag", setting.tag);
-        tagField.RegisterValueChangedCallback(evt => setting.tag = evt.newValue);
+        tagField.RegisterValueChangedCallback(evt =>
+        {
+            setting.tag = evt.newValue;
+            MarkDirty();
+        });
         fold.Add(tagField);
 
         var previewToggle = new Toggle("Preview") { value = setting.canPreview };
@@ -184,11 +215,16 @@ public class TilemapSplitterWindow : EditorWindow
         {
             setting.canPreview = evt.newValue;
             UpdatePreview();
+            MarkDirty();
         });
         fold.Add(previewToggle);
 
         var colField = new ColorField("Preview Color") { value = setting.color };
-        colField.RegisterValueChangedCallback(evt => setting.color = evt.newValue);
+        colField.RegisterValueChangedCallback(evt =>
+        {
+            setting.color = evt.newValue;
+            MarkDirty();
+        });
         fold.Add(colField);
 
         return (previewToggle, colField);
@@ -222,6 +258,7 @@ public class TilemapSplitterWindow : EditorWindow
             setting.option = (ClassificationOption)evt.newValue;
             UpdatePreview();
             UpdateUI(setting, fold, previewToggle, colField);
+            MarkDirty();
         });
 
         UpdateUI(setting, fold, previewToggle, colField);
@@ -335,10 +372,47 @@ public class TilemapSplitterWindow : EditorWindow
         if (opt.HasFlag(ClassificationOption.Independent))     indep?.Add(pos);
     }
 
+    private void LoadSettings()
+    {
+        settingsAsset = AssetDatabase.LoadAssetAtPath<TilemapSplitterSettings>(SettingsAssetPath);
+        if (settingsAsset == null)
+        {
+            settingsAsset = TilemapSplitterSettings.CreateDefault();
+            var dir = System.IO.Path.GetDirectoryName(SettingsAssetPath);
+            if (System.IO.Directory.Exists(dir) == false)
+            {
+                System.IO.Directory.CreateDirectory(dir);
+            }
+            AssetDatabase.CreateAsset(settingsAsset, SettingsAssetPath);
+            AssetDatabase.SaveAssets();
+        }
+
+        canMergeEdges = settingsAsset.canMergeEdges;
+    }
+
+    private void SaveSettings()
+    {
+        if (settingsAsset == null) return;
+        settingsAsset.canMergeEdges = canMergeEdges;
+        EditorUtility.SetDirty(settingsAsset);
+        AssetDatabase.SaveAssets();
+    }
+
+    private void MarkDirty() => EditorUtility.SetDirty(settingsAsset);
+
     #region 分割プレビュー機能
 
-    private void OnEnable()  => SceneView.duringSceneGui += OnSceneGUI;
-    private void OnDisable() => SceneView.duringSceneGui -= OnSceneGUI;
+    private void OnEnable()
+    {
+        SceneView.duringSceneGui += OnSceneGUI;
+        LoadSettings();
+    }
+
+    private void OnDisable()
+    {
+        SceneView.duringSceneGui -= OnSceneGUI;
+        SaveSettings();
+    }
 
     private void OnSceneGUI(SceneView sv)
     {
