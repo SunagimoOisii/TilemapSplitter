@@ -55,7 +55,7 @@ public class TilemapSplitterWindow : EditorWindow
         var root = rootVisualElement;
 
         //ScrollView, Container 設定
-        var scroll = new ScrollView();
+        var scroll    = new ScrollView();
         var container = new VisualElement();
         container.style.flexDirection = FlexDirection.Column;
         container.style.paddingLeft   = 10;
@@ -246,38 +246,36 @@ public class TilemapSplitterWindow : EditorWindow
         {
             setOption((ClassificationOption)evt.newValue);
             UpdatePreview();
-            updateUI();
+            UpdateUI(getOption, fold, previewToggle, colField);
         });
 
-        updateUI();
+        UpdateUI(getOption, fold, previewToggle, colField);
         parent.Add(fold);
-
-        void updateUI()
-        {
-            var opt = getOption();
-            ApplyHelp(fold, opt);
-
-            bool show = opt.HasFlag(ClassificationOption.Independent);
-            previewToggle.visible = show;
-            colField.visible = show;
-        }
     }
 
-    private static void ApplyHelp(Foldout fold, ClassificationOption opt)
+    void UpdateUI(Func<ClassificationOption> getOption, Foldout fold,
+        Toggle previewToggle, ColorField colField)
     {
+        var opt = getOption();
+        
         var exist = fold.Q<HelpBox>();
         if (exist != null) fold.Remove(exist);
 
+        //HelpBox 作成
         string msg = null;
         string helpV = "The preview complies with VerticalEdge settings.";
         string helpH = "The preview complies with HorizontalEdge settings.";
-        if (opt.HasFlag(ClassificationOption.VerticalEdge))        msg = helpV;
+        if      (opt.HasFlag(ClassificationOption.VerticalEdge))   msg = helpV;
         else if (opt.HasFlag(ClassificationOption.HorizontalEdge)) msg = helpH;
 
         if (string.IsNullOrEmpty(msg) == false)
         {
             fold.Add(new HelpBox(msg, HelpBoxMessageType.Info));
         }
+
+        bool isVisible = opt.HasFlag(ClassificationOption.Independent);
+        previewToggle.visible = isVisible;
+        colField.visible      = isVisible;
     }
 
     private static void ApplyClassification(Vector3Int pos, ClassificationOption opt,
