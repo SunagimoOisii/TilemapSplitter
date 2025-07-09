@@ -204,9 +204,13 @@ public class TilemapSplitterWindow : EditorWindow
         obj.layer = layer;
 
         var renderer = obj.GetComponent<TilemapRenderer>();
-        var orig     = original.GetComponent<TilemapRenderer>();
-        renderer.sortingLayerID = orig.sortingLayerID;
-        renderer.sortingOrder   = orig.sortingOrder;
+        if (original.TryGetComponent<TilemapRenderer>(out var oriRenderer))
+        {
+            renderer.sortingLayerID = oriRenderer.sortingLayerID;
+            renderer.sortingOrder   = oriRenderer.sortingOrder;
+        }
+        else Debug.LogWarning("Since TilemapRenderer is not attached to the split target," +
+            "the TilemapRenderer of the generated object was generated with the default settings.");
 
         var tm = obj.GetComponent<Tilemap>();
         foreach(var p in data) tm.SetTile(p, original.GetTile(p));
