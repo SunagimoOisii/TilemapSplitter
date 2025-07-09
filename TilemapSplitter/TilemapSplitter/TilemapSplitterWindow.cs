@@ -98,8 +98,11 @@ public class TilemapSplitterWindow : EditorWindow
 
         //縦, 横エッジ統合チェックボックス
         var mergeToggle = new Toggle("Merge VerticalEdge, HorizontalEdge") { value = mergeEdges };
+        var mergeHB = new HelpBox("When merging, VerticalEdge settings take precedence",
+            HelpBoxMessageType.Info);
         mergeToggle.RegisterValueChangedCallback(evt => mergeEdges = evt.newValue);
         container.Add(mergeToggle);
+        container.Add(mergeHB);
 
         //縦, 横エッジ設定
         CreateEdgeFoldout(container, "VerticalEdge",   SettingType.VerticalEdge);
