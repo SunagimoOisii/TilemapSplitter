@@ -25,7 +25,7 @@ public class TilemapSplitterWindow : EditorWindow
     private Foldout isolateFoldOut;
 
     private Tilemap original;
-    private TileShapeResult result = new();
+    private ShapeCells result = new();
     private readonly TilemapPreviewDrawer previewDrawer = new();
 
     private bool canMergeEdges = false;
@@ -69,7 +69,7 @@ public class TilemapSplitterWindow : EditorWindow
 
         //縦横エッジ設定 UI 作成, 追加
         var mergeToggle = new Toggle("Merge VerticalEdge, HorizontalEdge") { value = canMergeEdges };
-        var mergeHB     = new HelpBox("When merging, VerticalEdge settings take precedence",
+        var mergeHB     = new HelpBox("When merging, VerticalEdge shapeSettings take precedence",
             HelpBoxMessageType.Info);
         mergeToggle.RegisterValueChangedCallback(evt => canMergeEdges = evt.newValue);
         container.Add(mergeToggle);
@@ -157,7 +157,7 @@ public class TilemapSplitterWindow : EditorWindow
         return (previewToggle, colField);
     }
 
-    private Foldout CreateEdgeFoldout(VisualElement parent, string title, TileShapeType type)
+    private Foldout CreateEdgeFoldout(VisualElement parentContainer, string title, TileShapeType type)
     {
         var fold = new Foldout { text = title };
         fold.style.unityFontStyleAndWeight = FontStyle.Bold;
@@ -165,11 +165,11 @@ public class TilemapSplitterWindow : EditorWindow
         var setting = GetShapeSetting(type);
         AddShapeSettingControls(fold, setting);
 
-        parent.Add(fold);
+        parentContainer.Add(fold);
         return fold;
     }
 
-    private Foldout CreateFoldout(VisualElement parent, string title, TileShapeSetting setting)
+    private Foldout CreateFoldout(VisualElement parentContainer, string title, TileShapeSetting setting)
     {
         var fold = new Foldout { text = title };
         fold.style.unityFontStyleAndWeight = FontStyle.Bold;
@@ -187,7 +187,7 @@ public class TilemapSplitterWindow : EditorWindow
         });
 
         RefreshFoldoutUI(setting, fold, previewToggle, colField);
-        parent.Add(fold);
+        parentContainer.Add(fold);
         return fold;
     }
 
@@ -200,8 +200,8 @@ public class TilemapSplitterWindow : EditorWindow
         if (exist != null) fold.Remove(exist);
 
         string msg = null;
-        string helpV = "The canPreview complies with VerticalEdge settings.";
-        string helpH = "The canPreview complies with HorizontalEdge settings.";
+        string helpV = "The canPreview complies with VerticalEdge shapeSettings.";
+        string helpH = "The canPreview complies with HorizontalEdge shapeSettings.";
         if      (opt.HasFlag(TileShapeFlags.VerticalEdge))   msg = helpV;
         else if (opt.HasFlag(TileShapeFlags.HorizontalEdge)) msg = helpH;
 
@@ -229,12 +229,12 @@ public class TilemapSplitterWindow : EditorWindow
     {
         var list = new (Foldout f, string name, int count)[]
         {
-            (verticalEdgeFoldOut,   "VerticalEdge",   result.VerticalEdges.Count),
-            (horizontalEdgeFoldOut, "HorizontalEdge", result.HorizontalEdges.Count),
-            (crossFoldOut,          "CrossTiles",     result.CrossTiles.Count),
-            (tJunctionFoldOut,      "TJunctionTiles", result.TJunctionTiles.Count),
-            (cornerFoldOut,         "CornerTiles",    result.CornerTiles.Count),
-            (isolateFoldOut,        "IsolateTiles",   result.IsolateTiles.Count),
+            (verticalEdgeFoldOut,   "VerticalEdge",   result.VerticalEdgesCells.Count),
+            (horizontalEdgeFoldOut, "HorizontalEdge", result.HorizontalEdgesCells.Count),
+            (crossFoldOut,          "CrossCells",     result.CrossCells.Count),
+            (tJunctionFoldOut,      "TJunctionCells", result.TJunctionCells.Count),
+            (cornerFoldOut,         "CornerCells",    result.CornerCells.Count),
+            (isolateFoldOut,        "IsolateCells",   result.IsolateCells.Count),
         };
         foreach (var (f, name, count) in list)
         {
