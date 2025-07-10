@@ -1,148 +1,151 @@
-using System;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Tilemaps;
-
-[Flags]
-internal enum TileShapeFlags
+namespace TilemapSplitter
 {
-    VerticalEdge   = 1 << 0,
-    HorizontalEdge = 1 << 1,
-    Independent    = 1 << 2,
-}
+    using System;
+    using System.Collections.Generic;
+    using UnityEngine;
+    using UnityEngine.Tilemaps;
 
-internal enum TileShapeType
-{
-    VerticalEdge = 0,
-    HorizontalEdge,
-    Cross,
-    TJunction,
-    Corner,
-    Isolate,
-}
-
-internal class TileShapeSetting
-{
-    public TileShapeFlags flags;
-    public int    layer;
-    public string tag        = "Untagged";
-    public bool   canPreview = true;
-    public Color  previewColor;
-}
-
-/// <summary>
-/// Maintain cell coordinates in each classification
-/// </summary>
-internal class ShapeCells
-{
-    public readonly List<Vector3Int> VerticalEdgesCells   = new();
-    public readonly List<Vector3Int> HorizontalEdgesCells = new();
-    public readonly List<Vector3Int> CrossCells           = new();
-    public readonly List<Vector3Int> TJunctionCells       = new();
-    public readonly List<Vector3Int> CornerCells          = new();
-    public readonly List<Vector3Int> IsolateCells         = new();
-}
-
-internal static class TileShapeClassifier
-{
-    /// <summary>
-    /// Analyses the layout of the tilemap and returns the classification results
-    /// </summary>
-    public static ShapeCells Classify(Tilemap original, TileShapeSetting[] settings)
+    [Flags]
+    internal enum TileShapeFlags
     {
-        var result = new ShapeCells();
+        VerticalEdge   = 1 << 0,
+        HorizontalEdge = 1 << 1,
+        Independent    = 1 << 2,
+    }
 
-        //Reduce cellBounds only for the range of empty cells
-        original.CompressBounds();
+    internal enum TileShapeType
+    {
+        VerticalEdge = 0,
+        HorizontalEdge,
+        Cross,
+        TJunction,
+        Corner,
+        Isolate,
+    }
 
-        //Obtain the bounding box in the cell coordinate space and all tiles within it(blank cells are null)
-        var cellBounds    = original.cellBounds;
-        var tilesInBounds = original.GetTilesBlock(cellBounds);
+    internal class TileShapeSetting
+    {
+        public TileShapeFlags flags;
+        public int    layer;
+        public string tag        = "Untagged";
+        public bool   canPreview = true;
+        public Color  previewColor;
+    }
 
-        //Only cells containing tiles are stored in the collection
-        int width  = cellBounds.size.x;
-        int height = cellBounds.size.y;
-        var occupiedCells = new HashSet<Vector3Int>();
-        for (int y = 0; y < height; y++)
+    /// <summary>
+    /// Maintain cell coordinates in each classification
+    /// </summary>
+    internal class ShapeCells
+    {
+        public readonly List<Vector3Int> VerticalEdgesCells   = new();
+        public readonly List<Vector3Int> HorizontalEdgesCells = new();
+        public readonly List<Vector3Int> CrossCells           = new();
+        public readonly List<Vector3Int> TJunctionCells       = new();
+        public readonly List<Vector3Int> CornerCells          = new();
+        public readonly List<Vector3Int> IsolateCells         = new();
+    }
+
+    internal static class TileShapeClassifier
+    {
+        /// <summary>
+        /// Analyses the layout of the tilemap and returns the classification results
+        /// </summary>
+        public static ShapeCells Classify(Tilemap original, TileShapeSetting[] settings)
         {
-            for (int x = 0; x < width; x++)
-            {
-                int index = x + y * width;
-                if (tilesInBounds[index] == null) continue;
+            var result = new ShapeCells();
 
-                //Convert the min coordinates of Bounds to world coordinates as an offset.
-                var cell = new Vector3Int(cellBounds.xMin + x, cellBounds.yMin + y, cellBounds.zMin);
-                occupiedCells.Add(cell);
+            //Reduce cellBounds only for the range of empty cells
+            original.CompressBounds();
+
+            //Obtain the bounding box in the cell coordinate space and all tiles within it(blank cells are null)
+            var cellBounds    = original.cellBounds;
+            var tilesInBounds = original.GetTilesBlock(cellBounds);
+
+            //Only cells containing tiles are stored in the collection
+            int width         = cellBounds.size.x;
+            int height        = cellBounds.size.y;
+            var occupiedCells = new HashSet<Vector3Int>();
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    int index = x + y * width;
+                    if (tilesInBounds[index] == null) continue;
+
+                    //Convert the min coordinates of Bounds to world coordinates as an offset.
+                    var cell = new Vector3Int(cellBounds.xMin + x, cellBounds.yMin + y, cellBounds.zMin);
+                    occupiedCells.Add(cell);
+                }
+            }
+
+            //Perform proximity determination for each cell
+            foreach (var cell in occupiedCells)
+            {
+                ClassifyCellNeighbors(cell, occupiedCells, settings, result);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Classify the specified cell based on the four neighbouring cells
+        /// </summary>
+        private static void ClassifyCellNeighbors(Vector3Int cell, HashSet<Vector3Int> cells,
+            TileShapeSetting[] settings, ShapeCells result)
+        {
+            //Determine whether adjacent cells exist
+            bool up    = cells.Contains(cell + Vector3Int.up);
+            bool down  = cells.Contains(cell + Vector3Int.down);
+            bool left  = cells.Contains(cell + Vector3Int.left);
+            bool right = cells.Contains(cell + Vector3Int.right);
+            bool anyV  = up || down;
+            bool anyH  = left || right;
+            int count  = (up ? 1 : 0) + (down ? 1 : 0) + (left ? 1 : 0) + (right ? 1 : 0);
+
+            //Add to collection by Classification
+            if (count == 4) //Cross
+            {
+                ApplyShapeFlags(cell, settings[(int)TileShapeType.Cross].flags,
+                    result.CrossCells, result.VerticalEdgesCells, result.HorizontalEdgesCells);
+            }
+            else if (count == 3) //TJunction
+            {
+                ApplyShapeFlags(cell, settings[(int)TileShapeType.TJunction].flags,
+                    result.TJunctionCells, result.VerticalEdgesCells, result.HorizontalEdgesCells);
+            }
+            else if (count == 2 && //Corner
+                     anyV &&
+                     anyH)
+            {
+                ApplyShapeFlags(cell, settings[(int)TileShapeType.Corner].flags,
+                    result.CornerCells, result.VerticalEdgesCells, result.HorizontalEdgesCells);
+            }
+            else if (anyV && //VerticalEdge
+                     anyH == false)
+            {
+                result.VerticalEdgesCells.Add(cell);
+            }
+            else if (anyH && //HorizontalEdge
+                     anyV == false)
+            {
+                result.HorizontalEdgesCells.Add(cell);
+            }
+            else if (count == 0) //Isolate
+            {
+                ApplyShapeFlags(cell, settings[(int)TileShapeType.Isolate].flags,
+                    result.IsolateCells, result.VerticalEdgesCells, result.HorizontalEdgesCells);
             }
         }
 
-        //Perform proximity determination for each cell
-        foreach (var cell in occupiedCells)
+        /// <summary>
+        /// Add to each collection according to the settings
+        /// </summary>
+        private static void ApplyShapeFlags(Vector3Int cell, TileShapeFlags flags,
+            List<Vector3Int> indepCellList, List<Vector3Int> vCellList, List<Vector3Int> hCellList)
         {
-            ClassifyCellNeighbors(cell, occupiedCells, settings, result);
+            if (flags.HasFlag(TileShapeFlags.VerticalEdge)) vCellList?.Add(cell);
+            if (flags.HasFlag(TileShapeFlags.HorizontalEdge)) hCellList?.Add(cell);
+            if (flags.HasFlag(TileShapeFlags.Independent)) indepCellList?.Add(cell);
         }
-
-        return result;
-    }
-
-    /// <summary>
-    /// Classify the specified cell based on the four neighbouring cells
-    /// </summary>
-    private static void ClassifyCellNeighbors(Vector3Int cell, HashSet<Vector3Int> cells,
-        TileShapeSetting[] settings, ShapeCells result)
-    {
-        //Determine whether adjacent cells exist
-        bool up    = cells.Contains(cell + Vector3Int.up);
-        bool down  = cells.Contains(cell + Vector3Int.down);
-        bool left  = cells.Contains(cell + Vector3Int.left);
-        bool right = cells.Contains(cell + Vector3Int.right);
-        bool anyV  = up   || down;
-        bool anyH  = left || right;
-        int count  = (up ? 1 : 0) + (down ? 1 : 0) + (left ? 1 : 0) + (right ? 1 : 0);
-
-        //Add to collection by Classification
-        if (count == 4) //Cross
-        {
-            ApplyShapeFlags(cell, settings[(int)TileShapeType.Cross].flags,
-                result.CrossCells, result.VerticalEdgesCells, result.HorizontalEdgesCells);
-        }
-        else if (count == 3) //TJunction
-        {
-            ApplyShapeFlags(cell, settings[(int)TileShapeType.TJunction].flags,
-                result.TJunctionCells, result.VerticalEdgesCells, result.HorizontalEdgesCells);
-        }
-        else if (count == 2 && //Corner
-                 anyV &&
-                 anyH)
-        {
-            ApplyShapeFlags(cell, settings[(int)TileShapeType.Corner].flags,
-                result.CornerCells, result.VerticalEdgesCells, result.HorizontalEdgesCells);
-        }
-        else if (anyV && //VerticalEdge
-                 anyH == false)
-        {
-            result.VerticalEdgesCells.Add(cell);
-        }
-        else if (anyH && //HorizontalEdge
-                 anyV == false)
-        {
-            result.HorizontalEdgesCells.Add(cell);
-        }
-        else if (count == 0) //Isolate
-        {
-            ApplyShapeFlags(cell, settings[(int)TileShapeType.Isolate].flags,
-                result.IsolateCells, result.VerticalEdgesCells, result.HorizontalEdgesCells);
-        }
-    }
-
-    /// <summary>
-    /// Add to each collection according to the settings
-    /// </summary>
-    private static void ApplyShapeFlags(Vector3Int cell, TileShapeFlags flags,
-        List<Vector3Int> indepCellList, List<Vector3Int> vCellList, List<Vector3Int> hCellList)
-    {
-        if (flags.HasFlag(TileShapeFlags.VerticalEdge))   vCellList?.Add(cell);
-        if (flags.HasFlag(TileShapeFlags.HorizontalEdge)) hCellList?.Add(cell);
-        if (flags.HasFlag(TileShapeFlags.Independent))    indepCellList?.Add(cell);
     }
 }
