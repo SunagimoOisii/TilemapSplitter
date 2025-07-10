@@ -9,19 +9,19 @@ using UnityEngine.Tilemaps;
 public class TilemapPreviewDrawer
 {
     private Tilemap tilemap;
-    private ClassificationSetting[] settings;
-    private ClassificationResult result;
+    private TileShapeSetting[] settings;
+    private TileShapeResult result;
 
     /// <summary>
     /// 分割対象と設定を登録
     /// </summary>
-    public void Initialize(Tilemap tm, ClassificationSetting[] settings)
+    public void Setup(Tilemap tm, TileShapeSetting[] settings)
     {
         tilemap = tm;
         this.settings = settings;
     }
 
-    public void SetResult(ClassificationResult result) => this.result = result;
+    public void SetShapeResult(TileShapeResult result) => this.result = result;
 
     public void Register()   => SceneView.duringSceneGui += OnSceneGUI;
     public void Unregister() => SceneView.duringSceneGui -= OnSceneGUI;
@@ -32,37 +32,34 @@ public class TilemapPreviewDrawer
             result == null) return;
 
         //各設定の取得
-        var v       = settings[(int)SettingType.VerticalEdge];
-        var h       = settings[(int)SettingType.HorizontalEdge];
-        var cross   = settings[(int)SettingType.Cross];
-        var t       = settings[(int)SettingType.TJunction];
-        var corner  = settings[(int)SettingType.Corner];
-        var isolate = settings[(int)SettingType.Isolate];
+        var v       = settings[(int)TileShapeType.VerticalEdge];
+        var h       = settings[(int)TileShapeType.HorizontalEdge];
+        var cross   = settings[(int)TileShapeType.Cross];
+        var t       = settings[(int)TileShapeType.TJunction];
+        var corner  = settings[(int)TileShapeType.Corner];
+        var isolate = settings[(int)TileShapeType.Isolate];
 
         //設定色, プレビュー許可に応じて表示
-        var previewSettings = new (List<Vector3Int> positions, Color c, bool canPreview)[]
+        var previewSettings = new (List<Vector3Int> cells, Color c, bool canPreview)[]
         {
-            (result.VerticalEdges,   v.color,       v.canPreview),
-            (result.HorizontalEdges, h.color,       h.canPreview),
-            (result.CrossTiles,      cross.color,   cross.canPreview),
-            (result.TJunctionTiles,  t.color ,      t.canPreview),
-            (result.CornerTiles,     corner.color,  corner.canPreview),
-            (result.IsolateTiles,    isolate.color, isolate.canPreview)
+            (result.VerticalEdges,   v.previewColor,       v.canPreview),
+            (result.HorizontalEdges, h.previewColor,       h.canPreview),
+            (result.CrossTiles,      cross.previewColor,   cross.canPreview),
+            (result.TJunctionTiles,  t.previewColor ,      t.canPreview),
+            (result.CornerTiles,     corner.previewColor,  corner.canPreview),
+            (result.IsolateTiles,    isolate.previewColor, isolate.canPreview)
         };
-        foreach (var (positions, c, canPreview) in previewSettings)
+        foreach (var (cells, c, canPreview) in previewSettings)
         {
-            if(canPreview) DrawList(positions, c);
+            if(canPreview) DrawCellPreviews(cells, c);
         }
     }
 
-    /// <summary>
-    /// 各セルを指定色で描画
-    /// </summary>
-    private void DrawList(List<Vector3Int> positions, Color c)
+    private void DrawCellPreviews(List<Vector3Int> cells, Color c)
     {
         Handles.color = new Color(c.r, c.g, c.b, 0.4f);
         var cellSize  = tilemap.cellSize;
-        foreach (var pos in positions)
+        foreach (var pos in cells)
         {
             var worldPos = tilemap.CellToWorld(pos) + new Vector3(cellSize.x / 2f, cellSize.y / 2f);
             var rect = new Rect(

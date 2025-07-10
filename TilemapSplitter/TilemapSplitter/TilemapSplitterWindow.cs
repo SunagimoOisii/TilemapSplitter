@@ -6,26 +6,26 @@ using UnityEngine.UIElements;
 
 public class TilemapSplitterWindow : EditorWindow
 {
-    private readonly ClassificationSetting[] settings = new ClassificationSetting[6]
+    private readonly TileShapeSetting[] settings = new TileShapeSetting[6]
     {
-        new() { option = ClassificationOption.VerticalEdge,  color = Color.green  },
-        new() { option = ClassificationOption.HorizontalEdge,color = Color.yellow },
-        new() { option = ClassificationOption.Independent,   color = Color.red    },
-        new() { option = ClassificationOption.Independent,   color = Color.blue   },
-        new() { option = ClassificationOption.Independent,   color = Color.cyan   },
-        new() { option = ClassificationOption.Independent,   color = Color.magenta },
+        new() { flags = TileShapeFlags.VerticalEdge,   previewColor = Color.green  },
+        new() { flags = TileShapeFlags.HorizontalEdge, previewColor = Color.yellow },
+        new() { flags = TileShapeFlags.Independent,    previewColor = Color.red    },
+        new() { flags = TileShapeFlags.Independent,    previewColor = Color.blue   },
+        new() { flags = TileShapeFlags.Independent,    previewColor = Color.cyan   },
+        new() { flags = TileShapeFlags.Independent,    previewColor = Color.magenta },
     };
-    private ClassificationSetting GetSetting(SettingType t) => settings[(int)t];
+    private TileShapeSetting GetShapeSetting(TileShapeType t) => settings[(int)t];
 
-    private Foldout verticalEdgeFO;
-    private Foldout horizontalEdgeFO;
-    private Foldout crossFO;
-    private Foldout tJunctionFO;
-    private Foldout cornerFO;
-    private Foldout isolateFO;
+    private Foldout verticalEdgeFoldOut;
+    private Foldout horizontalEdgeFoldOut;
+    private Foldout crossFoldOut;
+    private Foldout tJunctionFoldOut;
+    private Foldout cornerFoldOut;
+    private Foldout isolateFoldOut;
 
     private Tilemap original;
-    private ClassificationResult result = new();
+    private TileShapeResult result = new();
     private readonly TilemapPreviewDrawer previewDrawer = new();
 
     private bool canMergeEdges = false;
@@ -60,12 +60,12 @@ public class TilemapSplitterWindow : EditorWindow
         {
             original = evt.newValue as Tilemap;
             helpBox.visible = (original == null);
-            UpdatePreview();
+            RefreshPreview();
         });
         container.Add(originalField);
         container.Add(helpBox);
 
-        AddSeparator(container);
+        AddHorizontalSeparator(container);
 
         //縦横エッジ設定 UI 作成, 追加
         var mergeToggle = new Toggle("Merge VerticalEdge, HorizontalEdge") { value = canMergeEdges };
@@ -75,30 +75,30 @@ public class TilemapSplitterWindow : EditorWindow
         container.Add(mergeToggle);
         container.Add(mergeHB);
 
-        verticalEdgeFO   = CreateEdgeFoldout(container, "VerticalEdge",   SettingType.VerticalEdge);
-        AddSeparator(container);
-        horizontalEdgeFO = CreateEdgeFoldout(container, "HorizontalEdge", SettingType.HorizontalEdge);
-        AddSeparator(container);
+        verticalEdgeFoldOut   = CreateEdgeFoldout(container, "VerticalEdge",   TileShapeType.VerticalEdge);
+        AddHorizontalSeparator(container);
+        horizontalEdgeFoldOut = CreateEdgeFoldout(container, "HorizontalEdge", TileShapeType.HorizontalEdge);
+        AddHorizontalSeparator(container);
 
         //各種分類の設定 UI 作成, 追加
-        var infos = new (string title, SettingType type)[]
+        var infos = new (string title, TileShapeType type)[]
         {
-            ("Cross",      SettingType.Cross),
-            ("T-Junction", SettingType.TJunction),
-            ("Corner",     SettingType.Corner),
-            ("Isolate",    SettingType.Isolate),
+            ("Cross",      TileShapeType.Cross),
+            ("T-Junction", TileShapeType.TJunction),
+            ("Corner",     TileShapeType.Corner),
+            ("Isolate",    TileShapeType.Isolate),
         };
         foreach (var info in infos)
         {
-            var fold = CreateFoldout(container, info.title, GetSetting(info.type));
+            var fold = CreateFoldout(container, info.title, GetShapeSetting(info.type));
             switch (info.type)
             {
-                case SettingType.Cross:     crossFO     = fold; break;
-                case SettingType.TJunction: tJunctionFO = fold; break;
-                case SettingType.Corner:    cornerFO    = fold; break;
-                case SettingType.Isolate:   isolateFO   = fold; break;
+                case TileShapeType.Cross:     crossFoldOut     = fold; break;
+                case TileShapeType.TJunction: tJunctionFoldOut = fold; break;
+                case TileShapeType.Corner:    cornerFoldOut    = fold; break;
+                case TileShapeType.Isolate:   isolateFoldOut   = fold; break;
             }
-            AddSeparator(container);
+            AddHorizontalSeparator(container);
         }
 
         //実行ボタン作成, 追加
@@ -109,18 +109,18 @@ public class TilemapSplitterWindow : EditorWindow
                 EditorUtility.DisplayDialog("Error", "The split target isn't set", "OK");
                 return;
             }
-            result = TilemapClassifier.Classify(original, settings);
-            TilemapCreator.Create(original, result, settings, canMergeEdges);
-            UpdatePreview();
+            result = TileShapeClassifier.Classify(original, settings);
+            TilemapCreator.GenerateSplitTilemaps(original, result, settings, canMergeEdges);
+            RefreshPreview();
         });
         splitButton.text = "Execute Splitting";
         splitButton.style.marginTop = 10;
         container.Add(splitButton);
 
-        previewDrawer.Initialize(original, settings);
+        previewDrawer.Setup(original, settings);
     }
 
-    private static void AddSeparator(VisualElement parent)
+    private static void AddHorizontalSeparator(VisualElement parentContainer)
     {
         var separator = new VisualElement();
         separator.style.borderBottomWidth = 1;
@@ -128,11 +128,11 @@ public class TilemapSplitterWindow : EditorWindow
         separator.style.marginTop         = 5;
         separator.style.marginBottom      = 5;
 
-        parent.Add(separator);
+        parentContainer.Add(separator);
     }
 
-    private (Toggle previewToggle, ColorField colorField) AddCommonFields(Foldout fold,
-        ClassificationSetting setting)
+    private (Toggle previewToggle, ColorField colorField) AddShapeSettingControls(Foldout fold,
+        TileShapeSetting setting)
     {
         var layerField = new LayerField("Layer", setting.layer);
         layerField.RegisterValueChangedCallback(evt => setting.layer = evt.newValue);
@@ -146,55 +146,55 @@ public class TilemapSplitterWindow : EditorWindow
         previewToggle.RegisterValueChangedCallback(evt =>
         {
             setting.canPreview = evt.newValue;
-            UpdatePreview();
+            RefreshPreview();
         });
         fold.Add(previewToggle);
 
-        var colField = new ColorField("Preview Color") { value = setting.color };
-        colField.RegisterValueChangedCallback(evt => setting.color = evt.newValue);
+        var colField = new ColorField("Preview Color") { value = setting.previewColor };
+        colField.RegisterValueChangedCallback(evt => setting.previewColor = evt.newValue);
         fold.Add(colField);
 
         return (previewToggle, colField);
     }
 
-    private Foldout CreateEdgeFoldout(VisualElement parent, string title, SettingType type)
+    private Foldout CreateEdgeFoldout(VisualElement parent, string title, TileShapeType type)
     {
         var fold = new Foldout { text = title };
         fold.style.unityFontStyleAndWeight = FontStyle.Bold;
 
-        var setting = GetSetting(type);
-        AddCommonFields(fold, setting);
+        var setting = GetShapeSetting(type);
+        AddShapeSettingControls(fold, setting);
 
         parent.Add(fold);
         return fold;
     }
 
-    private Foldout CreateFoldout(VisualElement parent, string title, ClassificationSetting setting)
+    private Foldout CreateFoldout(VisualElement parent, string title, TileShapeSetting setting)
     {
         var fold = new Foldout { text = title };
         fold.style.unityFontStyleAndWeight = FontStyle.Bold;
 
-        var enumField = new EnumFlagsField("Which obj to add to", setting.option);
+        var enumField = new EnumFlagsField("Which obj to add to", setting.flags);
         fold.Add(enumField);
 
-        var (previewToggle, colField) = AddCommonFields(fold, setting);
+        var (previewToggle, colField) = AddShapeSettingControls(fold, setting);
 
         enumField.RegisterValueChangedCallback(evt =>
         {
-            setting.option = (ClassificationOption)evt.newValue;
-            UpdatePreview();
-            UpdateUI(setting, fold, previewToggle, colField);
+            setting.flags = (TileShapeFlags)evt.newValue;
+            RefreshPreview();
+            RefreshFoldoutUI(setting, fold, previewToggle, colField);
         });
 
-        UpdateUI(setting, fold, previewToggle, colField);
+        RefreshFoldoutUI(setting, fold, previewToggle, colField);
         parent.Add(fold);
         return fold;
     }
 
-    void UpdateUI(ClassificationSetting setting, Foldout fold,
+    void RefreshFoldoutUI(TileShapeSetting setting, Foldout fold,
         Toggle previewToggle, ColorField colField)
     {
-        var opt = setting.option;
+        var opt = setting.flags;
 
         var exist = fold.Q<HelpBox>();
         if (exist != null) fold.Remove(exist);
@@ -202,25 +202,25 @@ public class TilemapSplitterWindow : EditorWindow
         string msg = null;
         string helpV = "The canPreview complies with VerticalEdge settings.";
         string helpH = "The canPreview complies with HorizontalEdge settings.";
-        if      (opt.HasFlag(ClassificationOption.VerticalEdge))   msg = helpV;
-        else if (opt.HasFlag(ClassificationOption.HorizontalEdge)) msg = helpH;
+        if      (opt.HasFlag(TileShapeFlags.VerticalEdge))   msg = helpV;
+        else if (opt.HasFlag(TileShapeFlags.HorizontalEdge)) msg = helpH;
 
         if (string.IsNullOrEmpty(msg) == false)
         {
             fold.Add(new HelpBox(msg, HelpBoxMessageType.Info));
         }
 
-        bool isVisible = opt.HasFlag(ClassificationOption.Independent);
+        bool isVisible = opt.HasFlag(TileShapeFlags.Independent);
         previewToggle.visible = isVisible;
         colField.visible      = isVisible;
     }
 
-    private void UpdatePreview()
+    private void RefreshPreview()
     {
         if (original == null) return;
-        result = TilemapClassifier.Classify(original, settings);
-        previewDrawer.Initialize(original, settings);
-        previewDrawer.SetResult(result);
+        result = TileShapeClassifier.Classify(original, settings);
+        previewDrawer.Setup(original, settings);
+        previewDrawer.SetShapeResult(result);
         SceneView.RepaintAll();
         UpdateFoldoutTitles();
     }
@@ -229,12 +229,12 @@ public class TilemapSplitterWindow : EditorWindow
     {
         var list = new (Foldout f, string name, int count)[]
         {
-            (verticalEdgeFO,   "VerticalEdge",   result.VerticalEdges.Count),
-            (horizontalEdgeFO, "HorizontalEdge", result.HorizontalEdges.Count),
-            (crossFO,          "CrossTiles",     result.CrossTiles.Count),
-            (tJunctionFO,      "TJunctionTiles", result.TJunctionTiles.Count),
-            (cornerFO,         "CornerTiles",    result.CornerTiles.Count),
-            (isolateFO,        "IsolateTiles",   result.IsolateTiles.Count),
+            (verticalEdgeFoldOut,   "VerticalEdge",   result.VerticalEdges.Count),
+            (horizontalEdgeFoldOut, "HorizontalEdge", result.HorizontalEdges.Count),
+            (crossFoldOut,          "CrossTiles",     result.CrossTiles.Count),
+            (tJunctionFoldOut,      "TJunctionTiles", result.TJunctionTiles.Count),
+            (cornerFoldOut,         "CornerTiles",    result.CornerTiles.Count),
+            (isolateFoldOut,        "IsolateTiles",   result.IsolateTiles.Count),
         };
         foreach (var (f, name, count) in list)
         {

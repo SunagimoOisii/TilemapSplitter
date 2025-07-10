@@ -4,14 +4,14 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 
 [Flags]
-public enum ClassificationOption
+public enum TileShapeFlags
 {
     VerticalEdge   = 1 << 0,
     HorizontalEdge = 1 << 1,
     Independent    = 1 << 2,
 }
 
-public enum SettingType
+public enum TileShapeType
 {
     VerticalEdge = 0,
     HorizontalEdge,
@@ -21,19 +21,19 @@ public enum SettingType
     Isolate,
 }
 
-public class ClassificationSetting
+public class TileShapeSetting
 {
-    public ClassificationOption option;
+    public TileShapeFlags flags;
     public int    layer;
     public string tag        = "Untagged";
     public bool   canPreview = true;
-    public Color  color;
+    public Color  previewColor;
 }
 
 /// <summary>
 /// 各分類に沿ったリストへタイルが格納される
 /// </summary>
-public class ClassificationResult
+public class TileShapeResult
 {
     public readonly List<Vector3Int> VerticalEdges   = new();
     public readonly List<Vector3Int> HorizontalEdges = new();
@@ -43,14 +43,14 @@ public class ClassificationResult
     public readonly List<Vector3Int> IsolateTiles    = new();
 }
 
-public static class TilemapClassifier
+public static class TileShapeClassifier
 {
     /// <summary>
     /// Tilemap のタイル配置を解析し分類結果を返す
     /// </summary>
-    public static ClassificationResult Classify(Tilemap tilemap, ClassificationSetting[] settings)
+    public static TileShapeResult Classify(Tilemap tilemap, TileShapeSetting[] settings)
     {
-        var result = new ClassificationResult();
+        var result = new TileShapeResult();
 
         //空セル分だけ cellBounds 縮小
         tilemap.CompressBounds();
@@ -76,10 +76,10 @@ public static class TilemapClassifier
             }
         }
 
-        //各タイルの近傍判定
+        //各セルの近傍判定
         foreach (var pos in occupiedCellPositions)
         {
-            ClassifyTileNeighbors(pos, occupiedCellPositions, settings, result);
+            ClassifyCellNeighbors(pos, occupiedCellPositions, settings, result);
         }
 
         return result;
@@ -88,14 +88,14 @@ public static class TilemapClassifier
     /// <summary>
     /// 指定セルの4近傍から分類を行う
     /// </summary>
-    private static void ClassifyTileNeighbors(Vector3Int pos, HashSet<Vector3Int> tiles,
-        ClassificationSetting[] settings, ClassificationResult result)
+    private static void ClassifyCellNeighbors(Vector3Int pos, HashSet<Vector3Int> cells,
+        TileShapeSetting[] settings, TileShapeResult result)
     {
         //隣接タイルの有無を調査
-        bool up    = tiles.Contains(pos + Vector3Int.up);
-        bool down  = tiles.Contains(pos + Vector3Int.down);
-        bool left  = tiles.Contains(pos + Vector3Int.left);
-        bool right = tiles.Contains(pos + Vector3Int.right);
+        bool up    = cells.Contains(pos + Vector3Int.up);
+        bool down  = cells.Contains(pos + Vector3Int.down);
+        bool left  = cells.Contains(pos + Vector3Int.left);
+        bool right = cells.Contains(pos + Vector3Int.right);
         bool anyV  = up   || down;
         bool anyH  = left || right;
         int count  = (up ? 1 : 0) + (down ? 1 : 0) + (left ? 1 : 0) + (right ? 1 : 0);
@@ -103,19 +103,19 @@ public static class TilemapClassifier
         //分類ごとにリストへ追加する
         if (count == 4) //Cross
         {
-            ApplyClassification(pos, settings[(int)SettingType.Cross].option,
+            ApplyShapeFlags(pos, settings[(int)TileShapeType.Cross].flags,
                 result.CrossTiles, result.VerticalEdges, result.HorizontalEdges);
         }
         else if (count == 3) //TJunction
         {
-            ApplyClassification(pos, settings[(int)SettingType.TJunction].option,
+            ApplyShapeFlags(pos, settings[(int)TileShapeType.TJunction].flags,
                 result.TJunctionTiles, result.VerticalEdges, result.HorizontalEdges);
         }
         else if (count == 2 && //Corner
                  anyV &&
                  anyH)
         {
-            ApplyClassification(pos, settings[(int)SettingType.Corner].option,
+            ApplyShapeFlags(pos, settings[(int)TileShapeType.Corner].flags,
                 result.CornerTiles, result.VerticalEdges, result.HorizontalEdges);
         }
         else if (anyV && //VerticalEdge
@@ -130,7 +130,7 @@ public static class TilemapClassifier
         }
         else if (count == 0) //Isolate
         {
-            ApplyClassification(pos, settings[(int)SettingType.Isolate].option,
+            ApplyShapeFlags(pos, settings[(int)TileShapeType.Isolate].flags,
                 result.IsolateTiles, result.VerticalEdges, result.HorizontalEdges);
         }
     }
@@ -138,11 +138,11 @@ public static class TilemapClassifier
     /// <summary>
     /// 設定に従って各リストへ追加
     /// </summary>
-    private static void ApplyClassification(Vector3Int pos, ClassificationOption opt,
+    private static void ApplyShapeFlags(Vector3Int pos, TileShapeFlags flags,
         List<Vector3Int> indep, List<Vector3Int> vList, List<Vector3Int> hList)
     {
-        if (opt.HasFlag(ClassificationOption.VerticalEdge))   vList?.Add(pos);
-        if (opt.HasFlag(ClassificationOption.HorizontalEdge)) hList?.Add(pos);
-        if (opt.HasFlag(ClassificationOption.Independent))    indep?.Add(pos);
+        if (flags.HasFlag(TileShapeFlags.VerticalEdge))   vList?.Add(pos);
+        if (flags.HasFlag(TileShapeFlags.HorizontalEdge)) hList?.Add(pos);
+        if (flags.HasFlag(TileShapeFlags.Independent))    indep?.Add(pos);
     }
 }
