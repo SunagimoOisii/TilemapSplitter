@@ -31,16 +31,28 @@ public class TilemapPreviewDrawer
         if (tilemap == null || 
             result == null) return;
 
-        var list = new (List<Vector3Int> positions, Color c)[]
+        //各設定の取得
+        var v       = settings[(int)SettingType.VerticalEdge];
+        var h       = settings[(int)SettingType.HorizontalEdge];
+        var cross   = settings[(int)SettingType.Cross];
+        var t       = settings[(int)SettingType.TJunction];
+        var corner  = settings[(int)SettingType.Corner];
+        var isolate = settings[(int)SettingType.Isolate];
+
+        //設定色, プレビュー許可に応じて表示
+        var previewSettings = new (List<Vector3Int> positions, Color c, bool canPreview)[]
         {
-            (result.VerticalEdges,   settings[(int)SettingType.VerticalEdge].color),
-            (result.HorizontalEdges, settings[(int)SettingType.HorizontalEdge].color),
-            (result.CrossTiles,      settings[(int)SettingType.Cross].color),
-            (result.TJunctionTiles,  settings[(int)SettingType.TJunction].color),
-            (result.CornerTiles,     settings[(int)SettingType.Corner].color),
-            (result.IsolateTiles,    settings[(int)SettingType.Isolate].color)
+            (result.VerticalEdges,   v.color,       v.canPreview),
+            (result.HorizontalEdges, h.color,       h.canPreview),
+            (result.CrossTiles,      cross.color,   cross.canPreview),
+            (result.TJunctionTiles,  t.color ,      t.canPreview),
+            (result.CornerTiles,     corner.color,  corner.canPreview),
+            (result.IsolateTiles,    isolate.color, isolate.canPreview)
         };
-        foreach (var (positions, c) in list) DrawList(positions, c);
+        foreach (var (positions, c, canPreview) in previewSettings)
+        {
+            if(canPreview) DrawList(positions, c);
+        }
     }
 
     /// <summary>
