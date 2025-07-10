@@ -4,14 +4,14 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 
 [Flags]
-public enum TileShapeFlags
+internal enum TileShapeFlags
 {
     VerticalEdge   = 1 << 0,
     HorizontalEdge = 1 << 1,
     Independent    = 1 << 2,
 }
 
-public enum TileShapeType
+internal enum TileShapeType
 {
     VerticalEdge = 0,
     HorizontalEdge,
@@ -21,7 +21,7 @@ public enum TileShapeType
     Isolate,
 }
 
-public class TileShapeSetting
+internal class TileShapeSetting
 {
     public TileShapeFlags flags;
     public int    layer;
@@ -33,7 +33,7 @@ public class TileShapeSetting
 /// <summary>
 /// Maintain cell coordinates in each classification
 /// </summary>
-public class ShapeCells
+internal class ShapeCells
 {
     public readonly List<Vector3Int> VerticalEdgesCells   = new();
     public readonly List<Vector3Int> HorizontalEdgesCells = new();
@@ -43,7 +43,7 @@ public class ShapeCells
     public readonly List<Vector3Int> IsolateCells         = new();
 }
 
-public static class TileShapeClassifier
+internal static class TileShapeClassifier
 {
     /// <summary>
     /// Analyses the layout of the tilemap and returns the classification results

@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-public static class TilemapCreator
+internal static class TilemapCreator
 {
     private const string VerticalEdgeName   = "VerticalEdge";
     private const string HorizontalEdgeName = "HorizontalEdge";

@@ -6,7 +6,7 @@ using UnityEngine.Tilemaps;
 /// <summary>
 /// Class for previewing tile division results
 /// </summary>
-public class TilemapPreviewDrawer
+internal class TilemapPreviewDrawer
 {
     private Tilemap tilemap;
     private TileShapeSetting[] shapeSettings;

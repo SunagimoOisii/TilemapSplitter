@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 using UnityEngine.UIElements;
 
-public class TilemapSplitterWindow : EditorWindow
+internal class TilemapSplitterWindow : EditorWindow
 {
     private readonly TileShapeSetting[] settings = new TileShapeSetting[6]
     {
@@ -191,7 +191,7 @@ public class TilemapSplitterWindow : EditorWindow
         return fold;
     }
 
-    void RefreshFoldoutUI(TileShapeSetting setting, Foldout fold,
+    private void RefreshFoldoutUI(TileShapeSetting setting, Foldout fold,
         Toggle previewToggle, ColorField colField)
     {
         var opt = setting.flags;
