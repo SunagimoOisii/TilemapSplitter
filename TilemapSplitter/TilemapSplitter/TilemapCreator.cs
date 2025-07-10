@@ -79,9 +79,14 @@ public static class TilemapCreator
                 "the TilemapRenderer of the generated object was generated with the default settings.");
         }
 
-        //タイル配置
+        //元タイルの設定を生成タイルへコピー
         var tm = obj.GetComponent<Tilemap>();
-        foreach (var p in tilePositions) tm.SetTile(p, original.GetTile(p));
+        foreach (var p in tilePositions)
+        {
+            tm.SetTile(p, original.GetTile(p));
+            tm.SetColor(p, original.GetColor(p));
+            tm.SetTransformMatrix(p,original.GetTransformMatrix(p));
+        }
 
         Undo.RegisterCreatedObjectUndo(obj, "Create " + name);
     }
