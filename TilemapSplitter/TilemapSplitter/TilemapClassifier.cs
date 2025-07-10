@@ -51,19 +51,37 @@ public static class TilemapClassifier
     public static ClassificationResult Classify(Tilemap tilemap, ClassificationSetting[] settings)
     {
         var result = new ClassificationResult();
-        
-        //タイルが存在するセルのみを収集
-        var tiles = new HashSet<Vector3Int>();
-        foreach (var pos in tilemap.cellBounds.allPositionsWithin)
+
+        //空セル分だけ cellBounds 縮小
+        tilemap.CompressBounds();
+
+        //セル座標空間における境界ボックスと、その中の全タイルを取得(空白セル分は null)
+        var cellBounds    = tilemap.cellBounds;
+        var tilesInBounds = tilemap.GetTilesBlock(cellBounds);
+
+        //タイルが存在するセルのみコレクションに格納
+        int width  = cellBounds.size.x;
+        int height = cellBounds.size.y;
+        var occupiedCellPositions = new HashSet<Vector3Int>();
+        for (int y = 0; y < height; y++)
         {
-            if (tilemap.GetTile(pos) != null) tiles.Add(pos);
+            for (int x = 0; x < width; x++)
+            {
+                int index = x + y * width;
+                if (tilesInBounds[index] == null) continue;
+
+                //Bounds の最小座標をオフセットとしてワールド座標へ変換
+                var pos = new Vector3Int(cellBounds.xMin + x, cellBounds.yMin + y, cellBounds.zMin);
+                occupiedCellPositions.Add(pos);
+            }
         }
 
         //各タイルの近傍判定
-        foreach (var pos in tiles)
+        foreach (var pos in occupiedCellPositions)
         {
-            ClassifyTileNeighbors(pos, tiles, settings, result);
+            ClassifyTileNeighbors(pos, occupiedCellPositions, settings, result);
         }
+
         return result;
     }
 
