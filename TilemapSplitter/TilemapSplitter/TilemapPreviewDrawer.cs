@@ -9,19 +9,16 @@ using UnityEngine.Tilemaps;
 public class TilemapPreviewDrawer
 {
     private Tilemap tilemap;
-    private ClassificationSetting[] settings;
-    private ClassificationResult result;
+    private TileShapeSetting[] shapeSettings;
+    private ShapeCells shapeCells;
 
-    /// <summary>
-    /// 分割対象と設定を登録
-    /// </summary>
-    public void Initialize(Tilemap tm, ClassificationSetting[] settings)
+    public void Setup(Tilemap original, TileShapeSetting[] settings)
     {
-        tilemap = tm;
-        this.settings = settings;
+        tilemap       = original;
+        shapeSettings = settings;
     }
 
-    public void SetResult(ClassificationResult result) => this.result = result;
+    public void SetShapeResult(ShapeCells sc) => shapeCells = sc;
 
     public void Register()   => SceneView.duringSceneGui += OnSceneGUI;
     public void Unregister() => SceneView.duringSceneGui -= OnSceneGUI;
@@ -29,42 +26,39 @@ public class TilemapPreviewDrawer
     private void OnSceneGUI(SceneView sv)
     {
         if (tilemap == null || 
-            result == null) return;
+            shapeCells == null) return;
 
         //各設定の取得
-        var v       = settings[(int)SettingType.VerticalEdge];
-        var h       = settings[(int)SettingType.HorizontalEdge];
-        var cross   = settings[(int)SettingType.Cross];
-        var t       = settings[(int)SettingType.TJunction];
-        var corner  = settings[(int)SettingType.Corner];
-        var isolate = settings[(int)SettingType.Isolate];
+        var v       = shapeSettings[(int)TileShapeType.VerticalEdge];
+        var h       = shapeSettings[(int)TileShapeType.HorizontalEdge];
+        var cross   = shapeSettings[(int)TileShapeType.Cross];
+        var t       = shapeSettings[(int)TileShapeType.TJunction];
+        var corner  = shapeSettings[(int)TileShapeType.Corner];
+        var isolate = shapeSettings[(int)TileShapeType.Isolate];
 
         //設定色, プレビュー許可に応じて表示
-        var previewSettings = new (List<Vector3Int> positions, Color c, bool canPreview)[]
+        var previewSettings = new (List<Vector3Int> cells, Color c, bool canPreview)[]
         {
-            (result.VerticalEdges,   v.color,       v.canPreview),
-            (result.HorizontalEdges, h.color,       h.canPreview),
-            (result.CrossTiles,      cross.color,   cross.canPreview),
-            (result.TJunctionTiles,  t.color ,      t.canPreview),
-            (result.CornerTiles,     corner.color,  corner.canPreview),
-            (result.IsolateTiles,    isolate.color, isolate.canPreview)
+            (shapeCells.VerticalEdgesCells,   v.previewColor,       v.canPreview),
+            (shapeCells.HorizontalEdgesCells, h.previewColor,       h.canPreview),
+            (shapeCells.CrossCells,           cross.previewColor,   cross.canPreview),
+            (shapeCells.TJunctionCells,       t.previewColor ,      t.canPreview),
+            (shapeCells.CornerCells,          corner.previewColor,  corner.canPreview),
+            (shapeCells.IsolateCells,         isolate.previewColor, isolate.canPreview)
         };
-        foreach (var (positions, c, canPreview) in previewSettings)
+        foreach (var (cells, c, canPreview) in previewSettings)
         {
-            if(canPreview) DrawList(positions, c);
+            if(canPreview) DrawCellPreviews(cells, c);
         }
     }
 
-    /// <summary>
-    /// 各セルを指定色で描画
-    /// </summary>
-    private void DrawList(List<Vector3Int> positions, Color c)
+    private void DrawCellPreviews(List<Vector3Int> cells, Color c)
     {
         Handles.color = new Color(c.r, c.g, c.b, 0.4f);
         var cellSize  = tilemap.cellSize;
-        foreach (var pos in positions)
+        foreach (var cell in cells)
         {
-            var worldPos = tilemap.CellToWorld(pos) + new Vector3(cellSize.x / 2f, cellSize.y / 2f);
+            var worldPos = tilemap.CellToWorld(cell) + new Vector3(cellSize.x / 2f, cellSize.y / 2f);
             var rect = new Rect(
                 worldPos.x - cellSize.x / 2f, worldPos.y - cellSize.y / 2f,
                 cellSize.x, cellSize.y);

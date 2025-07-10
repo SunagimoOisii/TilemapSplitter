@@ -12,52 +12,53 @@ public static class TilemapCreator
     private const string CornerTileName     = "CornerTiles";
     private const string IsolateTileName    = "IsolateTiles";
 
-    /// <summary>
-    /// Tilemap を分割し、新しい Tilemap オブジェクトを生成
-    /// </summary>
-    public static void Create(Tilemap original, ClassificationResult result,
-        ClassificationSetting[] settings, bool mergeEdges)
+    public static void GenerateSplitTilemaps(Tilemap original, ShapeCells sCells,
+        TileShapeSetting[] settings, bool mergeEdges)
     {
         if (mergeEdges)
         {
-            var merged = new List<Vector3Int>(result.VerticalEdges);
-            merged.AddRange(result.HorizontalEdges);
-            var v = settings[(int)SettingType.VerticalEdge];
-            CreateTiles(original, ClassificationOption.Independent, "EdgeTiles", merged, v.layer, v.tag);
+            var merged = new List<Vector3Int>(sCells.VerticalEdgesCells);
+            merged.AddRange(sCells.HorizontalEdgesCells);
+            var v = settings[(int)TileShapeType.VerticalEdge];
+            CreateTilemapObjForCells(original, TileShapeFlags.Independent, "EdgeTiles", merged,
+                v.layer, v.tag);
         }
         else
         {
-            var v = settings[(int)SettingType.VerticalEdge];
-            var h = settings[(int)SettingType.HorizontalEdge];
-            CreateTiles(original, v.option, VerticalEdgeName, result.VerticalEdges, v.layer, v.tag);
-            CreateTiles(original, h.option, HorizontalEdgeName, result.HorizontalEdges, h.layer, h.tag);
+            var v = settings[(int)TileShapeType.VerticalEdge];
+            var h = settings[(int)TileShapeType.HorizontalEdge];
+            CreateTilemapObjForCells(original, v.flags, VerticalEdgeName,   sCells.VerticalEdgesCells,
+                v.layer, v.tag);
+            CreateTilemapObjForCells(original, h.flags, HorizontalEdgeName, sCells.HorizontalEdgesCells,
+                h.layer, h.tag);
         }
 
-        var cross   = settings[(int)SettingType.Cross];
-        var t       = settings[(int)SettingType.TJunction];
-        var corner  = settings[(int)SettingType.Corner];
-        var isolate = settings[(int)SettingType.Isolate];
+        var cross   = settings[(int)TileShapeType.Cross];
+        var t       = settings[(int)TileShapeType.TJunction];
+        var corner  = settings[(int)TileShapeType.Corner];
+        var isolate = settings[(int)TileShapeType.Isolate];
 
-        CreateTiles(original, cross.option,   CrossTileName,     result.CrossTiles,   cross.layer,   cross.tag);
-        CreateTiles(original, t.option,       TJunctionTileName, result.TJunctionTiles, t.layer,       t.tag);
-        CreateTiles(original, corner.option,  CornerTileName,    result.CornerTiles,  corner.layer,  corner.tag);
-        CreateTiles(original, isolate.option, IsolateTileName,   result.IsolateTiles, isolate.layer, isolate.tag);
+        CreateTilemapObjForCells(original, cross.flags,   CrossTileName,     sCells.CrossCells,
+            cross.layer,   cross.tag);
+        CreateTilemapObjForCells(original, t.flags,       TJunctionTileName, sCells.TJunctionCells,
+            t.layer,       t.tag);
+        CreateTilemapObjForCells(original, corner.flags,  CornerTileName,    sCells.CornerCells,
+            corner.layer,  corner.tag);
+        CreateTilemapObjForCells(original, isolate.flags, IsolateTileName,   sCells.IsolateCells,
+            isolate.layer, isolate.tag);
     }
 
-    /// <summary>
-    /// タイル座標リスト通りの Tilemap を持つ GameObject を生成
-    /// </summary>
-    private static void CreateTiles(Tilemap original, ClassificationOption opt, string name,
-        List<Vector3Int> tilePositions, int layer, string tag)
+    private static void CreateTilemapObjForCells(Tilemap original, TileShapeFlags flags, string name,
+        List<Vector3Int> cells, int layer, string tag)
     {
-        if (tilePositions == null || 
-            tilePositions.Count == 0) return;
+        if (cells == null || 
+            cells.Count == 0) return;
 
         //Independent が必要な場合、設定になければ生成中断
-        bool isRequiredIndependentOption = name == CrossTileName  || name == TJunctionTileName ||
-                                           name == CornerTileName || name == IsolateTileName;
-        if (isRequiredIndependentOption && 
-            opt.HasFlag(ClassificationOption.Independent) == false) return;
+        bool isRequiredIndependentFlag = name == CrossTileName  || name == TJunctionTileName ||
+                                         name == CornerTileName || name == IsolateTileName;
+        if (isRequiredIndependentFlag && 
+            flags.HasFlag(TileShapeFlags.Independent) == false) return;
 
         //Tilemap, TilemapRenderer を持つ GameObject 生成
         //生成元の Transform 設定を引継ぎつつ、レイヤー等を指定のものに変更
@@ -79,18 +80,18 @@ public static class TilemapCreator
         else
         {
             Debug.LogWarning("Since TilemapRenderer is not attached to the split target, " +
-                "the TilemapRenderer of the generated object was generated with the default settings.");
+                "the TilemapRenderer of the generated object was generated with the default shapeSettings.");
         }
 
         //生成元タイルの情報を、対応する生成タイルへコピー
         var tm = obj.GetComponent<Tilemap>();
-        foreach (var p in tilePositions)
+        foreach (var cell in cells)
         {
-            tm.SetTile(p, original.GetTile(p));
-            tm.SetColor(p, original.GetColor(p));
-            tm.SetTransformMatrix(p,original.GetTransformMatrix(p));
+            tm.SetTile(cell, original.GetTile(cell));
+            tm.SetColor(cell, original.GetColor(cell));
+            tm.SetTransformMatrix(cell,original.GetTransformMatrix(cell));
         }
 
-        Undo.RegisterCreatedObjectUndo(obj, "Create " + name);
+        Undo.RegisterCreatedObjectUndo(obj, "GenerateSplitTilemaps " + name);
     }
 }
