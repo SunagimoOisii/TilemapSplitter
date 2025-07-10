@@ -1,1 +1,3 @@
-*.cs text working-tree-encoding=UTF-8
+* text=auto eol=lf
+*.cs  text working-tree-encoding=UTF-8
+*.md  text working-tree-encoding=UTF-8
