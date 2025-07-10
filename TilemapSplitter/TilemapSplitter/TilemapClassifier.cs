@@ -30,6 +30,9 @@ public class ClassificationSetting
     public Color  color;
 }
 
+/// <summary>
+/// 各分類に沿ったリストへタイルが格納される
+/// </summary>
 public class ClassificationResult
 {
     public readonly List<Vector3Int> VerticalEdges   = new();

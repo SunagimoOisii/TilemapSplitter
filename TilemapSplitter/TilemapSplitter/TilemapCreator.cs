@@ -12,6 +12,9 @@ public static class TilemapCreator
     private const string CornerTileName     = "CornerTiles";
     private const string IsolateTileName    = "IsolateTiles";
 
+    /// <summary>
+    /// Tilemap を分割し、新しい Tilemap オブジェクトを生成
+    /// </summary>
     public static void Create(Tilemap original, ClassificationResult result,
         ClassificationSetting[] settings, bool mergeEdges)
     {
@@ -19,8 +22,8 @@ public static class TilemapCreator
         {
             var merged = new List<Vector3Int>(result.VerticalEdges);
             merged.AddRange(result.HorizontalEdges);
-            var s = settings[(int)SettingType.VerticalEdge];
-            CreateTiles(original, ClassificationOption.Independent, "EdgeTiles", merged, s.layer, s.tag);
+            var v = settings[(int)SettingType.VerticalEdge];
+            CreateTiles(original, ClassificationOption.Independent, "EdgeTiles", merged, v.layer, v.tag);
         }
         else
         {
@@ -41,20 +44,29 @@ public static class TilemapCreator
         CreateTiles(original, isolate.option, IsolateTileName,   result.IsolateTiles, isolate.layer, isolate.tag);
     }
 
+    /// <summary>
+    /// タイル座標リスト通りの Tilemap を持つ GameObject を生成
+    /// </summary>
     private static void CreateTiles(Tilemap original, ClassificationOption opt, string name,
-        List<Vector3Int> data, int layer, string tag)
+        List<Vector3Int> tilePositions, int layer, string tag)
     {
-        if (data == null || data.Count == 0) return;
+        if (tilePositions == null || 
+            tilePositions.Count == 0) return;
 
-        bool requiresIndependent = name == CrossTileName  || name == TJunctionTileName ||
-                                   name == CornerTileName || name == IsolateTileName;
-        if (requiresIndependent && opt.HasFlag(ClassificationOption.Independent) == false) return;
+        //Independent が必要な場合、設定になければ生成しない
+        bool isRequiredIndependentOption = name == CrossTileName  || name == TJunctionTileName ||
+                                           name == CornerTileName || name == IsolateTileName;
+        if (isRequiredIndependentOption && 
+            opt.HasFlag(ClassificationOption.Independent) == false) return;
 
+        //Tilemap, TilemapRenderer を持つ GameObject 生成
+        //レイヤー等を指定のものに変更
         var obj = new GameObject(name, typeof(Tilemap), typeof(TilemapRenderer));
         obj.transform.SetParent(original.transform.parent, false);
         obj.layer = layer;
         obj.tag   = tag;
 
+        //分割元に TilemapRenderer があればその設定を一致させる
         var renderer = obj.GetComponent<TilemapRenderer>();
         if (original.TryGetComponent<TilemapRenderer>(out var oriRenderer))
         {
@@ -63,11 +75,13 @@ public static class TilemapCreator
         }
         else
         {
-            Debug.LogWarning("Since TilemapRenderer is not attached to the split target, the TilemapRenderer of the generated object was generated with the default settings.");
+            Debug.LogWarning("Since TilemapRenderer is not attached to the split target, " +
+                "the TilemapRenderer of the generated object was generated with the default settings.");
         }
 
+        //タイル配置
         var tm = obj.GetComponent<Tilemap>();
-        foreach (var p in data) tm.SetTile(p, original.GetTile(p));
+        foreach (var p in tilePositions) tm.SetTile(p, original.GetTile(p));
 
         Undo.RegisterCreatedObjectUndo(obj, "Create " + name);
     }
