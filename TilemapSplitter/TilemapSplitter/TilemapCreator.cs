@@ -53,16 +53,19 @@ public static class TilemapCreator
         if (tilePositions == null || 
             tilePositions.Count == 0) return;
 
-        //Independent が必要な場合、設定になければ生成しない
+        //Independent が必要な場合、設定になければ生成中断
         bool isRequiredIndependentOption = name == CrossTileName  || name == TJunctionTileName ||
                                            name == CornerTileName || name == IsolateTileName;
         if (isRequiredIndependentOption && 
             opt.HasFlag(ClassificationOption.Independent) == false) return;
 
         //Tilemap, TilemapRenderer を持つ GameObject 生成
-        //レイヤー等を指定のものに変更
+        //生成元の Transform 設定を引継ぎつつ、レイヤー等を指定のものに変更
         var obj = new GameObject(name, typeof(Tilemap), typeof(TilemapRenderer));
         obj.transform.SetParent(original.transform.parent, false);
+        obj.transform.SetLocalPositionAndRotation(original.transform.localPosition, 
+            original.transform.localRotation);
+        obj.transform.localScale = original.transform.localScale;
         obj.layer = layer;
         obj.tag   = tag;
 
@@ -79,7 +82,7 @@ public static class TilemapCreator
                 "the TilemapRenderer of the generated object was generated with the default settings.");
         }
 
-        //タイル配置
+        //生成元タイルの情報を、対応する生成タイルへコピー
         var tm = obj.GetComponent<Tilemap>();
         foreach (var p in tilePositions)
         {
