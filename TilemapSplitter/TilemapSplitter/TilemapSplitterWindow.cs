@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 using UnityEngine.UIElements;
 
+
 public class TilemapSplitterWindow : EditorWindow
 {
     [Flags]
@@ -55,12 +56,7 @@ public class TilemapSplitterWindow : EditorWindow
     private Foldout isolateFO;
 
     private Tilemap original;
-    private readonly List<Vector3Int> previewVertTiles    = new();
-    private readonly List<Vector3Int> previewHorTiles     = new();
-    private readonly List<Vector3Int> previewCrossTiles   = new();
-    private readonly List<Vector3Int> previewTTiles       = new();
-    private readonly List<Vector3Int> previewCornerTiles  = new();
-    private readonly List<Vector3Int> previewIsolateTiles = new();
+    private TilemapClassificationResult classification = new();
 
     //文字列リテラルの回避に使用
     private const string VerticalEdgeName   = "VerticalEdge";
@@ -266,33 +262,33 @@ public class TilemapSplitterWindow : EditorWindow
         var isolate = GetSetting(SettingType.Isolate);
 
         //各エッジ, タイルオブジェクトを作成
-        if (canMergeEdges) //縦横エッジ統合
+        if (canMergeEdges)
         {
-            var merged = new List<Vector3Int>(previewVertTiles);
-            merged.AddRange(previewHorTiles);
+            var merged = new List<Vector3Int>(classification.VerticalEdges);
+            merged.AddRange(classification.HorizontalEdges);
             CreateTiles(ClassificationOption.Independent, "EdgeTiles", merged, v.layer, v.tag);
         }
         else
         {
-            CreateTiles(v.option, VerticalEdgeName,   previewVertTiles, v.layer, v.tag);
-            CreateTiles(h.option, HorizontalEdgeName, previewHorTiles,  h.layer, h.tag);
+            CreateTiles(v.option, VerticalEdgeName,   classification.VerticalEdges,   v.layer, v.tag);
+            CreateTiles(h.option, HorizontalEdgeName, classification.HorizontalEdges, h.layer, h.tag);
         }
-        CreateTiles(cross.option,   CrossTileName,     previewCrossTiles,   cross.layer,   cross.tag);
-        CreateTiles(t.option,       TJunctionTileName, previewTTiles,       t.layer,       t.tag);
-        CreateTiles(corner.option,  CornerTileName,    previewCornerTiles,  corner.layer,  corner.tag);
-        CreateTiles(isolate.option, IsolateTileName,   previewIsolateTiles, isolate.layer, isolate.tag);
+        CreateTiles(cross.option,   CrossTileName,     classification.CrossTiles,    cross.layer,   cross.tag);
+        CreateTiles(t.option,       TJunctionTileName, classification.TJunctionTiles, t.layer,       t.tag);
+        CreateTiles(corner.option,  CornerTileName,    classification.CornerTiles,   corner.layer,  corner.tag);
+        CreateTiles(isolate.option, IsolateTileName,   classification.IsolateTiles,  isolate.layer, isolate.tag);
     }
 
     private void UpdateFoldoutTitles()
     {
         var list = new (Foldout f, string name, int count)[]
         {
-            (verticalEdgeFO,   VerticalEdgeName,   previewVertTiles.Count),
-            (horizontalEdgeFO, HorizontalEdgeName, previewHorTiles.Count),
-            (crossFO,          CrossTileName,      previewCrossTiles.Count),
-            (tJunctionFO,      TJunctionTileName,  previewTTiles.Count),
-            (cornerFO,         CornerTileName,     previewCornerTiles.Count),
-            (isolateFO,        IsolateTileName,    previewIsolateTiles.Count),
+            (verticalEdgeFO,   VerticalEdgeName,   classification.VerticalEdges.Count),
+            (horizontalEdgeFO, HorizontalEdgeName, classification.HorizontalEdges.Count),
+            (crossFO,          CrossTileName,      classification.CrossTiles.Count),
+            (tJunctionFO,      TJunctionTileName,  classification.TJunctionTiles.Count),
+            (cornerFO,         CornerTileName,     classification.CornerTiles.Count),
+            (isolateFO,        IsolateTileName,    classification.IsolateTiles.Count),
         };
         foreach (var (f, name, count) in list)
         {
@@ -300,7 +296,7 @@ public class TilemapSplitterWindow : EditorWindow
         }
     }
 
-    private void CreateTiles(ClassificationOption opt, string name, List<Vector3Int> data, 
+    private void CreateTiles(ClassificationOption opt, string name, List<Vector3Int> data,
         int layer, string tag)
     {
         if (data == null ||
@@ -311,77 +307,7 @@ public class TilemapSplitterWindow : EditorWindow
         if (requiresIndependent &&
             opt.HasFlag(ClassificationOption.Independent) == false) return;
 
-        var obj = new GameObject(name, typeof(Tilemap), typeof(TilemapRenderer));
-        obj.transform.SetParent(original.transform.parent, false);
-        obj.layer = layer;
-        obj.tag   = tag;
-
-        var renderer = obj.GetComponent<TilemapRenderer>();
-        if (original.TryGetComponent<TilemapRenderer>(out var oriRenderer))
-        {
-            renderer.sortingLayerID = oriRenderer.sortingLayerID;
-            renderer.sortingOrder   = oriRenderer.sortingOrder;
-        }
-        else Debug.LogWarning("Since TilemapRenderer is not attached to the split target," +
-            "the TilemapRenderer of the generated object was generated with the default settings.");
-
-        var tm = obj.GetComponent<Tilemap>();
-        foreach(var p in data) tm.SetTile(p, original.GetTile(p));
-
-        Undo.RegisterCreatedObjectUndo(obj, "Create " + name);
-    }
-
-    private void ClassifyTileNeighbors(Vector3Int pos, HashSet<Vector3Int> tiles)
-    {
-        //各方向隣接チェック
-        bool up    = tiles.Contains(pos + Vector3Int.up);
-        bool down  = tiles.Contains(pos + Vector3Int.down);
-        bool left  = tiles.Contains(pos + Vector3Int.left);
-        bool right = tiles.Contains(pos + Vector3Int.right);
-        bool anyV  = up   || down;
-        bool anyH  = left || right;
-        int count  = (up ? 1 : 0) + (down ? 1 : 0) + (left ? 1 : 0) + (right ? 1 : 0);
-
-        if (count == 4) //交差タイル
-        {
-            ApplyClassification(pos, settings[2].option, previewCrossTiles,
-                previewVertTiles, previewHorTiles);
-        }
-        else if (count == 3) //T字タイル
-        {
-            ApplyClassification(pos, settings[3].option, previewTTiles,
-                previewVertTiles, previewHorTiles);
-        }
-        else if (count == 2 && //角タイル
-                 anyV &&
-                 anyH)
-        {
-            ApplyClassification(pos, settings[4].option, previewCornerTiles,
-                previewVertTiles, previewHorTiles);
-        }
-        else if (anyV && //縦エッジ
-                 anyH == false)
-        {
-            previewVertTiles.Add(pos);
-        }
-        else if (anyH && //横エッジ
-                 anyV == false)
-        {
-            previewHorTiles.Add(pos);
-        }
-        else if (count == 0) //孤立タイル
-        {
-            ApplyClassification(pos, settings[5].option, previewIsolateTiles,
-                previewVertTiles, previewHorTiles);
-        }
-    }
-
-    private static void ApplyClassification(Vector3Int pos, ClassificationOption opt,
-        List<Vector3Int> indep, List<Vector3Int> vList, List<Vector3Int> hList)
-    {
-        if (opt.HasFlag(ClassificationOption.VerticalEdge))    vList?.Add(pos);
-        if (opt.HasFlag(ClassificationOption.HorizontalEdge))  hList?.Add(pos);
-        if (opt.HasFlag(ClassificationOption.Independent))     indep?.Add(pos);
+        TilemapCreator.CreateTiles(original, data, name, layer, tag);
     }
 
     #region プレビュー機能
@@ -393,52 +319,19 @@ public class TilemapSplitterWindow : EditorWindow
     {
         if (original == null) return;
 
-        if (settings[0].canPreview) DrawPreviewList(previewVertTiles,    settings[0].color);
-        if (settings[1].canPreview) DrawPreviewList(previewHorTiles,     settings[1].color);
-        if (settings[2].canPreview) DrawPreviewList(previewCrossTiles,   settings[2].color);
-        if (settings[3].canPreview) DrawPreviewList(previewTTiles,       settings[3].color);
-        if (settings[4].canPreview) DrawPreviewList(previewCornerTiles,  settings[4].color);
-        if (settings[5].canPreview) DrawPreviewList(previewIsolateTiles, settings[5].color);
-    }
-
-    private void DrawPreviewList(List<Vector3Int> list, Color col)
-    {
-        Handles.color = new Color(col.r, col.g, col.b, 0.4f);
-        var cellSize = original.cellSize;
-        foreach(var pos in list)
-        {
-            Vector3 worldPos = original.CellToWorld(pos) + new Vector3(cellSize.x / 2f, cellSize.y / 2f);
-            Rect rect = new(
-                worldPos.x - cellSize.x / 2f,
-                worldPos.y - cellSize.y / 2f,
-                cellSize.x,
-                cellSize.y);
-            Handles.DrawSolidRectangleWithOutline(rect, Handles.color, Color.clear);
-        }
+        if (settings[0].canPreview) TilemapPreviewDrawer.DrawPreviewList(original, classification.VerticalEdges,    settings[0].color);
+        if (settings[1].canPreview) TilemapPreviewDrawer.DrawPreviewList(original, classification.HorizontalEdges,  settings[1].color);
+        if (settings[2].canPreview) TilemapPreviewDrawer.DrawPreviewList(original, classification.CrossTiles,       settings[2].color);
+        if (settings[3].canPreview) TilemapPreviewDrawer.DrawPreviewList(original, classification.TJunctionTiles,   settings[3].color);
+        if (settings[4].canPreview) TilemapPreviewDrawer.DrawPreviewList(original, classification.CornerTiles,      settings[4].color);
+        if (settings[5].canPreview) TilemapPreviewDrawer.DrawPreviewList(original, classification.IsolateTiles,     settings[5].color);
     }
 
     private void UpdatePreview()
     {
         if (original == null) return;
 
-        var positions = new List<Vector3Int>();
-        foreach (var pos in original.cellBounds.allPositionsWithin)
-        {
-            if (original.GetTile(pos) != null) positions.Add(pos);
-        }
-
-        previewCrossTiles.Clear();
-        previewTTiles.Clear();
-        previewCornerTiles.Clear();
-        previewIsolateTiles.Clear();
-        previewVertTiles.Clear();
-        previewHorTiles.Clear();
-
-        var tiles = new HashSet<Vector3Int>(positions);
-        foreach (var pos in positions)
-        {
-            ClassifyTileNeighbors(pos, tiles);
-        }
+        classification = TilemapClassifier.Classify(original);
 
         SceneView.RepaintAll();
         UpdateFoldoutTitles();

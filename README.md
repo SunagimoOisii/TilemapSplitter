@@ -23,5 +23,11 @@ Unity 用 Tilemap 分割ツールです。タイルの接続状態を解析し�
 - **Unity 2023** 以降
 - .NET Standard 2.1
 
+## コード構成
+- `TilemapSplitterWindow.cs` : UI ロジック
+- `TilemapClassifier.cs` : タイル分類処理
+- `TilemapCreator.cs` : Tilemap 生成処理
+- `TilemapPreviewDrawer.cs` : プレビュー描画処理
+
 ## ライセンス
 このリポジトリは [CC0 1.0 Universal](LICENSE) の下で公開されています。
