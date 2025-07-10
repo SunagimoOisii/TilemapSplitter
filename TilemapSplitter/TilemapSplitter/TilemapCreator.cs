@@ -13,7 +13,7 @@ public static class TilemapCreator
     private const string IsolateTileName    = "IsolateTiles";
 
     /// <summary>
-    /// Tilemap ‚ğ•ªŠ„‚µAV‚µ‚¢ Tilemap ƒIƒuƒWƒFƒNƒg‚ğ¶¬
+    /// Tilemap ã‚’åˆ†å‰²ã—ã€æ–°ã—ã„ Tilemap ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’ç”Ÿæˆ
     /// </summary>
     public static void Create(Tilemap original, ClassificationResult result,
         ClassificationSetting[] settings, bool mergeEdges)
@@ -45,7 +45,7 @@ public static class TilemapCreator
     }
 
     /// <summary>
-    /// ƒ^ƒCƒ‹À•WƒŠƒXƒg’Ê‚è‚Ì Tilemap ‚ğ‚Â GameObject ‚ğ¶¬
+    /// ã‚¿ã‚¤ãƒ«åº§æ¨™ãƒªã‚¹ãƒˆé€šã‚Šã® Tilemap ã‚’æŒã¤ GameObject ã‚’ç”Ÿæˆ
     /// </summary>
     private static void CreateTiles(Tilemap original, ClassificationOption opt, string name,
         List<Vector3Int> tilePositions, int layer, string tag)
@@ -53,20 +53,20 @@ public static class TilemapCreator
         if (tilePositions == null || 
             tilePositions.Count == 0) return;
 
-        //Independent ‚ª•K—v‚Èê‡Aİ’è‚É‚È‚¯‚ê‚Î¶¬‚µ‚È‚¢
+        //Independent ãŒå¿…è¦ãªå ´åˆã€è¨­å®šã«ãªã‘ã‚Œã°ç”Ÿæˆã—ãªã„
         bool isRequiredIndependentOption = name == CrossTileName  || name == TJunctionTileName ||
                                            name == CornerTileName || name == IsolateTileName;
         if (isRequiredIndependentOption && 
             opt.HasFlag(ClassificationOption.Independent) == false) return;
 
-        //Tilemap, TilemapRenderer ‚ğ‚Â GameObject ¶¬
-        //ƒŒƒCƒ„[“™‚ğw’è‚Ì‚à‚Ì‚É•ÏX
+        //Tilemap, TilemapRenderer ã‚’æŒã¤ GameObject ç”Ÿæˆ
+        //ãƒ¬ã‚¤ãƒ¤ãƒ¼ç­‰ã‚’æŒ‡å®šã®ã‚‚ã®ã«å¤‰æ›´
         var obj = new GameObject(name, typeof(Tilemap), typeof(TilemapRenderer));
         obj.transform.SetParent(original.transform.parent, false);
         obj.layer = layer;
         obj.tag   = tag;
 
-        //•ªŠ„Œ³‚É TilemapRenderer ‚ª‚ ‚ê‚Î‚»‚Ìİ’è‚ğˆê’v‚³‚¹‚é
+        //åˆ†å‰²å…ƒã« TilemapRenderer ãŒã‚ã‚Œã°ãã®è¨­å®šã‚’ä¸€è‡´ã•ã›ã‚‹
         var renderer = obj.GetComponent<TilemapRenderer>();
         if (original.TryGetComponent<TilemapRenderer>(out var oriRenderer))
         {
@@ -79,7 +79,7 @@ public static class TilemapCreator
                 "the TilemapRenderer of the generated object was generated with the default settings.");
         }
 
-        //Œ³ƒ^ƒCƒ‹‚Ìİ’è‚ğ¶¬ƒ^ƒCƒ‹‚ÖƒRƒs[
+        //ã‚¿ã‚¤ãƒ«é…ç½®
         var tm = obj.GetComponent<Tilemap>();
         foreach (var p in tilePositions)
         {

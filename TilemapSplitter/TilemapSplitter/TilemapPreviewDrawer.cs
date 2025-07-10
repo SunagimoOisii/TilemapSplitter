@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 
 /// <summary>
-/// ƒ^ƒCƒ‹•ªŠ„Œ‹‰Ê‚ğ Scene ã‚ÅƒvƒŒƒrƒ…[•\¦‚·‚éƒNƒ‰ƒX
+/// ã‚¿ã‚¤ãƒ«åˆ†å‰²çµæœã‚’ Scene ä¸Šã§ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼è¡¨ç¤ºã™ã‚‹ã‚¯ãƒ©ã‚¹
 /// </summary>
 public class TilemapPreviewDrawer
 {
@@ -13,7 +13,7 @@ public class TilemapPreviewDrawer
     private ClassificationResult result;
 
     /// <summary>
-    /// •ªŠ„‘ÎÛ‚Æİ’è‚ğ“o˜^
+    /// åˆ†å‰²å¯¾è±¡ã¨è¨­å®šã‚’ç™»éŒ²
     /// </summary>
     public void Initialize(Tilemap tm, ClassificationSetting[] settings)
     {
@@ -44,7 +44,7 @@ public class TilemapPreviewDrawer
     }
 
     /// <summary>
-    /// ŠeƒZƒ‹‚ğw’èF‚Å•`‰æ
+    /// å„ã‚»ãƒ«ã‚’æŒ‡å®šè‰²ã§æç”»
     /// </summary>
     private void DrawList(List<Vector3Int> positions, Color c)
     {

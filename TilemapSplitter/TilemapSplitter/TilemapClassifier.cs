@@ -31,7 +31,7 @@ public class ClassificationSetting
 }
 
 /// <summary>
-/// Še•ª—Ş‚É‰ˆ‚Á‚½ƒŠƒXƒg‚Öƒ^ƒCƒ‹‚ªŠi”[‚³‚ê‚é
+/// å„åˆ†é¡ã«æ²¿ã£ãŸãƒªã‚¹ãƒˆã¸ã‚¿ã‚¤ãƒ«ãŒæ ¼ç´ã•ã‚Œã‚‹
 /// </summary>
 public class ClassificationResult
 {
@@ -46,20 +46,20 @@ public class ClassificationResult
 public static class TilemapClassifier
 {
     /// <summary>
-    /// Tilemap ‚Ìƒ^ƒCƒ‹”z’u‚ğ‰ğÍ‚µ•ª—ŞŒ‹‰Ê‚ğ•Ô‚·
+    /// Tilemap ã®ã‚¿ã‚¤ãƒ«é…ç½®ã‚’è§£æã—åˆ†é¡çµæœã‚’è¿”ã™
     /// </summary>
     public static ClassificationResult Classify(Tilemap tilemap, ClassificationSetting[] settings)
     {
         var result = new ClassificationResult();
         
-        //ƒ^ƒCƒ‹‚ª‘¶İ‚·‚éƒZƒ‹‚Ì‚İ‚ğûW
+        //ã‚¿ã‚¤ãƒ«ãŒå­˜åœ¨ã™ã‚‹ã‚»ãƒ«ã®ã¿ã‚’åé›†
         var tiles = new HashSet<Vector3Int>();
         foreach (var pos in tilemap.cellBounds.allPositionsWithin)
         {
             if (tilemap.GetTile(pos) != null) tiles.Add(pos);
         }
 
-        //Šeƒ^ƒCƒ‹‚Ì‹ß–T”»’è
+        //å„ã‚¿ã‚¤ãƒ«ã®è¿‘å‚åˆ¤å®š
         foreach (var pos in tiles)
         {
             ClassifyTileNeighbors(pos, tiles, settings, result);
@@ -68,12 +68,12 @@ public static class TilemapClassifier
     }
 
     /// <summary>
-    /// w’èƒZƒ‹‚Ì4‹ß–T‚©‚ç•ª—Ş‚ğs‚¤
+    /// æŒ‡å®šã‚»ãƒ«ã®4è¿‘å‚ã‹ã‚‰åˆ†é¡ã‚’è¡Œã†
     /// </summary>
     private static void ClassifyTileNeighbors(Vector3Int pos, HashSet<Vector3Int> tiles,
         ClassificationSetting[] settings, ClassificationResult result)
     {
-        //—×Úƒ^ƒCƒ‹‚Ì—L–³‚ğ’²¸
+        //éš£æ¥ã‚¿ã‚¤ãƒ«ã®æœ‰ç„¡ã‚’èª¿æŸ»
         bool up    = tiles.Contains(pos + Vector3Int.up);
         bool down  = tiles.Contains(pos + Vector3Int.down);
         bool left  = tiles.Contains(pos + Vector3Int.left);
@@ -82,7 +82,7 @@ public static class TilemapClassifier
         bool anyH  = left || right;
         int count  = (up ? 1 : 0) + (down ? 1 : 0) + (left ? 1 : 0) + (right ? 1 : 0);
 
-        //•ª—Ş‚²‚Æ‚ÉƒŠƒXƒg‚Ö’Ç‰Á‚·‚é
+        //åˆ†é¡ã”ã¨ã«ãƒªã‚¹ãƒˆã¸è¿½åŠ ã™ã‚‹
         if (count == 4) //Cross
         {
             ApplyClassification(pos, settings[(int)SettingType.Cross].option,
@@ -118,7 +118,7 @@ public static class TilemapClassifier
     }
 
     /// <summary>
-    /// İ’è‚É]‚Á‚ÄŠeƒŠƒXƒg‚Ö’Ç‰Á
+    /// è¨­å®šã«å¾“ã£ã¦å„ãƒªã‚¹ãƒˆã¸è¿½åŠ 
     /// </summary>
     private static void ApplyClassification(Vector3Int pos, ClassificationOption opt,
         List<Vector3Int> indep, List<Vector3Int> vList, List<Vector3Int> hList)

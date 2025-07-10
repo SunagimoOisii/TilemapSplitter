@@ -41,7 +41,7 @@ public class TilemapSplitterWindow : EditorWindow
     {
         var root = rootVisualElement;
 
-        //ScrollView, VisualElement ì¬, ’Ç‰Á
+        //ScrollView, VisualElement ä½œæˆ, è¿½åŠ 
         var scroll    = new ScrollView();
         var container = new VisualElement();
         container.style.flexDirection = FlexDirection.Column;
@@ -50,7 +50,7 @@ public class TilemapSplitterWindow : EditorWindow
         root.Add(scroll);
         scroll.Add(container);
 
-        //•ªŠ„‘ÎÛÝ’è UI ì¬, ’Ç‰Á
+        //åˆ†å‰²å¯¾è±¡è¨­å®š UI ä½œæˆ, è¿½åŠ 
         var originalField = new ObjectField("Split Tilemap");
         var helpBox       = new HelpBox("Select the subject of the division", HelpBoxMessageType.Info);
         helpBox.visible = (original == null);
@@ -67,7 +67,7 @@ public class TilemapSplitterWindow : EditorWindow
 
         AddSeparator(container);
 
-        //c‰¡ƒGƒbƒWÝ’è UI ì¬, ’Ç‰Á
+        //ç¸¦æ¨ªã‚¨ãƒƒã‚¸è¨­å®š UI ä½œæˆ, è¿½åŠ 
         var mergeToggle = new Toggle("Merge VerticalEdge, HorizontalEdge") { value = canMergeEdges };
         var mergeHB     = new HelpBox("When merging, VerticalEdge settings take precedence",
             HelpBoxMessageType.Info);
@@ -80,7 +80,7 @@ public class TilemapSplitterWindow : EditorWindow
         horizontalEdgeFO = CreateEdgeFoldout(container, "HorizontalEdge", SettingType.HorizontalEdge);
         AddSeparator(container);
 
-        //ŠeŽí•ª—Þ‚ÌÝ’è UI ì¬, ’Ç‰Á
+        //å„ç¨®åˆ†é¡žã®è¨­å®š UI ä½œæˆ, è¿½åŠ 
         var infos = new (string title, SettingType type)[]
         {
             ("Cross",      SettingType.Cross),
@@ -101,7 +101,7 @@ public class TilemapSplitterWindow : EditorWindow
             AddSeparator(container);
         }
 
-        //ŽÀsƒ{ƒ^ƒ“ì¬, ’Ç‰Á
+        //å®Ÿè¡Œãƒœã‚¿ãƒ³ä½œæˆ, è¿½åŠ 
         var splitButton = new Button(() =>
         {
             if (original == null)
