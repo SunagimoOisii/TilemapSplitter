@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -35,20 +33,15 @@ public class TilemapSplitterWindow : EditorWindow
     [MenuItem("Tools/TilemapSplitter")]
     public static void ShowWindow() => GetWindow<TilemapSplitterWindow>("Split Tilemap");
 
-    private void OnEnable()
-    {
-        previewDrawer.Register();
-    }
+    private void OnEnable(){ previewDrawer.Register(); }
 
-    private void OnDisable()
-    {
-        previewDrawer.Unregister();
-    }
+    private void OnDisable(){ previewDrawer.Unregister(); }
 
     public void CreateGUI()
     {
         var root = rootVisualElement;
 
+        //ScrollView, VisualElement 作成, 追加
         var scroll    = new ScrollView();
         var container = new VisualElement();
         container.style.flexDirection = FlexDirection.Column;
@@ -57,8 +50,9 @@ public class TilemapSplitterWindow : EditorWindow
         root.Add(scroll);
         scroll.Add(container);
 
-        var helpBox = new HelpBox("Select the subject of the division", HelpBoxMessageType.Info);
+        //分割対象設定 UI 作成, 追加
         var originalField = new ObjectField("Split Tilemap");
+        var helpBox       = new HelpBox("Select the subject of the division", HelpBoxMessageType.Info);
         helpBox.visible = (original == null);
         originalField.objectType = typeof(Tilemap);
         originalField.value      = original;
@@ -73,8 +67,9 @@ public class TilemapSplitterWindow : EditorWindow
 
         AddSeparator(container);
 
+        //縦横エッジ設定 UI 作成, 追加
         var mergeToggle = new Toggle("Merge VerticalEdge, HorizontalEdge") { value = canMergeEdges };
-        var mergeHB = new HelpBox("When merging, VerticalEdge settings take precedence",
+        var mergeHB     = new HelpBox("When merging, VerticalEdge settings take precedence",
             HelpBoxMessageType.Info);
         mergeToggle.RegisterValueChangedCallback(evt => canMergeEdges = evt.newValue);
         container.Add(mergeToggle);
@@ -85,6 +80,7 @@ public class TilemapSplitterWindow : EditorWindow
         horizontalEdgeFO = CreateEdgeFoldout(container, "HorizontalEdge", SettingType.HorizontalEdge);
         AddSeparator(container);
 
+        //各種分類の設定 UI 作成, 追加
         var infos = new (string title, SettingType type)[]
         {
             ("Cross",      SettingType.Cross),
@@ -105,6 +101,7 @@ public class TilemapSplitterWindow : EditorWindow
             AddSeparator(container);
         }
 
+        //実行ボタン作成, 追加
         var splitButton = new Button(() =>
         {
             if (original == null)
@@ -162,10 +159,10 @@ public class TilemapSplitterWindow : EditorWindow
 
     private Foldout CreateEdgeFoldout(VisualElement parent, string title, SettingType type)
     {
-        var setting = GetSetting(type);
         var fold = new Foldout { text = title };
         fold.style.unityFontStyleAndWeight = FontStyle.Bold;
 
+        var setting = GetSetting(type);
         AddCommonFields(fold, setting);
 
         parent.Add(fold);
