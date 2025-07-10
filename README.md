@@ -19,7 +19,7 @@ Unity の `Tilemap` を接続関係に基づき自動で分類し、用途に応
 
 ## インストール
 
-1. 本リポジトリをクローンし、`TilemapSplitter` フォルダーを `Assets` 配下へ配置します
+1. `TilemapSplitter` フォルダーを `Assets` 配下へ配置します
 2. Unity を再起動するとメニューに **Tools/TilemapSplitter** が追加されます
 
 ## 使い方
