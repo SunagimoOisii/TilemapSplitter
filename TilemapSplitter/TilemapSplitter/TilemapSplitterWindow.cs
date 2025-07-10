@@ -41,7 +41,7 @@ public class TilemapSplitterWindow : EditorWindow
     {
         var root = rootVisualElement;
 
-        //ScrollView, VisualElement 作成, 追加
+        //Create & Add: ScrollView, VisualElement
         var scroll    = new ScrollView();
         var container = new VisualElement();
         container.style.flexDirection = FlexDirection.Column;
@@ -50,7 +50,7 @@ public class TilemapSplitterWindow : EditorWindow
         root.Add(scroll);
         scroll.Add(container);
 
-        //分割対象設定 UI 作成, 追加
+        //Create & Add: Split Target UI
         var originalField = new ObjectField("Split Tilemap");
         var helpBox       = new HelpBox("Select the subject of the division", HelpBoxMessageType.Info);
         helpBox.visible = (original == null);
@@ -67,7 +67,7 @@ public class TilemapSplitterWindow : EditorWindow
 
         AddHorizontalSeparator(container);
 
-        //縦横エッジ設定 UI 作成, 追加
+        //Create & Add: Vertical, Horizontal Edge Shape Settings UI
         var mergeToggle = new Toggle("Merge VerticalEdge, HorizontalEdge") { value = canMergeEdges };
         var mergeHB     = new HelpBox("When merging, VerticalEdge shapeSettings take precedence",
             HelpBoxMessageType.Info);
@@ -80,7 +80,7 @@ public class TilemapSplitterWindow : EditorWindow
         horizontalEdgeFoldOut = CreateEdgeFoldout(container, "HorizontalEdge", TileShapeType.HorizontalEdge);
         AddHorizontalSeparator(container);
 
-        //各種分類の設定 UI 作成, 追加
+        //Create & Add: Split Each Shape Settings UI
         var infos = new (string title, TileShapeType type)[]
         {
             ("Cross",      TileShapeType.Cross),
@@ -101,7 +101,7 @@ public class TilemapSplitterWindow : EditorWindow
             AddHorizontalSeparator(container);
         }
 
-        //実行ボタン作成, 追加
+        //Create & Add: Execute Button
         var splitButton = new Button(() =>
         {
             if (original == null)

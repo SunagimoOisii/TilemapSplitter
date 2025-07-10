@@ -31,7 +31,7 @@ public class TileShapeSetting
 }
 
 /// <summary>
-/// 分類ごとにセル座標を保持
+/// Maintain cell coordinates in each classification
 /// </summary>
 public class ShapeCells
 {
@@ -46,20 +46,20 @@ public class ShapeCells
 public static class TileShapeClassifier
 {
     /// <summary>
-    /// Tilemap のタイル配置を解析し分類結果を返す
+    /// Analyses the layout of the tilemap and returns the classification results
     /// </summary>
     public static ShapeCells Classify(Tilemap original, TileShapeSetting[] settings)
     {
         var result = new ShapeCells();
 
-        //空セル分だけ cellBounds 縮小
+        //Reduce cellBounds only for the range of empty cells
         original.CompressBounds();
 
-        //セル座標空間における境界ボックスと、その中の全タイルを取得(空白セル分は null)
+        //Obtain the bounding box in the cell coordinate space and all tiles within it(blank cells are null)
         var cellBounds    = original.cellBounds;
         var tilesInBounds = original.GetTilesBlock(cellBounds);
 
-        //タイルが存在するセルのみコレクションに格納
+        //Only cells containing tiles are stored in the collection
         int width  = cellBounds.size.x;
         int height = cellBounds.size.y;
         var occupiedCells = new HashSet<Vector3Int>();
@@ -70,13 +70,13 @@ public static class TileShapeClassifier
                 int index = x + y * width;
                 if (tilesInBounds[index] == null) continue;
 
-                //Bounds の最小座標をオフセットとしてワールド座標へ変換
+                //Convert the min coordinates of Bounds to world coordinates as an offset.
                 var cell = new Vector3Int(cellBounds.xMin + x, cellBounds.yMin + y, cellBounds.zMin);
                 occupiedCells.Add(cell);
             }
         }
 
-        //各セルの近傍判定
+        //Perform proximity determination for each cell
         foreach (var cell in occupiedCells)
         {
             ClassifyCellNeighbors(cell, occupiedCells, settings, result);
@@ -86,12 +86,12 @@ public static class TileShapeClassifier
     }
 
     /// <summary>
-    /// 指定セルの4近傍から分類を行う
+    /// Classify the specified cell based on the four neighbouring cells
     /// </summary>
     private static void ClassifyCellNeighbors(Vector3Int cell, HashSet<Vector3Int> cells,
         TileShapeSetting[] settings, ShapeCells result)
     {
-        //隣接タイルの有無を調査
+        //Determine whether adjacent cells exist
         bool up    = cells.Contains(cell + Vector3Int.up);
         bool down  = cells.Contains(cell + Vector3Int.down);
         bool left  = cells.Contains(cell + Vector3Int.left);
@@ -100,7 +100,7 @@ public static class TileShapeClassifier
         bool anyH  = left || right;
         int count  = (up ? 1 : 0) + (down ? 1 : 0) + (left ? 1 : 0) + (right ? 1 : 0);
 
-        //分類ごとにリストへ追加する
+        //Add to collection by Classification
         if (count == 4) //Cross
         {
             ApplyShapeFlags(cell, settings[(int)TileShapeType.Cross].flags,
@@ -136,7 +136,7 @@ public static class TileShapeClassifier
     }
 
     /// <summary>
-    /// 設定に従って各リストへ追加
+    /// Add to each collection according to the settings
     /// </summary>
     private static void ApplyShapeFlags(Vector3Int cell, TileShapeFlags flags,
         List<Vector3Int> indepCellList, List<Vector3Int> vCellList, List<Vector3Int> hCellList)

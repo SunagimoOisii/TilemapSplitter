@@ -54,14 +54,15 @@ public static class TilemapCreator
         if (cells == null || 
             cells.Count == 0) return;
 
-        //Independent が必要な場合、設定になければ生成中断
+        //If Independent is required,
+        //generation will be interrupted if it is not specified in the settings
         bool isRequiredIndependentFlag = name == CrossTileName  || name == TJunctionTileName ||
                                          name == CornerTileName || name == IsolateTileName;
         if (isRequiredIndependentFlag && 
             flags.HasFlag(TileShapeFlags.Independent) == false) return;
 
-        //Tilemap, TilemapRenderer を持つ GameObject 生成
-        //生成元の Transform 設定を引継ぎつつ、レイヤー等を指定のものに変更
+        //Create a GameObject with Tilemap and TilemapRenderer
+        //Change layers, etc. to specified values while inheriting the Transform settings from the source
         var obj = new GameObject(name, typeof(Tilemap), typeof(TilemapRenderer));
         obj.transform.SetParent(original.transform.parent, false);
         obj.transform.SetLocalPositionAndRotation(original.transform.localPosition, 
@@ -70,7 +71,7 @@ public static class TilemapCreator
         obj.layer = layer;
         obj.tag   = tag;
 
-        //分割元に TilemapRenderer があればその設定を一致させる
+        //If there is a TilemapRenderer in the original, match its settings.
         var renderer = obj.GetComponent<TilemapRenderer>();
         if (original.TryGetComponent<TilemapRenderer>(out var oriRenderer))
         {
@@ -83,7 +84,7 @@ public static class TilemapCreator
                 "the TilemapRenderer of the generated object was generated with the default shapeSettings.");
         }
 
-        //生成元タイルの情報を、対応する生成タイルへコピー
+        //Copy the information from the source tile to the corresponding generated tile
         var tm = obj.GetComponent<Tilemap>();
         foreach (var cell in cells)
         {

@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 
 /// <summary>
-/// タイル分割結果を Scene 上でプレビュー表示するクラス
+/// Class for previewing tile division results
 /// </summary>
 public class TilemapPreviewDrawer
 {
@@ -28,7 +28,7 @@ public class TilemapPreviewDrawer
         if (tilemap == null || 
             shapeCells == null) return;
 
-        //各設定の取得
+        //Obtaining settings for each shape
         var v       = shapeSettings[(int)TileShapeType.VerticalEdge];
         var h       = shapeSettings[(int)TileShapeType.HorizontalEdge];
         var cross   = shapeSettings[(int)TileShapeType.Cross];
@@ -36,7 +36,7 @@ public class TilemapPreviewDrawer
         var corner  = shapeSettings[(int)TileShapeType.Corner];
         var isolate = shapeSettings[(int)TileShapeType.Isolate];
 
-        //設定色, プレビュー許可に応じて表示
+        //Displayed according to setting colour and preview flag
         var previewSettings = new (List<Vector3Int> cells, Color c, bool canPreview)[]
         {
             (shapeCells.VerticalEdgesCells,   v.previewColor,       v.canPreview),
