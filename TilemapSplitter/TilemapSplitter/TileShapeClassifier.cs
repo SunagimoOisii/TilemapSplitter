@@ -100,52 +100,45 @@ namespace TilemapSplitter
             bool right = cells.Contains(cell + Vector3Int.right);
             bool anyV  = up || down;
             bool anyH  = left || right;
-            int count  = (up ? 1 : 0) + (down ? 1 : 0) + (left ? 1 : 0) + (right ? 1 : 0);
 
             //Add to collection by Classification
-            if (count == 4) //Cross
+            int neighborCount  = (up ? 1 : 0) + (down ? 1 : 0) + (left ? 1 : 0) + (right ? 1 : 0);
+            switch (neighborCount)
             {
-                ApplyShapeFlags(cell, settings[(int)TileShapeType.Cross].flags,
-                    result.CrossCells, result.VerticalEdgesCells, result.HorizontalEdgesCells);
-            }
-            else if (count == 3) //TJunction
-            {
-                ApplyShapeFlags(cell, settings[(int)TileShapeType.TJunction].flags,
-                    result.TJunctionCells, result.VerticalEdgesCells, result.HorizontalEdgesCells);
-            }
-            else if (count == 2 && //Corner
-                     anyV &&
-                     anyH)
-            {
-                ApplyShapeFlags(cell, settings[(int)TileShapeType.Corner].flags,
-                    result.CornerCells, result.VerticalEdgesCells, result.HorizontalEdgesCells);
-            }
-            else if (anyV && //VerticalEdge
-                     anyH == false)
-            {
-                result.VerticalEdgesCells.Add(cell);
-            }
-            else if (anyH && //HorizontalEdge
-                     anyV == false)
-            {
-                result.HorizontalEdgesCells.Add(cell);
-            }
-            else if (count == 0) //Isolate
-            {
-                ApplyShapeFlags(cell, settings[(int)TileShapeType.Isolate].flags,
-                    result.IsolateCells, result.VerticalEdgesCells, result.HorizontalEdgesCells);
+                case 4: //Cross
+                    ApplyShapeFlags(cell, settings[(int)TileShapeType.Cross].flags, result);
+                    break;
+                case 3: //TJunction
+                    ApplyShapeFlags(cell, settings[(int)TileShapeType.TJunction].flags, result);
+                    break;
+                case 2 when anyV && anyH: //Corner
+                    ApplyShapeFlags(cell, settings[(int)TileShapeType.Corner].flags, result);
+                    break;
+                default:
+                    if (anyV && anyH == false) //Vertical
+                    {
+                        result.VerticalEdgesCells.Add(cell);
+                    }
+                    else if (anyH && anyV == false) //Horizontal
+                    {
+                        result.HorizontalEdgesCells.Add(cell);
+                    }
+                    else if (neighborCount == 0) //Isolate
+                    {
+                        ApplyShapeFlags(cell, settings[(int)TileShapeType.Isolate].flags, result);
+                    }
+                    break;
             }
         }
 
         /// <summary>
         /// Add to each collection according to the settings
         /// </summary>
-        private static void ApplyShapeFlags(Vector3Int cell, TileShapeFlags flags,
-            List<Vector3Int> indepCellList, List<Vector3Int> vCellList, List<Vector3Int> hCellList)
+        private static void ApplyShapeFlags(Vector3Int cell, TileShapeFlags flags, ShapeCells sc)
         {
-            if (flags.HasFlag(TileShapeFlags.VerticalEdge)) vCellList?.Add(cell);
-            if (flags.HasFlag(TileShapeFlags.HorizontalEdge)) hCellList?.Add(cell);
-            if (flags.HasFlag(TileShapeFlags.Independent)) indepCellList?.Add(cell);
+            if (flags.HasFlag(TileShapeFlags.VerticalEdge))   sc.VerticalEdgesCells?.Add(cell);
+            if (flags.HasFlag(TileShapeFlags.HorizontalEdge)) sc.HorizontalEdgesCells?.Add(cell);
+            if (flags.HasFlag(TileShapeFlags.Independent))    sc.IsolateCells?.Add(cell);
         }
     }
 }

@@ -9,11 +9,11 @@ namespace TilemapSplitter
     {
         private const string VerticalEdgeName   = "VerticalEdge";
         private const string HorizontalEdgeName = "HorizontalEdge";
+        private const string MergeTileName      = "EdgeTiles";
         private const string CrossTileName      = "CrossTiles";
         private const string TJunctionTileName  = "TJunctionTiles";
         private const string CornerTileName     = "CornerTiles";
         private const string IsolateTileName    = "IsolateTiles";
-        private const string MergeTileName      = "EdgeTiles";
 
         public static void GenerateSplitTilemaps(Tilemap original, ShapeCells sCells,
             TileShapeSetting[] settings, bool mergeEdges)

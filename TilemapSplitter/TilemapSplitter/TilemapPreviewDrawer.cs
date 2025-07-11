@@ -56,6 +56,9 @@ namespace TilemapSplitter
 
         private void DrawCellPreviews(List<Vector3Int> cells, Color c)
         {
+            if (cells == null ||
+                cells.Count == 0) return;
+
             Handles.color = new Color(c.r, c.g, c.b, 0.4f);
             var cellSize  = tilemap.cellSize;
             foreach (var cell in cells)
