@@ -33,7 +33,7 @@ namespace TilemapSplitter
     }
 
     /// <summary>
-    /// Maintain cell coordinates in each classification
+    /// Store cell coordinates for each tile classification
     /// </summary>
     internal class ShapeCells
     {
@@ -48,16 +48,16 @@ namespace TilemapSplitter
     internal static class TileShapeClassifier
     {
         /// <summary>
-        /// Analyses the layout of the tilemap and returns the classification results
+        /// Compress the tilemap bounds to exclude empty rows and columns
         /// </summary>
         public static ShapeCells Classify(Tilemap original, TileShapeSetting[] settings)
         {
             var result = new ShapeCells();
 
-            //Reduce cellBounds only for the range of empty cells
+            //Compress the Tilemap’s cellBounds to skip empty rows and columns
             original.CompressBounds();
 
-            //Obtain the bounding box in the cell coordinate space and all tiles within it(blank cells are null)
+            //Get the bounding box in cell coordinates and retrieve all tiles inside it(empty slots = null)
             var cellBounds    = original.cellBounds;
             var tilesInBounds = original.GetTilesBlock(cellBounds);
 
@@ -72,7 +72,7 @@ namespace TilemapSplitter
                     int index = x + y * width;
                     if (tilesInBounds[index] == null) continue;
 
-                    //Convert the min coordinates of Bounds to world coordinates as an offset.
+                    //Calculate the world-space offset from the lower-left cell to origin
                     var cell = new Vector3Int(cellBounds.xMin + x, cellBounds.yMin + y, cellBounds.zMin);
                     occupiedCells.Add(cell);
                 }

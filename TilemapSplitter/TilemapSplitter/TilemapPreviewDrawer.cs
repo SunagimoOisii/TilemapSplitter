@@ -6,7 +6,7 @@ namespace TilemapSplitter
     using UnityEngine.Tilemaps;
 
     /// <summary>
-    /// Class for previewing tile division results
+    /// Draws color-coded previews of classified tiles on the SceneView
     /// </summary>
     internal class TilemapPreviewDrawer
     {
@@ -30,7 +30,7 @@ namespace TilemapSplitter
             if (tilemap == null ||
                 shapeCells == null) return;
 
-            //Obtaining settings for each shape
+            //Read preview settings (color, visibility) for each tile classification
             var v       = shapeSettings[(int)TileShapeType.VerticalEdge];
             var h       = shapeSettings[(int)TileShapeType.HorizontalEdge];
             var cross   = shapeSettings[(int)TileShapeType.Cross];
@@ -38,7 +38,7 @@ namespace TilemapSplitter
             var corner  = shapeSettings[(int)TileShapeType.Corner];
             var isolate = shapeSettings[(int)TileShapeType.Isolate];
 
-            //Displayed according to setting colour and preview flag
+            //Draw each cell only if its preview flag is enabled, using the specified preview color
             var previewSettings = new (List<Vector3Int> cells, Color c, bool canPreview)[]
             {
                 (shapeCells.VerticalEdgesCells,   v.previewColor,       v.canPreview),

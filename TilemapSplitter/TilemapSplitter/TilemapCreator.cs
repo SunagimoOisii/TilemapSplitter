@@ -56,15 +56,14 @@ namespace TilemapSplitter
             if (cells == null ||
                 cells.Count == 0) return;
 
-            //If Independent is required,
-            //generation will be interrupted if it is not specified in the settings
+            //Skip instantiating this tile collection when the Independent flag is not enabled in settings
             bool isRequiredIndependentFlag = name == CrossTileName  || name == TJunctionTileName ||
                                              name == CornerTileName || name == IsolateTileName;
             if (isRequiredIndependentFlag &&
                 flags.HasFlag(TileShapeFlags.Independent) == false) return;
 
-            //Create a GameObject with Tilemap and TilemapRenderer
-            //Change layers, etc. to specified values while inheriting the Transform settings from the source
+            //Instantiate a GameObject with Tilemap and TilemapRenderer components attached
+            //Copy the original transform(position, rotation, scale) and apply the specified layer and tag
             var obj = new GameObject(name, typeof(Tilemap), typeof(TilemapRenderer));
             obj.layer                = layer;
             obj.tag                  = tag;
@@ -86,7 +85,7 @@ namespace TilemapSplitter
                     "the TilemapRenderer of the generated object was generated with the default shapeSettings.");
             }
 
-            //Copy the information from the source tile to the corresponding generated tile
+            //Transfer tile data(sprite, color, transform matrix) from the original to the new tile
             var tm = obj.GetComponent<Tilemap>();
             foreach (var cell in cells)
             {

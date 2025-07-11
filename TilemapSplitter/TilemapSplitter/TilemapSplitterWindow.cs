@@ -43,7 +43,7 @@ namespace TilemapSplitter
         {
             var root = rootVisualElement;
 
-            //Create & Add: ScrollView, VisualElement
+            //Create a ScrollView and a container VisualElement
             var scroll    = new ScrollView();
             var container = new VisualElement();
             container.style.flexDirection = FlexDirection.Column;
@@ -52,7 +52,7 @@ namespace TilemapSplitter
             root.Add(scroll);
             scroll.Add(container);
 
-            //Create & Add: Split Target UI
+            //Create an ObjectField and HelpBox for the user to select the source Tilemap asset
             var originalField = new ObjectField("Split Tilemap");
             var helpBox       = new HelpBox("Select the subject of the division", HelpBoxMessageType.Info);
             helpBox.visible = (original == null);
@@ -69,7 +69,7 @@ namespace TilemapSplitter
 
             AddHorizontalSeparator(container);
 
-            //Create & Add: Vertical, Horizontal Edge Shape Settings UI
+            //Create Vertical, Horizontal Edge Shape Settings UI
             var mergeToggle = new Toggle("Merge VerticalEdge, HorizontalEdge");
             var mergeHB = new HelpBox("When merging, VerticalEdge shapeSettings take precedence",
                 HelpBoxMessageType.Info);
@@ -85,7 +85,7 @@ namespace TilemapSplitter
                 TileShapeType.HorizontalEdge);
             AddHorizontalSeparator(container);
 
-            //Create & Add: Split Each Shape Settings UI
+            //Create Split Each Shape Settings UI
             var infos = new (string title, TileShapeType type)[]
             {
                 ("Cross",      TileShapeType.Cross),
@@ -106,7 +106,7 @@ namespace TilemapSplitter
                 AddHorizontalSeparator(container);
             }
 
-            //Create & Add: Execute Button
+            //Add the Execute Splitting button at the bottom of the UI
             var splitButton = new Button(() =>
             {
                 if (original == null)
