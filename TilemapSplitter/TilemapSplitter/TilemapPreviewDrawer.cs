@@ -30,7 +30,7 @@ namespace TilemapSplitter
             if (tilemap == null ||
                 shapeCells == null) return;
 
-            //Read preview settings (color, visibility) for each tile classification
+            //Read preview settings(color, visibility) for each tile classification
             var v       = shapeSettings[(int)TileShapeType.VerticalEdge];
             var h       = shapeSettings[(int)TileShapeType.HorizontalEdge];
             var cross   = shapeSettings[(int)TileShapeType.Cross];

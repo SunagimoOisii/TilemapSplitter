@@ -13,6 +13,7 @@ namespace TilemapSplitter
         private const string TJunctionTileName  = "TJunctionTiles";
         private const string CornerTileName     = "CornerTiles";
         private const string IsolateTileName    = "IsolateTiles";
+        private const string MergeTileName      = "EdgeTiles";
 
         public static void GenerateSplitTilemaps(Tilemap original, ShapeCells sCells,
             TileShapeSetting[] settings, bool mergeEdges)
@@ -22,7 +23,7 @@ namespace TilemapSplitter
                 var mergedCells = new List<Vector3Int>(sCells.VerticalEdgesCells);
                 var v           = settings[(int)TileShapeType.VerticalEdge];
                 mergedCells.AddRange(sCells.HorizontalEdgesCells);
-                CreateTilemapObjForCells(original, TileShapeFlags.Independent, "EdgeTiles",
+                CreateTilemapObjForCells(original, TileShapeFlags.Independent, MergeTileName,
                     mergedCells, v.layer, v.tag);
             }
             else
