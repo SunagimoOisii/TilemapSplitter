@@ -91,7 +91,7 @@ namespace TilemapSplitter
         /// Classify the specified cell based on the four neighbouring cells
         /// </summary>
         private static void ClassifyCellNeighbors(Vector3Int cell, HashSet<Vector3Int> cells,
-            Dictionary<ShapeType, ShapeSetting> settings, ShapeCells result)
+            Dictionary<ShapeType, ShapeSetting> settings, ShapeCells sc)
         {
             //Determine whether adjacent cells exist
             bool up    = cells.Contains(cell + Vector3Int.up);
@@ -106,26 +106,26 @@ namespace TilemapSplitter
             switch (neighborCount)
             {
                 case 4: //Cross
-                    ApplyShapeFlags(cell, settings[ShapeType.Cross].flags, result);
+                    ApplyShapeFlags(cell, settings[ShapeType.Cross].flags, sc, sc.CrossCells);
                     break;
                 case 3: //TJunction
-                    ApplyShapeFlags(cell, settings[ShapeType.TJunction].flags, result);
+                    ApplyShapeFlags(cell, settings[ShapeType.TJunction].flags, sc, sc.TJunctionCells);
                     break;
                 case 2 when anyV && anyH: //Corner
-                    ApplyShapeFlags(cell, settings[ShapeType.Corner].flags, result);
+                    ApplyShapeFlags(cell, settings[ShapeType.Corner].flags, sc, sc.CornerCells);
                     break;
                 default:
                     if (anyV && anyH == false) //Vertical
                     {
-                        result.VerticalEdgesCells.Add(cell);
+                        sc.VerticalEdgesCells.Add(cell);
                     }
                     else if (anyH && anyV == false) //Horizontal
                     {
-                        result.HorizontalEdgesCells.Add(cell);
+                        sc.HorizontalEdgesCells.Add(cell);
                     }
                     else if (neighborCount == 0) //Isolate
                     {
-                        ApplyShapeFlags(cell, settings[ShapeType.Isolate].flags, result);
+                        ApplyShapeFlags(cell, settings[ShapeType.Isolate].flags, sc, sc.IsolateCells);
                     }
                     break;
             }
@@ -134,11 +134,12 @@ namespace TilemapSplitter
         /// <summary>
         /// Add to each collection according to the settings
         /// </summary>
-        private static void ApplyShapeFlags(Vector3Int cell, ShapeFlags flags, ShapeCells sc)
+        private static void ApplyShapeFlags(Vector3Int cell, ShapeFlags flags,
+            ShapeCells sc, List<Vector3Int> indepCells)
         {
             if (flags.HasFlag(ShapeFlags.VerticalEdge))   sc.VerticalEdgesCells?.Add(cell);
             if (flags.HasFlag(ShapeFlags.HorizontalEdge)) sc.HorizontalEdgesCells?.Add(cell);
-            if (flags.HasFlag(ShapeFlags.Independent))    sc.IsolateCells?.Add(cell);
+            if (flags.HasFlag(ShapeFlags.Independent))    indepCells?.Add(cell);
         }
     }
 }
