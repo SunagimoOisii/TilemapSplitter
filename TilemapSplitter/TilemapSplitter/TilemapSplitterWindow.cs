@@ -6,6 +6,7 @@ namespace TilemapSplitter
     using UnityEngine;
     using UnityEngine.Tilemaps;
     using UnityEngine.UIElements;
+    using System.Collections;
 
     internal class TilemapSplitterWindow : EditorWindow
     {
@@ -112,15 +113,38 @@ namespace TilemapSplitter
                     EditorUtility.DisplayDialog("Error", "The split target isn't set", "OK");
                     return;
                 }
-                result = TileShapeClassifier.Classify(original, settingsDict);
-                TilemapCreator.GenerateSplitTilemaps(original, result, settingsDict, canMergeEdges);
-                RefreshPreview();
+                StartEditorCoroutine(SplitCoroutine());
+                //result = TileShapeClassifier.Classify(original, settingsDict);
+                //TilemapCreator.GenerateSplitTilemaps(original, result, settingsDict, canMergeEdges);
+                //RefreshPreview();
             });
             splitButton.text            = "Execute Splitting";
             splitButton.style.marginTop = 10;
             container.Add(splitButton);
 
             previewDrawer.Setup(original, settingsDict);
+        }
+
+        private static void StartEditorCoroutine(IEnumerator e)
+        {
+            void Update()
+            {
+                if (e.MoveNext() == false) EditorApplication.update -= Update;
+            }
+
+            EditorApplication.update += Update;
+        }
+
+        private IEnumerator SplitCoroutine()
+        {
+            result = new ShapeCells();
+            var  e = TileShapeClassifier.ClassifyCoroutine(original, settingsDict, result);
+            while (e.MoveNext())
+            {
+                yield return null;
+            }
+            TilemapCreator.GenerateSplitTilemaps(original, result, settingsDict, canMergeEdges);
+            RefreshPreview();
         }
 
         private static void AddHorizontalSeparator(VisualElement parentContainer)

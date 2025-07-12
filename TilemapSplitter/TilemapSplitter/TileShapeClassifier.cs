@@ -1,7 +1,9 @@
 namespace TilemapSplitter
 {
     using System;
+    using System.Collections;
     using System.Collections.Generic;
+    using UnityEditor;
     using UnityEngine;
     using UnityEngine.Tilemaps;
 
@@ -85,6 +87,75 @@ namespace TilemapSplitter
             }
 
             return result;
+        }
+
+        public static IEnumerator ClassifyCoroutine(Tilemap original, 
+            Dictionary<ShapeType, ShapeSetting> settings, ShapeCells result, int batch = 100)
+        {
+            result.VerticalEdgesCells.Clear();
+            result.HorizontalEdgesCells.Clear();
+            result.CrossCells.Clear();
+            result.TJunctionCells.Clear();
+            result.CornerCells.Clear();
+            result.IsolateCells.Clear();
+
+            //Compress the Tilemap’s cellBounds to skip empty rows and columns
+            original.CompressBounds();
+
+            //Get the bounding box in cell coordinates and retrieve all tiles inside it(empty slots = null)
+            var cellBounds    = original.cellBounds;
+            var tilesInBounds = original.GetTilesBlock(cellBounds);
+
+            //Only cells containing tiles are stored in the collection
+            int width  = cellBounds.size.x;
+            int height = cellBounds.size.y;
+            var occupiedCells = new HashSet<Vector3Int>();
+
+            try
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        int index = x + y * width;
+                        if (tilesInBounds[index] == null) continue;
+
+                        //Calculate the world-space offset from the lower-left cell to origin
+                        var cell = new Vector3Int(cellBounds.xMin + x,
+                                                  cellBounds.yMin + y,
+                                                  cellBounds.zMin);
+                        occupiedCells.Add(cell);
+                    }
+
+                    if (y % batch == 0)
+                    {
+                        float progress = (float)(y * width) / (width * height);
+                        EditorUtility.DisplayProgressBar("Classify", "Collecting cells...", progress);
+                        yield return null;
+                    }
+                }
+
+                int total     = occupiedCells.Count;
+                int processed = 0;
+                foreach (var cell in occupiedCells)
+                {
+                    //Perform proximity determination for each cell
+                    ClassifyCellNeighbors(cell, occupiedCells, settings, result);
+
+                    processed++;
+                    if (processed % batch == 0)
+                    {
+                        float progress = (float)processed / total;
+                        EditorUtility.DisplayProgressBar("Classify",
+                            $"Classifying... {processed}/{total}", progress);
+                        yield return null;
+                    }
+                }
+            }
+            finally
+            {
+                EditorUtility.ClearProgressBar();
+            }
         }
 
         /// <summary>
