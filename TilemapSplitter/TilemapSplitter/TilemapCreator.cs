@@ -16,30 +16,30 @@ namespace TilemapSplitter
         private const string IsolateTileName    = "IsolateTiles";
 
         public static void GenerateSplitTilemaps(Tilemap original, ShapeCells sCells,
-            Dictionary<TileShapeType, TileShapeSetting> settings, bool mergeEdges)
+            Dictionary<ShapeType, ShapeSetting> settings, bool mergeEdges)
         {
             if (mergeEdges)
             {
                 var mergedCells = new List<Vector3Int>(sCells.VerticalEdgesCells);
-                var v           = settings[TileShapeType.VerticalEdge];
+                var v           = settings[ShapeType.VerticalEdge];
                 mergedCells.AddRange(sCells.HorizontalEdgesCells);
-                CreateTilemapObjForCells(original, TileShapeFlags.Independent, MergeTileName,
+                CreateTilemapObjForCells(original, ShapeFlags.Independent, MergeTileName,
                     mergedCells, v.layer, v.tag);
             }
             else
             {
-                var v = settings[TileShapeType.VerticalEdge];
-                var h = settings[TileShapeType.HorizontalEdge];
+                var v = settings[ShapeType.VerticalEdge];
+                var h = settings[ShapeType.HorizontalEdge];
                 CreateTilemapObjForCells(original, v.flags, VerticalEdgeName,
                     sCells.VerticalEdgesCells, v.layer, v.tag);
                 CreateTilemapObjForCells(original, h.flags, HorizontalEdgeName,
                     sCells.HorizontalEdgesCells, h.layer, h.tag);
             }
 
-            var cross   = settings[TileShapeType.Cross];
-            var t       = settings[TileShapeType.TJunction];
-            var corner  = settings[TileShapeType.Corner];
-            var isolate = settings[TileShapeType.Isolate];
+            var cross   = settings[ShapeType.Cross];
+            var t       = settings[ShapeType.TJunction];
+            var corner  = settings[ShapeType.Corner];
+            var isolate = settings[ShapeType.Isolate];
 
             CreateTilemapObjForCells(original, cross.flags, CrossTileName,
                 sCells.CrossCells, cross.layer, cross.tag);
@@ -51,7 +51,7 @@ namespace TilemapSplitter
                 sCells.IsolateCells, isolate.layer, isolate.tag);
         }
 
-        private static void CreateTilemapObjForCells(Tilemap original, TileShapeFlags flags,
+        private static void CreateTilemapObjForCells(Tilemap original, ShapeFlags flags,
             string name, List<Vector3Int> cells, int layer, string tag)
         {
             if (cells == null ||
@@ -61,7 +61,7 @@ namespace TilemapSplitter
             bool isRequiredIndependentFlag = name == CrossTileName  || name == TJunctionTileName ||
                                              name == CornerTileName || name == IsolateTileName;
             if (isRequiredIndependentFlag &&
-                flags.HasFlag(TileShapeFlags.Independent) == false) return;
+                flags.HasFlag(ShapeFlags.Independent) == false) return;
 
             //Instantiate a GameObject with Tilemap and TilemapRenderer components attached
             //Copy the original transform(position, rotation, scale) and apply the specified layer and tag

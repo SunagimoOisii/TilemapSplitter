@@ -11,10 +11,10 @@ namespace TilemapSplitter
     internal class TilemapPreviewDrawer
     {
         private Tilemap tilemap;
-        private Dictionary<TileShapeType, TileShapeSetting> shapeSettings;
+        private Dictionary<ShapeType, ShapeSetting> shapeSettings;
         private ShapeCells shapeCells;
 
-        public void Setup(Tilemap original, Dictionary<TileShapeType, TileShapeSetting> settings)
+        public void Setup(Tilemap original, Dictionary<ShapeType, ShapeSetting> settings)
         {
             tilemap       = original;
             shapeSettings = settings;
@@ -31,12 +31,12 @@ namespace TilemapSplitter
                 shapeCells == null) return;
 
             //Read preview settings(color, visibility) for each tile classification
-            var v       = shapeSettings[TileShapeType.VerticalEdge];
-            var h       = shapeSettings[TileShapeType.HorizontalEdge];
-            var cross   = shapeSettings[TileShapeType.Cross];
-            var t       = shapeSettings[TileShapeType.TJunction];
-            var corner  = shapeSettings[TileShapeType.Corner];
-            var isolate = shapeSettings[TileShapeType.Isolate];
+            var v       = shapeSettings[ShapeType.VerticalEdge];
+            var h       = shapeSettings[ShapeType.HorizontalEdge];
+            var cross   = shapeSettings[ShapeType.Cross];
+            var t       = shapeSettings[ShapeType.TJunction];
+            var corner  = shapeSettings[ShapeType.Corner];
+            var isolate = shapeSettings[ShapeType.Isolate];
 
             //Draw each cell only if its preview flag is enabled, using the specified preview color
             var previewSettings = new (List<Vector3Int> cells, Color c, bool canPreview)[]
