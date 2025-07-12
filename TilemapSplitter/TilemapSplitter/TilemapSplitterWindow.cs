@@ -2,22 +2,23 @@ namespace TilemapSplitter
 {
     using UnityEditor;
     using UnityEditor.UIElements;
+    using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.Tilemaps;
     using UnityEngine.UIElements;
 
     internal class TilemapSplitterWindow : EditorWindow
     {
-        private readonly TileShapeSetting[] settings = new TileShapeSetting[6]
+        private readonly Dictionary<TileShapeType, TileShapeSetting> settings = new()
         {
-            new() { flags = TileShapeFlags.VerticalEdge,   previewColor = Color.green  },
-            new() { flags = TileShapeFlags.HorizontalEdge, previewColor = Color.yellow },
-            new() { flags = TileShapeFlags.Independent,    previewColor = Color.red    },
-            new() { flags = TileShapeFlags.Independent,    previewColor = Color.blue   },
-            new() { flags = TileShapeFlags.Independent,    previewColor = Color.cyan   },
-            new() { flags = TileShapeFlags.Independent,    previewColor = Color.magenta },
+            [TileShapeType.VerticalEdge]   = new() { flags = TileShapeFlags.VerticalEdge,   previewColor = Color.green  },
+            [TileShapeType.HorizontalEdge] = new() { flags = TileShapeFlags.HorizontalEdge, previewColor = Color.yellow },
+            [TileShapeType.Cross]          = new() { flags = TileShapeFlags.Independent,    previewColor = Color.red    },
+            [TileShapeType.TJunction]      = new() { flags = TileShapeFlags.Independent,    previewColor = Color.blue   },
+            [TileShapeType.Corner]         = new() { flags = TileShapeFlags.Independent,    previewColor = Color.cyan   },
+            [TileShapeType.Isolate]        = new() { flags = TileShapeFlags.Independent,    previewColor = Color.magenta },
         };
-        private TileShapeSetting GetShapeSetting(TileShapeType t) => settings[(int)t];
+        private TileShapeSetting GetShapeSetting(TileShapeType t) => settings[t];
 
         private Foldout verticalEdgeFoldOut;
         private Foldout horizontalEdgeFoldOut;
