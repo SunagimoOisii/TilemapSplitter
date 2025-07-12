@@ -32,6 +32,7 @@ namespace TilemapSplitter
         private readonly TilemapPreviewDrawer previewDrawer = new();
 
         private bool canMergeEdges = false;
+        private bool isRefreshingPreview = false;
 
         [MenuItem("Tools/TilemapSplitter")]
         public static void ShowWindow() => GetWindow<TilemapSplitterWindow>("Split Tilemap");
@@ -72,14 +73,14 @@ namespace TilemapSplitter
 
             //Create Vertical, Horizontal Edge Shape Settings UI
             var mergeToggle = new Toggle("Merge VerticalEdge, HorizontalEdge");
-            var mergeHB = new HelpBox("When merging, VerticalEdge shapeSettings take precedence",
+            var mergeHB     = new HelpBox("When merging, VerticalEdge shapeSettings take precedence",
                 HelpBoxMessageType.Info);
             mergeToggle.value = canMergeEdges;
             mergeToggle.RegisterValueChangedCallback(evt => canMergeEdges = evt.newValue);
             container.Add(mergeToggle);
             container.Add(mergeHB);
 
-            verticalEdgeFoldOut = CreateEdgeFoldout(container, "VerticalEdge", ShapeType.VerticalEdge);
+            verticalEdgeFoldOut   = CreateEdgeFoldout(container, "VerticalEdge", ShapeType.VerticalEdge);
             AddHorizontalSeparator(container);
             horizontalEdgeFoldOut = CreateEdgeFoldout(container, "HorizontalEdge", ShapeType.HorizontalEdge);
             AddHorizontalSeparator(container);
@@ -114,9 +115,6 @@ namespace TilemapSplitter
                     return;
                 }
                 StartEditorCoroutine(SplitCoroutine());
-                //result = TileShapeClassifier.Classify(original, settingsDict);
-                //TilemapCreator.GenerateSplitTilemaps(original, result, settingsDict, canMergeEdges);
-                //RefreshPreview();
             });
             splitButton.text            = "Execute Splitting";
             splitButton.style.marginTop = 10;
@@ -246,13 +244,29 @@ namespace TilemapSplitter
 
         private void RefreshPreview()
         {
-            if (original == null) return;
+            if (original == null ||
+                isRefreshingPreview) return;
 
-            result = TileShapeClassifier.Classify(original, settingsDict);
-            previewDrawer.Setup(original, settingsDict);
-            previewDrawer.SetShapeResult(result);
-            SceneView.RepaintAll();
-            UpdateFoldoutTitles();
+            StartEditorCoroutine(RefreshPreviewCoroutine());
+
+            IEnumerator RefreshPreviewCoroutine()
+            {
+                isRefreshingPreview = true;
+
+                result = new ShapeCells();
+                var e = TileShapeClassifier.ClassifyCoroutine(original, settingsDict, result);
+                while (e.MoveNext())
+                {
+                    yield return null;
+                }
+
+                previewDrawer.Setup(original, settingsDict);
+                previewDrawer.SetShapeResult(result);
+                SceneView.RepaintAll();
+                UpdateFoldoutTitles();
+
+                isRefreshingPreview = false;
+            }
         }
 
         private void UpdateFoldoutTitles()
