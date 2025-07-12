@@ -50,7 +50,7 @@ namespace TilemapSplitter
         /// <summary>
         /// Compress the tilemap bounds to exclude empty rows and columns
         /// </summary>
-        public static ShapeCells Classify(Tilemap original, TileShapeSetting[] settings)
+        public static ShapeCells Classify(Tilemap original, Dictionary<TileShapeType, TileShapeSetting> settings)
         {
             var result = new ShapeCells();
 
@@ -91,7 +91,7 @@ namespace TilemapSplitter
         /// Classify the specified cell based on the four neighbouring cells
         /// </summary>
         private static void ClassifyCellNeighbors(Vector3Int cell, HashSet<Vector3Int> cells,
-            TileShapeSetting[] settings, ShapeCells result)
+            Dictionary<TileShapeType, TileShapeSetting> settings, ShapeCells result)
         {
             //Determine whether adjacent cells exist
             bool up    = cells.Contains(cell + Vector3Int.up);
@@ -106,13 +106,13 @@ namespace TilemapSplitter
             switch (neighborCount)
             {
                 case 4: //Cross
-                    ApplyShapeFlags(cell, settings[(int)TileShapeType.Cross].flags, result);
+                    ApplyShapeFlags(cell, settings[TileShapeType.Cross].flags, result);
                     break;
                 case 3: //TJunction
-                    ApplyShapeFlags(cell, settings[(int)TileShapeType.TJunction].flags, result);
+                    ApplyShapeFlags(cell, settings[TileShapeType.TJunction].flags, result);
                     break;
                 case 2 when anyV && anyH: //Corner
-                    ApplyShapeFlags(cell, settings[(int)TileShapeType.Corner].flags, result);
+                    ApplyShapeFlags(cell, settings[TileShapeType.Corner].flags, result);
                     break;
                 default:
                     if (anyV && anyH == false) //Vertical
@@ -125,7 +125,7 @@ namespace TilemapSplitter
                     }
                     else if (neighborCount == 0) //Isolate
                     {
-                        ApplyShapeFlags(cell, settings[(int)TileShapeType.Isolate].flags, result);
+                        ApplyShapeFlags(cell, settings[TileShapeType.Isolate].flags, result);
                     }
                     break;
             }

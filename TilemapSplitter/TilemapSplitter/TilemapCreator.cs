@@ -16,30 +16,30 @@ namespace TilemapSplitter
         private const string IsolateTileName    = "IsolateTiles";
 
         public static void GenerateSplitTilemaps(Tilemap original, ShapeCells sCells,
-            TileShapeSetting[] settings, bool mergeEdges)
+            Dictionary<TileShapeType, TileShapeSetting> settings, bool mergeEdges)
         {
             if (mergeEdges)
             {
                 var mergedCells = new List<Vector3Int>(sCells.VerticalEdgesCells);
-                var v           = settings[(int)TileShapeType.VerticalEdge];
+                var v           = settings[TileShapeType.VerticalEdge];
                 mergedCells.AddRange(sCells.HorizontalEdgesCells);
                 CreateTilemapObjForCells(original, TileShapeFlags.Independent, MergeTileName,
                     mergedCells, v.layer, v.tag);
             }
             else
             {
-                var v = settings[(int)TileShapeType.VerticalEdge];
-                var h = settings[(int)TileShapeType.HorizontalEdge];
+                var v = settings[TileShapeType.VerticalEdge];
+                var h = settings[TileShapeType.HorizontalEdge];
                 CreateTilemapObjForCells(original, v.flags, VerticalEdgeName,
                     sCells.VerticalEdgesCells, v.layer, v.tag);
                 CreateTilemapObjForCells(original, h.flags, HorizontalEdgeName,
                     sCells.HorizontalEdgesCells, h.layer, h.tag);
             }
 
-            var cross   = settings[(int)TileShapeType.Cross];
-            var t       = settings[(int)TileShapeType.TJunction];
-            var corner  = settings[(int)TileShapeType.Corner];
-            var isolate = settings[(int)TileShapeType.Isolate];
+            var cross   = settings[TileShapeType.Cross];
+            var t       = settings[TileShapeType.TJunction];
+            var corner  = settings[TileShapeType.Corner];
+            var isolate = settings[TileShapeType.Isolate];
 
             CreateTilemapObjForCells(original, cross.flags, CrossTileName,
                 sCells.CrossCells, cross.layer, cross.tag);
