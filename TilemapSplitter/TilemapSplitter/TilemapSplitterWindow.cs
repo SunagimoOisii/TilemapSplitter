@@ -111,9 +111,9 @@ namespace TilemapSplitter
             container.Add(mergeT);
             container.Add(mergeHB);
 
-            verticalEdgeFoldOut   = CreateEdgeFoldout(container, "VerticalEdge", ShapeType.VerticalEdge);
+            verticalEdgeFoldOut   = CreateFoldout(container, "VerticalEdge", settingsDict[ShapeType.VerticalEdge], false);
             AddHorizontalSeparator(container);
-            horizontalEdgeFoldOut = CreateEdgeFoldout(container, "HorizontalEdge", ShapeType.HorizontalEdge);
+            horizontalEdgeFoldOut = CreateFoldout(container, "HorizontalEdge", settingsDict[ShapeType.HorizontalEdge], false);
             AddHorizontalSeparator(container);
 
             //Create Split Each Shape Settings UI
@@ -165,38 +165,35 @@ namespace TilemapSplitter
             parentContainer.Add(separator);
         }
 
-        private Foldout CreateEdgeFoldout(VisualElement parentContainer, string title, ShapeType type)
+        private Foldout CreateFoldout(VisualElement parentContainer, string title, ShapeSetting setting, bool useFlags = true)
         {
             var fold = new Foldout();
             fold.text                          = title;
             fold.style.unityFontStyleAndWeight = FontStyle.Bold;
+            Toggle previewToggle = null;
+            ColorField colField  = null;
 
-            var setting = settingsDict[type];
-            AddShapeSettingControls(fold, setting);
-
-            parentContainer.Add(fold);
-            return fold;
-        }
-
-        private Foldout CreateFoldout(VisualElement parentContainer, string title, ShapeSetting setting)
-        {
-            var fold = new Foldout();
-            fold.text                          = title;
-            fold.style.unityFontStyleAndWeight = FontStyle.Bold;
-
-            var enumF = new EnumFlagsField("Which obj to add to", setting.flags);
-            fold.Add(enumF);
-
-            var (previewToggle, colField) = AddShapeSettingControls(fold, setting);
-
-            enumF.RegisterValueChangedCallback(evt =>
+            if (useFlags)
             {
-                setting.flags = (ShapeFlags)evt.newValue;
-                RefreshPreview();
-                RefreshFoldoutUI(setting, fold, previewToggle, colField);
-            });
+                var enumF = new EnumFlagsField("Which obj to add to", setting.flags);
+                fold.Add(enumF);
 
-            RefreshFoldoutUI(setting, fold, previewToggle, colField);
+                (previewToggle, colField) = AddShapeSettingControls(fold, setting);
+
+                enumF.RegisterValueChangedCallback(evt =>
+                {
+                    setting.flags = (ShapeFlags)evt.newValue;
+                    RefreshPreview();
+                    RefreshFoldoutUI(setting, fold, previewToggle, colField);
+                });
+
+                RefreshFoldoutUI(setting, fold, previewToggle, colField);
+            }
+            else
+            {
+                AddShapeSettingControls(fold, setting);
+            }
+
             parentContainer.Add(fold);
             return fold;
         }
