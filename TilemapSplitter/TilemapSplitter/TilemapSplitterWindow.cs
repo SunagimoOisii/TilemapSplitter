@@ -10,7 +10,11 @@ namespace TilemapSplitter
 
     internal class TilemapSplitterWindow : EditorWindow
     {
-        private readonly Dictionary<ShapeType, ShapeSetting> settingsDict = new()
+        private const string PrefPrefix = "TilemapSplitter.";
+        private static string CreateKey(string name) => PrefPrefix + name;
+
+        private Dictionary<ShapeType, ShapeSetting> settingsDict = CreateDefaultSettings();
+        private static Dictionary<ShapeType, ShapeSetting> CreateDefaultSettings() => new()
         {
             [ShapeType.VerticalEdge]   = new() { flags = ShapeFlags.VerticalEdge,   previewColor = Color.green  },
             [ShapeType.HorizontalEdge] = new() { flags = ShapeFlags.HorizontalEdge, previewColor = Color.yellow },
@@ -37,9 +41,17 @@ namespace TilemapSplitter
         [MenuItem("Tools/TilemapSplitter")]
         public static void ShowWindow() => GetWindow<TilemapSplitterWindow>("Split Tilemap");
 
-        private void OnEnable() { previewDrawer.Register(); }
+        private void OnEnable()
+        {
+            LoadPrefs();
+            previewDrawer.Register();
+        }
 
-        private void OnDisable() { previewDrawer.Unregister(); }
+        private void OnDisable()
+        {
+            SavePrefs();
+            previewDrawer.Unregister();
+        }
 
         public void CreateGUI()
         {
@@ -56,7 +68,7 @@ namespace TilemapSplitter
 
             //Create an ObjectField and HelpBox for the user to select the source Tilemap asset
             var sourceField = new ObjectField("Split Tilemap");
-            var helpBox       = new HelpBox("Select the subject of the division", HelpBoxMessageType.Info);
+            var helpBox     = new HelpBox("Select the subject of the division", HelpBoxMessageType.Info);
             helpBox.visible = (source == null);
             sourceField.objectType = typeof(Tilemap);
             sourceField.value      = source;
@@ -70,6 +82,17 @@ namespace TilemapSplitter
             container.Add(helpBox);
 
             AddHorizontalSeparator(container);
+
+            //Create Split Settings Button
+            var resetButton = new Button(() =>
+            {
+                ResetPrefs();
+                root.Clear();
+                CreateGUI();
+            });
+            resetButton.text            = "Reset Settings";
+            resetButton.style.marginTop = 5;
+            container.Add(resetButton);
 
             //Create Vertical, Horizontal Edge Shape Settings UI
             var mergeToggle = new Toggle("Merge VerticalEdge, HorizontalEdge");
@@ -282,5 +305,81 @@ namespace TilemapSplitter
                 f.text = $"{name} (Count:{count})";
             }
         }
+
+        #region Saving and Loading Split Settings using EditorPrefs
+
+        private void SavePrefs()
+        {
+            if (source != null)
+            {
+                string path = AssetDatabase.GetAssetPath(source);
+                EditorPrefs.SetString(CreateKey("SourcePath"), path);
+            }
+            else
+            {
+                EditorPrefs.DeleteKey(CreateKey("SourcePath"));
+            }
+
+            EditorPrefs.SetBool(CreateKey("CanMergeEdges"), canMergeEdges);
+
+            foreach (var kv in settingsDict)
+            {
+                string name = kv.Key.ToString();
+                var setting = kv.Value;
+                EditorPrefs.SetInt(CreateKey($"{name}.Flags"), (int)setting.flags);
+                EditorPrefs.SetInt(CreateKey($"{name}.Layer"), setting.layer);
+                EditorPrefs.SetString(CreateKey($"{name}.Tag"), setting.tag);
+                EditorPrefs.SetBool(CreateKey($"{name}.CanPreview"), setting.canPreview);
+                EditorPrefs.SetString(CreateKey($"{name}.Color"), ColorUtility.ToHtmlStringRGBA(setting.previewColor));
+            }
+        }
+
+        private void LoadPrefs()
+        {
+            if (EditorPrefs.HasKey(CreateKey("SourcePath")))
+            {
+                string path = EditorPrefs.GetString(CreateKey("SourcePath"));
+                source = AssetDatabase.LoadAssetAtPath<Tilemap>(path);
+            }
+
+            canMergeEdges = EditorPrefs.GetBool(CreateKey("CanMergeEdges"), canMergeEdges);
+
+            foreach (var kv in settingsDict)
+            {
+                string name = kv.Key.ToString();
+                var setting = kv.Value;
+                setting.flags      = (ShapeFlags)EditorPrefs.GetInt(CreateKey($"{name}.Flags"), (int)setting.flags);
+                setting.layer      = EditorPrefs.GetInt(CreateKey($"{name}.Layer"), setting.layer);
+                setting.tag        = EditorPrefs.GetString(CreateKey($"{name}.Tag"), setting.tag);
+                setting.canPreview = EditorPrefs.GetBool(CreateKey($"{name}.CanPreview"), setting.canPreview);
+                string col = EditorPrefs.GetString(CreateKey($"{name}.Color"), ColorUtility.ToHtmlStringRGBA(setting.previewColor));
+                if (ColorUtility.TryParseHtmlString("#" + col, out var c))
+                {
+                    setting.previewColor = c;
+                }
+            }
+        }
+
+        private void ResetPrefs()
+        {
+            EditorPrefs.DeleteKey(CreateKey("SourcePath"));
+            EditorPrefs.DeleteKey(CreateKey("CanMergeEdges"));
+
+            foreach (ShapeType type in System.Enum.GetValues(typeof(ShapeType)))
+            {
+                string name = type.ToString();
+                EditorPrefs.DeleteKey(CreateKey($"{name}.Flags"));
+                EditorPrefs.DeleteKey(CreateKey($"{name}.Layer"));
+                EditorPrefs.DeleteKey(CreateKey($"{name}.Tag"));
+                EditorPrefs.DeleteKey(CreateKey($"{name}.CanPreview"));
+                EditorPrefs.DeleteKey(CreateKey($"{name}.Color"));
+            }
+
+            settingsDict  = CreateDefaultSettings();
+            source        = null;
+            canMergeEdges = false;
+        }
+
+        #endregion
     }
 }

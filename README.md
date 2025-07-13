@@ -13,6 +13,8 @@ TilemapSplitter is a Unity editor extension that automatically classifies tiles 
 - Categories like Cross can be merged into VerticalEdge or HorizontalEdge via `Which obj to add to`
 - After execution, new Tilemap objects are created per category
 - Enable preview to visualize classification results in the Scene
+- Settings persist via EditorPrefs even after closing the window
+- A reset button is available below the Split Tilemap field
 
 ## Installation
 1. Clone this repository and place the `TilemapSplitter` folder under your `Assets`
@@ -25,6 +27,7 @@ TilemapSplitter is a Unity editor extension that automatically classifies tiles 
 4. Optionally enable `Merge VerticalEdge, HorizontalEdge`
    - When merging, settings for VerticalEdge take priority
 5. Press `Execute Splitting` to generate new Tilemaps based on the classification
+6. Use the button under `Split Tilemap` to reset settings
 
 Example of the tool window:
 
@@ -64,6 +67,8 @@ Unity の `Tilemap` を接続関係に基づき自動で分類し、用途に応
   へ統合することもできる
 - 実行後、選択したカテゴリ別に新しい Tilemap オブジェクトを生成
 - プレビューを有効にすると Scene 上で分類結果をカラー表示
+- 設定は EditorPrefs を介して保存され、ウィンドウを閉じても維持
+- `Split Tilemap` 欄の下にリセットボタンを配置
 
 ## インストール
 1. `TilemapSplitter` フォルダーを `Assets` 配下へ配置します
@@ -77,6 +82,7 @@ Unity の `Tilemap` を接続関係に基づき自動で分類し、用途に応
 4. 必要に応じて `Merge VerticalEdge, HorizontalEdge` を有効化
    - マージ時は VerticalEdge の設定が優先されます
 5. `Execute Splitting` を押すと分類結果に応じた Tilemap が生成されます
+6. 設定をリセットしたい場合は `Split Tilemap` の下にあるボタンを使用
 
 ツールウィンドウの例：
 
