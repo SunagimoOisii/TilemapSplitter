@@ -35,7 +35,8 @@ namespace TilemapSplitter
         private ShapeCells shapeCells = new();
         private readonly TilemapPreviewDrawer previewDrawer = new();
 
-        private bool canMergeEdges = false;
+        private bool canMergeEdges  = false;
+        private bool attachCollider = false;
         private bool isRefreshingPreview = false;
 
         [MenuItem("Tools/TilemapSplitter")]
@@ -93,6 +94,11 @@ namespace TilemapSplitter
             resetButton.text            = "Reset Settings";
             resetButton.style.marginTop = 5;
             container.Add(resetButton);
+
+            var attachToggle = new Toggle("Attach Colliders");
+            attachToggle.value = attachCollider;
+            attachToggle.RegisterValueChangedCallback(evt => attachCollider = evt.newValue);
+            container.Add(attachToggle);
 
             //Create Vertical, Horizontal Edge Shape Settings UI
             var mergeToggle = new Toggle("Merge VerticalEdge, HorizontalEdge");
@@ -260,7 +266,8 @@ namespace TilemapSplitter
 
             while (e.MoveNext()) yield return null;
 
-            TilemapCreator.GenerateSplitTilemaps(source, shapeCells, settingsDict, canMergeEdges);
+            TilemapCreator.GenerateSplitTilemaps(source, shapeCells, settingsDict,
+                canMergeEdges, attachCollider);
             RefreshPreview();
         }
 
@@ -320,7 +327,8 @@ namespace TilemapSplitter
                 EditorPrefs.DeleteKey(CreateKey("SourcePath"));
             }
 
-            EditorPrefs.SetBool(CreateKey("CanMergeEdges"), canMergeEdges);
+            EditorPrefs.SetBool(CreateKey("CanMergeEdges"),  canMergeEdges);
+            EditorPrefs.SetBool(CreateKey("AttachCollider"), attachCollider);
 
             foreach (var kv in settingsDict)
             {
@@ -342,7 +350,8 @@ namespace TilemapSplitter
                 source = AssetDatabase.LoadAssetAtPath<Tilemap>(path);
             }
 
-            canMergeEdges = EditorPrefs.GetBool(CreateKey("CanMergeEdges"), canMergeEdges);
+            canMergeEdges  = EditorPrefs.GetBool(CreateKey("CanMergeEdges"), canMergeEdges);
+            attachCollider = EditorPrefs.GetBool(CreateKey("AttachCollider"), attachCollider);
 
             foreach (var kv in settingsDict)
             {
@@ -364,6 +373,7 @@ namespace TilemapSplitter
         {
             EditorPrefs.DeleteKey(CreateKey("SourcePath"));
             EditorPrefs.DeleteKey(CreateKey("CanMergeEdges"));
+            EditorPrefs.DeleteKey(CreateKey("AttachCollider"));
 
             foreach (ShapeType type in System.Enum.GetValues(typeof(ShapeType)))
             {
@@ -375,9 +385,10 @@ namespace TilemapSplitter
                 EditorPrefs.DeleteKey(CreateKey($"{name}.Color"));
             }
 
-            settingsDict  = CreateDefaultSettings();
-            source        = null;
-            canMergeEdges = false;
+            settingsDict   = CreateDefaultSettings();
+            source         = null;
+            canMergeEdges  = false;
+            attachCollider = false;
         }
 
         #endregion
