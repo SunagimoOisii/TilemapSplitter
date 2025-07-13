@@ -1,5 +1,6 @@
 namespace TilemapSplitter
 {
+    using System;
     using System.Collections;
     using System.Collections.Generic;
     using UnityEditor;
@@ -35,8 +36,8 @@ namespace TilemapSplitter
         private ShapeCells shapeCells = new();
         private readonly TilemapPreviewDrawer previewDrawer = new();
 
-        private bool canMergeEdges  = false;
-        private bool attachCollider = false;
+        private bool canMergeEdges       = false;
+        private bool canAttachCollider   = false;
         private bool isRefreshingPreview = false;
 
         [MenuItem("Tools/TilemapSplitter")]
@@ -68,45 +69,46 @@ namespace TilemapSplitter
             scroll.Add(container);
 
             //Create an ObjectField and HelpBox for the user to select the source Tilemap asset
-            var sourceField = new ObjectField("Split Tilemap");
+            var sourceF = new ObjectField("Split Tilemap");
             var helpBox     = new HelpBox("Select the subject of the division", HelpBoxMessageType.Info);
             helpBox.visible = (source == null);
-            sourceField.objectType = typeof(Tilemap);
-            sourceField.value      = source;
-            sourceField.RegisterValueChangedCallback(evt =>
+            sourceF.objectType = typeof(Tilemap);
+            sourceF.value      = source;
+            sourceF.RegisterValueChangedCallback(evt =>
             {
                 source = evt.newValue as Tilemap;
                 helpBox.visible = (source == null);
                 RefreshPreview();
             });
-            container.Add(sourceField);
+            container.Add(sourceF);
             container.Add(helpBox);
 
             AddHorizontalSeparator(container);
 
             //Create Split Settings Button
-            var resetButton = new Button(() =>
+            var resetB = new Button(() =>
             {
                 ResetPrefs();
                 root.Clear();
                 CreateGUI();
             });
-            resetButton.text            = "Reset Settings";
-            resetButton.style.marginTop = 5;
-            container.Add(resetButton);
+            resetB.text            = "Reset Settings";
+            resetB.style.marginTop = 5;
+            container.Add(resetB);
 
-            var attachToggle = new Toggle("Attach Colliders");
-            attachToggle.value = attachCollider;
-            attachToggle.RegisterValueChangedCallback(evt => attachCollider = evt.newValue);
-            container.Add(attachToggle);
+            //Create Colliders Attach Button
+            var attachT = new Toggle("Attach Colliders");
+            attachT.value = canAttachCollider;
+            attachT.RegisterValueChangedCallback(evt => canAttachCollider = evt.newValue);
+            container.Add(attachT);
 
             //Create Vertical, Horizontal Edge Shape Settings UI
-            var mergeToggle = new Toggle("Merge VerticalEdge, HorizontalEdge");
-            var mergeHB     = new HelpBox("When merging, VerticalEdge shapeSettings take precedence",
+            var mergeT  = new Toggle("Merge VerticalEdge, HorizontalEdge");
+            var mergeHB = new HelpBox("When merging, VerticalEdge shapeSettings take precedence",
                 HelpBoxMessageType.Info);
-            mergeToggle.value = canMergeEdges;
-            mergeToggle.RegisterValueChangedCallback(evt => canMergeEdges = evt.newValue);
-            container.Add(mergeToggle);
+            mergeT.value = canMergeEdges;
+            mergeT.RegisterValueChangedCallback(evt => canMergeEdges = evt.newValue);
+            container.Add(mergeT);
             container.Add(mergeHB);
 
             verticalEdgeFoldOut   = CreateEdgeFoldout(container, "VerticalEdge", ShapeType.VerticalEdge);
@@ -136,7 +138,7 @@ namespace TilemapSplitter
             }
 
             //Add the Execute Splitting button at the bottom of the UI
-            var splitButton = new Button(() =>
+            var splitB = new Button(() =>
             {
                 if (source == null)
                 {
@@ -145,9 +147,9 @@ namespace TilemapSplitter
                 }
                 StartCoroutine(SplitCoroutine());
             });
-            splitButton.text            = "Execute Splitting";
-            splitButton.style.marginTop = 10;
-            container.Add(splitButton);
+            splitB.text            = "Execute Splitting";
+            splitB.style.marginTop = 10;
+            container.Add(splitB);
 
             previewDrawer.Setup(source, settingsDict);
         }
@@ -182,12 +184,12 @@ namespace TilemapSplitter
             fold.text                          = title;
             fold.style.unityFontStyleAndWeight = FontStyle.Bold;
 
-            var enumField = new EnumFlagsField("Which obj to add to", setting.flags);
-            fold.Add(enumField);
+            var enumF = new EnumFlagsField("Which obj to add to", setting.flags);
+            fold.Add(enumF);
 
             var (previewToggle, colField) = AddShapeSettingControls(fold, setting);
 
-            enumField.RegisterValueChangedCallback(evt =>
+            enumF.RegisterValueChangedCallback(evt =>
             {
                 setting.flags = (ShapeFlags)evt.newValue;
                 RefreshPreview();
@@ -202,27 +204,27 @@ namespace TilemapSplitter
         private (Toggle previewToggle, ColorField colorField) AddShapeSettingControls(Foldout fold,
             ShapeSetting setting)
         {
-            var layerField = new LayerField("Layer", setting.layer);
-            layerField.RegisterValueChangedCallback(evt => setting.layer = evt.newValue);
-            fold.Add(layerField);
+            var layerF = new LayerField("Layer", setting.layer);
+            layerF.RegisterValueChangedCallback(evt => setting.layer = evt.newValue);
+            fold.Add(layerF);
 
-            var tagField = new TagField("Tag", setting.tag);
-            tagField.RegisterValueChangedCallback(evt => setting.tag = evt.newValue);
-            fold.Add(tagField);
+            var tagF = new TagField("Tag", setting.tag);
+            tagF.RegisterValueChangedCallback(evt => setting.tag = evt.newValue);
+            fold.Add(tagF);
 
-            var previewToggle = new Toggle("Preview") { value = setting.canPreview };
-            previewToggle.RegisterValueChangedCallback(evt =>
+            var previewT = new Toggle("Preview") { value = setting.canPreview };
+            previewT.RegisterValueChangedCallback(evt =>
             {
                 setting.canPreview = evt.newValue;
                 RefreshPreview();
             });
-            fold.Add(previewToggle);
+            fold.Add(previewT);
 
-            var colField = new ColorField("Preview Color") { value = setting.previewColor };
-            colField.RegisterValueChangedCallback(evt => setting.previewColor = evt.newValue);
-            fold.Add(colField);
+            var colF = new ColorField("Preview Color") { value = setting.previewColor };
+            colF.RegisterValueChangedCallback(evt => setting.previewColor = evt.newValue);
+            fold.Add(colF);
 
-            return (previewToggle, colField);
+            return (previewT, colF);
         }
 
         private void RefreshFoldoutUI(ShapeSetting setting, Foldout fold,
@@ -267,7 +269,7 @@ namespace TilemapSplitter
             while (e.MoveNext()) yield return null;
 
             TilemapCreator.GenerateSplitTilemaps(source, shapeCells, settingsDict,
-                canMergeEdges, attachCollider);
+                canMergeEdges, canAttachCollider);
             RefreshPreview();
         }
 
@@ -328,7 +330,7 @@ namespace TilemapSplitter
             }
 
             EditorPrefs.SetBool(CreateKey("CanMergeEdges"),  canMergeEdges);
-            EditorPrefs.SetBool(CreateKey("AttachCollider"), attachCollider);
+            EditorPrefs.SetBool(CreateKey("AttachCollider"), canAttachCollider);
 
             foreach (var kv in settingsDict)
             {
@@ -338,7 +340,8 @@ namespace TilemapSplitter
                 EditorPrefs.SetInt(CreateKey($"{name}.Layer"), setting.layer);
                 EditorPrefs.SetString(CreateKey($"{name}.Tag"), setting.tag);
                 EditorPrefs.SetBool(CreateKey($"{name}.CanPreview"), setting.canPreview);
-                EditorPrefs.SetString(CreateKey($"{name}.Color"), ColorUtility.ToHtmlStringRGBA(setting.previewColor));
+                EditorPrefs.SetString(CreateKey($"{name}.Color"),
+                    ColorUtility.ToHtmlStringRGBA(setting.previewColor));
             }
         }
 
@@ -346,16 +349,16 @@ namespace TilemapSplitter
         {
             if (EditorPrefs.HasKey(CreateKey("SourcePath")))
             {
-                string path = EditorPrefs.GetString(CreateKey("SourcePath"));
-                source = AssetDatabase.LoadAssetAtPath<Tilemap>(path);
+                var path = EditorPrefs.GetString(CreateKey("SourcePath"));
+                source   = AssetDatabase.LoadAssetAtPath<Tilemap>(path);
             }
 
-            canMergeEdges  = EditorPrefs.GetBool(CreateKey("CanMergeEdges"), canMergeEdges);
-            attachCollider = EditorPrefs.GetBool(CreateKey("AttachCollider"), attachCollider);
+            canMergeEdges     = EditorPrefs.GetBool(CreateKey("CanMergeEdges"), canMergeEdges);
+            canAttachCollider = EditorPrefs.GetBool(CreateKey("AttachCollider"), canAttachCollider);
 
             foreach (var kv in settingsDict)
             {
-                string name = kv.Key.ToString();
+                var name    = kv.Key.ToString();
                 var setting = kv.Value;
                 setting.flags      = (ShapeFlags)EditorPrefs.GetInt(CreateKey($"{name}.Flags"), (int)setting.flags);
                 setting.layer      = EditorPrefs.GetInt(CreateKey($"{name}.Layer"), setting.layer);
@@ -375,9 +378,9 @@ namespace TilemapSplitter
             EditorPrefs.DeleteKey(CreateKey("CanMergeEdges"));
             EditorPrefs.DeleteKey(CreateKey("AttachCollider"));
 
-            foreach (ShapeType type in System.Enum.GetValues(typeof(ShapeType)))
+            foreach (ShapeType t in Enum.GetValues(typeof(ShapeType)))
             {
-                string name = type.ToString();
+                string name = t.ToString();
                 EditorPrefs.DeleteKey(CreateKey($"{name}.Flags"));
                 EditorPrefs.DeleteKey(CreateKey($"{name}.Layer"));
                 EditorPrefs.DeleteKey(CreateKey($"{name}.Tag"));
@@ -385,10 +388,10 @@ namespace TilemapSplitter
                 EditorPrefs.DeleteKey(CreateKey($"{name}.Color"));
             }
 
-            settingsDict   = CreateDefaultSettings();
-            source         = null;
-            canMergeEdges  = false;
-            attachCollider = false;
+            settingsDict      = CreateDefaultSettings();
+            source            = null;
+            canMergeEdges     = false;
+            canAttachCollider = false;
         }
 
         #endregion
