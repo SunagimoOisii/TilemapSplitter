@@ -111,28 +111,27 @@ namespace TilemapSplitter
             container.Add(mergeT);
             container.Add(mergeHB);
 
-            verticalEdgeFoldOut   = CreateFoldout(container, "VerticalEdge", settingsDict[ShapeType.VerticalEdge], false);
-            AddHorizontalSeparator(container);
-            horizontalEdgeFoldOut = CreateFoldout(container, "HorizontalEdge", settingsDict[ShapeType.HorizontalEdge], false);
-            AddHorizontalSeparator(container);
-
             //Create Split Each Shape Settings UI
-            var infos = new (string title, ShapeType type)[]
+            var infos = new (ShapeType type, string title)[]
             {
-                ("Cross",      ShapeType.Cross),
-                ("T-Junction", ShapeType.TJunction),
-                ("Corner",     ShapeType.Corner),
-                ("Isolate",    ShapeType.Isolate),
+                (ShapeType.VerticalEdge,   "VerticalEdge"),
+                (ShapeType.HorizontalEdge, "HorizontalEdge"),
+                (ShapeType.Cross,          "Cross"),
+                (ShapeType.TJunction,      "T-Junction"),
+                (ShapeType.Corner,         "Corner"),
+                (ShapeType.Isolate,        "Isolate")
             };
             foreach (var info in infos)
             {
-                var fold = CreateFoldout(container, info.title, settingsDict[info.type]);
+                var fold = CreateFoldout(container, info.type, info.title);
                 switch (info.type)
                 {
-                    case ShapeType.Cross:     crossFoldOut     = fold; break;
-                    case ShapeType.TJunction: tJunctionFoldOut = fold; break;
-                    case ShapeType.Corner:    cornerFoldOut    = fold; break;
-                    case ShapeType.Isolate:   isolateFoldOut   = fold; break;
+                    case ShapeType.VerticalEdge:   verticalEdgeFoldOut   = fold; break;
+                    case ShapeType.HorizontalEdge: horizontalEdgeFoldOut = fold; break;
+                    case ShapeType.Cross:          crossFoldOut          = fold; break;
+                    case ShapeType.TJunction:      tJunctionFoldOut      = fold; break;
+                    case ShapeType.Corner:         cornerFoldOut         = fold; break;
+                    case ShapeType.Isolate:        isolateFoldOut        = fold; break;
                 }
                 AddHorizontalSeparator(container);
             }
@@ -165,33 +164,35 @@ namespace TilemapSplitter
             parentContainer.Add(separator);
         }
 
-        private Foldout CreateFoldout(VisualElement parentContainer, string title, ShapeSetting setting, bool useFlags = true)
+        private Foldout CreateFoldout(VisualElement parentContainer, ShapeType type, string title)
         {
             var fold = new Foldout();
             fold.text                          = title;
             fold.style.unityFontStyleAndWeight = FontStyle.Bold;
-            Toggle previewToggle = null;
-            ColorField colField  = null;
 
-            if (useFlags)
+            var setting = settingsDict[type];
+            if (type == ShapeType.VerticalEdge ||
+                type == ShapeType.HorizontalEdge)
+            {
+                AddShapeSettingControls(fold, setting);
+            }
+            else
             {
                 var enumF = new EnumFlagsField("Which obj to add to", setting.flags);
                 fold.Add(enumF);
 
-                (previewToggle, colField) = AddShapeSettingControls(fold, setting);
+                Toggle previewT    = null;
+                ColorField colorF  = null;
+                (previewT, colorF) = AddShapeSettingControls(fold, setting);
 
                 enumF.RegisterValueChangedCallback(evt =>
                 {
                     setting.flags = (ShapeFlags)evt.newValue;
                     RefreshPreview();
-                    RefreshFoldoutUI(setting, fold, previewToggle, colField);
+                    RefreshFoldoutUI(setting, fold, previewT, colorF);
                 });
 
-                RefreshFoldoutUI(setting, fold, previewToggle, colField);
-            }
-            else
-            {
-                AddShapeSettingControls(fold, setting);
+                RefreshFoldoutUI(setting, fold, previewT, colorF);
             }
 
             parentContainer.Add(fold);
