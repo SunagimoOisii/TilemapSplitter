@@ -14,9 +14,9 @@ namespace TilemapSplitter
         private Dictionary<ShapeType, ShapeSetting> shapeSettings;
         private ShapeCells shapeCells;
 
-        public void Setup(Tilemap original, Dictionary<ShapeType, ShapeSetting> settings)
+        public void Setup(Tilemap source, Dictionary<ShapeType, ShapeSetting> settings)
         {
-            tilemap       = original;
+            tilemap       = source;
             shapeSettings = settings;
         }
 
@@ -27,8 +27,7 @@ namespace TilemapSplitter
 
         private void OnSceneGUI(SceneView sv)
         {
-            if (tilemap == null ||
-                shapeCells == null) return;
+            if (tilemap == null || shapeCells == null) return;
 
             //Read preview settings(color, visibility) for each tile classification
             var v       = shapeSettings[ShapeType.VerticalEdge];
@@ -41,12 +40,12 @@ namespace TilemapSplitter
             //Draw each cell only if its preview flag is enabled, using the specified preview color
             var previewSettings = new (List<Vector3Int> cells, Color c, bool canPreview)[]
             {
-                (shapeCells.VerticalEdgesCells,   v.previewColor,       v.canPreview),
-                (shapeCells.HorizontalEdgesCells, h.previewColor,       h.canPreview),
-                (shapeCells.CrossCells,           cross.previewColor,   cross.canPreview),
-                (shapeCells.TJunctionCells,       t.previewColor ,      t.canPreview),
-                (shapeCells.CornerCells,          corner.previewColor,  corner.canPreview),
-                (shapeCells.IsolateCells,         isolate.previewColor, isolate.canPreview)
+                (shapeCells.VerticalCells,   v.previewColor,       v.canPreview),
+                (shapeCells.HorizontalCells, h.previewColor,       h.canPreview),
+                (shapeCells.CrossCells,      cross.previewColor,   cross.canPreview),
+                (shapeCells.TJunctionCells,  t.previewColor ,      t.canPreview),
+                (shapeCells.CornerCells,     corner.previewColor,  corner.canPreview),
+                (shapeCells.IsolateCells,    isolate.previewColor, isolate.canPreview)
             };
             foreach (var (cells, c, canPreview) in previewSettings)
             {
@@ -56,8 +55,7 @@ namespace TilemapSplitter
 
         private void DrawCellPreviews(List<Vector3Int> cells, Color c)
         {
-            if (cells == null ||
-                cells.Count == 0) return;
+            if (cells == null || cells.Count == 0) return;
 
             Handles.color = new Color(c.r, c.g, c.b, 0.4f);
             var cellSize  = tilemap.cellSize;

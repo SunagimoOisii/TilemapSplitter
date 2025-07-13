@@ -7,75 +7,67 @@ namespace TilemapSplitter
 
     internal static class TilemapCreator
     {
-        private const string VerticalEdgeName   = "VerticalEdge";
-        private const string HorizontalEdgeName = "HorizontalEdge";
-        private const string MergeTileName      = "EdgeTiles";
-        private const string CrossTileName      = "CrossTiles";
-        private const string TJunctionTileName  = "TJunctionTiles";
-        private const string CornerTileName     = "CornerTiles";
-        private const string IsolateTileName    = "IsolateTiles";
+        private const string VerticalObjName   = "VerticalEdge";
+        private const string HorizontalObjName = "HorizontalEdge";
+        private const string MergeObjName      = "EdgeTiles";
+        private const string CrossObjName      = "CrossTiles";
+        private const string TJunctionObjName  = "TJunctionTiles";
+        private const string CornerObjName     = "CornerTiles";
+        private const string IsolateObjName    = "IsolateTiles";
 
-        public static void GenerateSplitTilemaps(Tilemap original, ShapeCells sCells,
+        public static void GenerateSplitTilemaps(Tilemap source, ShapeCells sCells,
             Dictionary<ShapeType, ShapeSetting> settings, bool mergeEdges)
         {
             if (mergeEdges)
             {
-                var mergedCells = new List<Vector3Int>(sCells.VerticalEdgesCells);
+                var mergedCells = new List<Vector3Int>(sCells.VerticalCells);
                 var v           = settings[ShapeType.VerticalEdge];
-                mergedCells.AddRange(sCells.HorizontalEdgesCells);
-                CreateTilemapObjForCells(original, ShapeFlags.Independent, MergeTileName,
-                    mergedCells, v.layer, v.tag);
+                v.flags         = ShapeFlags.Independent;
+                mergedCells.AddRange(sCells.HorizontalCells);
+                CreateTilemapObjForCells(source, mergedCells, v, MergeObjName);
             }
             else
             {
                 var v = settings[ShapeType.VerticalEdge];
                 var h = settings[ShapeType.HorizontalEdge];
-                CreateTilemapObjForCells(original, v.flags, VerticalEdgeName,
-                    sCells.VerticalEdgesCells, v.layer, v.tag);
-                CreateTilemapObjForCells(original, h.flags, HorizontalEdgeName,
-                    sCells.HorizontalEdgesCells, h.layer, h.tag);
+                CreateTilemapObjForCells(source, sCells.VerticalCells, v, VerticalObjName);
+                CreateTilemapObjForCells(source, sCells.HorizontalCells, h, HorizontalObjName);
             }
 
             var cross   = settings[ShapeType.Cross];
             var t       = settings[ShapeType.TJunction];
             var corner  = settings[ShapeType.Corner];
             var isolate = settings[ShapeType.Isolate];
-
-            CreateTilemapObjForCells(original, cross.flags, CrossTileName,
-                sCells.CrossCells, cross.layer, cross.tag);
-            CreateTilemapObjForCells(original, t.flags, TJunctionTileName,
-                sCells.TJunctionCells, t.layer, t.tag);
-            CreateTilemapObjForCells(original, corner.flags, CornerTileName,
-                sCells.CornerCells, corner.layer, corner.tag);
-            CreateTilemapObjForCells(original, isolate.flags, IsolateTileName,
-                sCells.IsolateCells, isolate.layer, isolate.tag);
+            CreateTilemapObjForCells(source, sCells.CrossCells,     cross,   CrossObjName);
+            CreateTilemapObjForCells(source, sCells.TJunctionCells, t,       TJunctionObjName);
+            CreateTilemapObjForCells(source, sCells.CornerCells,    corner,  CornerObjName);
+            CreateTilemapObjForCells(source, sCells.IsolateCells,   isolate, IsolateObjName);
         }
 
-        private static void CreateTilemapObjForCells(Tilemap original, ShapeFlags flags,
-            string name, List<Vector3Int> cells, int layer, string tag)
+        private static void CreateTilemapObjForCells(Tilemap source, List<Vector3Int> cells,
+            ShapeSetting setting, string name)
         {
-            if (cells == null ||
-                cells.Count == 0) return;
+            if (cells == null || cells.Count == 0) return;
 
             //Skip instantiating this tile collection when the Independent flag is not enabled in settings
-            bool isRequiredIndependentFlag = name == CrossTileName  || name == TJunctionTileName ||
-                                             name == CornerTileName || name == IsolateTileName;
+            bool isRequiredIndependentFlag = name == CrossObjName  || name == TJunctionObjName ||
+                                             name == CornerObjName || name == IsolateObjName;
             if (isRequiredIndependentFlag &&
-                flags.HasFlag(ShapeFlags.Independent) == false) return;
+                setting.flags.HasFlag(ShapeFlags.Independent) == false) return;
 
             //Instantiate a GameObject with Tilemap and TilemapRenderer components attached
-            //Copy the original transform(position, rotation, scale) and apply the specified layer and tag
+            //Copy the source transform(position, rotation, scale) and apply the specified layer and tag
             var obj = new GameObject(name, typeof(Tilemap), typeof(TilemapRenderer));
-            obj.layer                = layer;
-            obj.tag                  = tag;
-            obj.transform.localScale = original.transform.localScale;
-            obj.transform.SetLocalPositionAndRotation(original.transform.localPosition,
-                original.transform.localRotation);
-            obj.transform.SetParent(original.transform.parent, false);
+            obj.layer                = setting.layer;
+            obj.tag                  = setting.tag;
+            obj.transform.localScale = source.transform.localScale;
+            obj.transform.SetLocalPositionAndRotation(source.transform.localPosition,
+                source.transform.localRotation);
+            obj.transform.SetParent(source.transform.parent, false);
 
-            //If there is a TilemapRenderer in the original, match its settings.
+            //If there is a TilemapRenderer in the source, match its settings.
             var renderer = obj.GetComponent<TilemapRenderer>();
-            if (original.TryGetComponent<TilemapRenderer>(out var oriRenderer))
+            if (source.TryGetComponent<TilemapRenderer>(out var oriRenderer))
             {
                 renderer.sortingLayerID = oriRenderer.sortingLayerID;
                 renderer.sortingOrder = oriRenderer.sortingOrder;
@@ -90,9 +82,9 @@ namespace TilemapSplitter
             var tm = obj.GetComponent<Tilemap>();
             foreach (var cell in cells)
             {
-                tm.SetTile(cell,  original.GetTile(cell));
-                tm.SetColor(cell, original.GetColor(cell));
-                tm.SetTransformMatrix(cell, original.GetTransformMatrix(cell));
+                tm.SetTile(cell,  source.GetTile(cell));
+                tm.SetColor(cell, source.GetColor(cell));
+                tm.SetTransformMatrix(cell, source.GetTransformMatrix(cell));
             }
 
             Undo.RegisterCreatedObjectUndo(obj, "GenerateSplitTilemaps " + name);

@@ -1,12 +1,12 @@
 namespace TilemapSplitter
 {
+    using System.Collections;
+    using System.Collections.Generic;
     using UnityEditor;
     using UnityEditor.UIElements;
-    using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.Tilemaps;
     using UnityEngine.UIElements;
-    using System.Collections;
 
     internal class TilemapSplitterWindow : EditorWindow
     {
@@ -27,7 +27,7 @@ namespace TilemapSplitter
         private Foldout cornerFoldOut;
         private Foldout isolateFoldOut;
 
-        private Tilemap original;
+        private Tilemap source;
         private ShapeCells result = new();
         private readonly TilemapPreviewDrawer previewDrawer = new();
 
@@ -55,18 +55,18 @@ namespace TilemapSplitter
             scroll.Add(container);
 
             //Create an ObjectField and HelpBox for the user to select the source Tilemap asset
-            var originalField = new ObjectField("Split Tilemap");
+            var sourceField = new ObjectField("Split Tilemap");
             var helpBox       = new HelpBox("Select the subject of the division", HelpBoxMessageType.Info);
-            helpBox.visible = (original == null);
-            originalField.objectType = typeof(Tilemap);
-            originalField.value      = original;
-            originalField.RegisterValueChangedCallback(evt =>
+            helpBox.visible = (source == null);
+            sourceField.objectType = typeof(Tilemap);
+            sourceField.value      = source;
+            sourceField.RegisterValueChangedCallback(evt =>
             {
-                original = evt.newValue as Tilemap;
-                helpBox.visible = (original == null);
+                source = evt.newValue as Tilemap;
+                helpBox.visible = (source == null);
                 RefreshPreview();
             });
-            container.Add(originalField);
+            container.Add(sourceField);
             container.Add(helpBox);
 
             AddHorizontalSeparator(container);
@@ -109,40 +109,18 @@ namespace TilemapSplitter
             //Add the Execute Splitting button at the bottom of the UI
             var splitButton = new Button(() =>
             {
-                if (original == null)
+                if (source == null)
                 {
                     EditorUtility.DisplayDialog("Error", "The split target isn't set", "OK");
                     return;
                 }
-                StartEditorCoroutine(SplitCoroutine());
+                StartCoroutine(SplitCoroutine());
             });
             splitButton.text            = "Execute Splitting";
             splitButton.style.marginTop = 10;
             container.Add(splitButton);
 
-            previewDrawer.Setup(original, settingsDict);
-        }
-
-        private static void StartEditorCoroutine(IEnumerator e)
-        {
-            void Update()
-            {
-                if (e.MoveNext() == false) EditorApplication.update -= Update;
-            }
-
-            EditorApplication.update += Update;
-        }
-
-        private IEnumerator SplitCoroutine()
-        {
-            result = new ShapeCells();
-            var  e = TileShapeClassifier.ClassifyCoroutine(original, settingsDict, result);
-            while (e.MoveNext())
-            {
-                yield return null;
-            }
-            TilemapCreator.GenerateSplitTilemaps(original, result, settingsDict, canMergeEdges);
-            RefreshPreview();
+            previewDrawer.Setup(source, settingsDict);
         }
 
         private static void AddHorizontalSeparator(VisualElement parentContainer)
@@ -154,6 +132,27 @@ namespace TilemapSplitter
             separator.style.marginBottom      = 5;
 
             parentContainer.Add(separator);
+        }
+
+        private static void StartCoroutine(IEnumerator e)
+        {
+            EditorApplication.update += Update;
+
+            void Update()
+            {
+                if (e.MoveNext() == false) EditorApplication.update -= Update;
+            }
+        }
+
+        private IEnumerator SplitCoroutine()
+        {
+            result = new ShapeCells();
+            var  e = TileShapeClassifier.ClassifyCoroutine(source, settingsDict, result);
+
+            while (e.MoveNext()) yield return null;
+
+            TilemapCreator.GenerateSplitTilemaps(source, result, settingsDict, canMergeEdges);
+            RefreshPreview();
         }
 
         private (Toggle previewToggle, ColorField colorField) AddShapeSettingControls(Foldout fold,
@@ -244,23 +243,21 @@ namespace TilemapSplitter
 
         private void RefreshPreview()
         {
-            if (original == null ||
-                isRefreshingPreview) return;
-
-            StartEditorCoroutine(RefreshPreviewCoroutine());
+            if (source == null || isRefreshingPreview) return;
+            StartCoroutine(RefreshPreviewCoroutine());
 
             IEnumerator RefreshPreviewCoroutine()
             {
                 isRefreshingPreview = true;
 
                 result = new ShapeCells();
-                var e = TileShapeClassifier.ClassifyCoroutine(original, settingsDict, result);
+                var e = TileShapeClassifier.ClassifyCoroutine(source, settingsDict, result);
                 while (e.MoveNext())
                 {
                     yield return null;
                 }
 
-                previewDrawer.Setup(original, settingsDict);
+                previewDrawer.Setup(source, settingsDict);
                 previewDrawer.SetShapeResult(result);
                 SceneView.RepaintAll();
                 UpdateFoldoutTitles();
@@ -273,8 +270,8 @@ namespace TilemapSplitter
         {
             var list = new (Foldout f, string name, int count)[]
             {
-                (verticalEdgeFoldOut,   "VerticalEdge",   result.VerticalEdgesCells.Count),
-                (horizontalEdgeFoldOut, "HorizontalEdge", result.HorizontalEdgesCells.Count),
+                (verticalEdgeFoldOut,   "VerticalEdge",   result.VerticalCells.Count),
+                (horizontalEdgeFoldOut, "HorizontalEdge", result.HorizontalCells.Count),
                 (crossFoldOut,          "CrossCells",     result.CrossCells.Count),
                 (tJunctionFoldOut,      "TJunctionCells", result.TJunctionCells.Count),
                 (cornerFoldOut,         "CornerCells",    result.CornerCells.Count),

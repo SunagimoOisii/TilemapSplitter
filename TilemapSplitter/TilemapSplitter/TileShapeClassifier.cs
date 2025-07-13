@@ -39,12 +39,12 @@ namespace TilemapSplitter
     /// </summary>
     internal class ShapeCells
     {
-        public readonly List<Vector3Int> VerticalEdgesCells   = new();
-        public readonly List<Vector3Int> HorizontalEdgesCells = new();
-        public readonly List<Vector3Int> CrossCells           = new();
-        public readonly List<Vector3Int> TJunctionCells       = new();
-        public readonly List<Vector3Int> CornerCells          = new();
-        public readonly List<Vector3Int> IsolateCells         = new();
+        public readonly List<Vector3Int> VerticalCells   = new();
+        public readonly List<Vector3Int> HorizontalCells = new();
+        public readonly List<Vector3Int> CrossCells      = new();
+        public readonly List<Vector3Int> TJunctionCells  = new();
+        public readonly List<Vector3Int> CornerCells     = new();
+        public readonly List<Vector3Int> IsolateCells    = new();
     }
 
     internal static class TileShapeClassifier
@@ -52,22 +52,22 @@ namespace TilemapSplitter
         /// <summary>
         /// Compress the tilemap bounds to exclude empty rows and columns
         /// </summary>
-        public static IEnumerator ClassifyCoroutine(Tilemap original, 
+        public static IEnumerator ClassifyCoroutine(Tilemap source, 
             Dictionary<ShapeType, ShapeSetting> settings, ShapeCells result, int batch = 100)
         {
-            result.VerticalEdgesCells.Clear();
-            result.HorizontalEdgesCells.Clear();
+            result.VerticalCells.Clear();
+            result.HorizontalCells.Clear();
             result.CrossCells.Clear();
             result.TJunctionCells.Clear();
             result.CornerCells.Clear();
             result.IsolateCells.Clear();
 
             //Compress the Tilemap’s cellBounds to skip empty rows and columns
-            original.CompressBounds();
+            source.CompressBounds();
 
             //Get the bounding box in cell coordinates and retrieve all tiles inside it(empty slots = null)
-            var cellBounds    = original.cellBounds;
-            var tilesInBounds = original.GetTilesBlock(cellBounds);
+            var cellBounds    = source.cellBounds;
+            var tilesInBounds = source.GetTilesBlock(cellBounds);
 
             //Only cells containing tiles are stored in the collection
             int width  = cellBounds.size.x;
@@ -151,11 +151,11 @@ namespace TilemapSplitter
                 default:
                     if (anyV && anyH == false) //Vertical
                     {
-                        sc.VerticalEdgesCells.Add(cell);
+                        sc.VerticalCells.Add(cell);
                     }
                     else if (anyH && anyV == false) //Horizontal
                     {
-                        sc.HorizontalEdgesCells.Add(cell);
+                        sc.HorizontalCells.Add(cell);
                     }
                     else if (neighborCount == 0) //Isolate
                     {
@@ -171,8 +171,8 @@ namespace TilemapSplitter
         private static void ApplyShapeFlags(Vector3Int cell, ShapeFlags flags,
             ShapeCells sc, List<Vector3Int> indepCells)
         {
-            if (flags.HasFlag(ShapeFlags.VerticalEdge))   sc.VerticalEdgesCells?.Add(cell);
-            if (flags.HasFlag(ShapeFlags.HorizontalEdge)) sc.HorizontalEdgesCells?.Add(cell);
+            if (flags.HasFlag(ShapeFlags.VerticalEdge))   sc.VerticalCells?.Add(cell);
+            if (flags.HasFlag(ShapeFlags.HorizontalEdge)) sc.HorizontalCells?.Add(cell);
             if (flags.HasFlag(ShapeFlags.Independent))    indepCells?.Add(cell);
         }
     }
