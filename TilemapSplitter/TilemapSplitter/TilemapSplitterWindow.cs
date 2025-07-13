@@ -70,18 +70,18 @@ namespace TilemapSplitter
 
             //Create an ObjectField and HelpBox for the user to select the source Tilemap asset
             var sourceF = new ObjectField("Split Tilemap");
-            var helpBox     = new HelpBox("Select the subject of the division", HelpBoxMessageType.Info);
-            helpBox.visible = (source == null);
+            var hp      = new HelpBox("Select the subject of the division", HelpBoxMessageType.Info);
+            hp.visible = (source == null);
             sourceF.objectType = typeof(Tilemap);
             sourceF.value      = source;
             sourceF.RegisterValueChangedCallback(evt =>
             {
                 source = evt.newValue as Tilemap;
-                helpBox.visible = (source == null);
+                hp.visible = (source == null);
                 RefreshPreview();
             });
             container.Add(sourceF);
-            container.Add(helpBox);
+            container.Add(hp);
 
             AddHorizontalSeparator(container);
 
@@ -202,24 +202,24 @@ namespace TilemapSplitter
         private (Toggle previewToggle, ColorField colorField) AddShapeSettingControls(Foldout fold,
             ShapeSetting setting)
         {
-            var layerF = new LayerField("Layer", setting.layer);
-            layerF.RegisterValueChangedCallback(evt => setting.layer = evt.newValue);
-            fold.Add(layerF);
-
-            var tagF = new TagField("Tag", setting.tag);
-            tagF.RegisterValueChangedCallback(evt => setting.tag = evt.newValue);
-            fold.Add(tagF);
-
+            //Create controls and register callbacks
+            var layerF   = new LayerField("Layer", setting.layer);
+            var tagF     = new TagField("Tag", setting.tag);
             var previewT = new Toggle("Preview") { value = setting.canPreview };
+            var colF     = new ColorField("Preview Color") { value = setting.previewColor };
+            layerF.RegisterValueChangedCallback(evt => setting.layer = evt.newValue);
+            tagF.RegisterValueChangedCallback(evt => setting.tag = evt.newValue);
             previewT.RegisterValueChangedCallback(evt =>
             {
                 setting.canPreview = evt.newValue;
                 RefreshPreview();
             });
-            fold.Add(previewT);
-
-            var colF = new ColorField("Preview Color") { value = setting.previewColor };
             colF.RegisterValueChangedCallback(evt => setting.previewColor = evt.newValue);
+
+            //Add creation controls to foldout
+            fold.Add(layerF);
+            fold.Add(tagF);
+            fold.Add(previewT);
             fold.Add(colF);
 
             return (previewT, colF);
