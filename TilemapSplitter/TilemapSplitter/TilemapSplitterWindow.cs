@@ -57,18 +57,34 @@ namespace TilemapSplitter
 
         public void CreateGUI()
         {
-            var root = rootVisualElement;
+            var container = CreateScrollableContainer();
 
-            //Create a ScrollView and a container VisualElement
+            CreateSourceField(container);
+            AddHorizontalSeparator(container);
+
+            CreateResetButton(container);
+            CreateColliderToggle(container);
+            CreateMergeEdgeToggle(container);
+            CreateShapeFoldouts(container);
+            CreateExecuteButton(container);
+
+            previewDrawer.Setup(source, settingsDict);
+        }
+
+        private VisualElement CreateScrollableContainer()
+        {
             var scroll    = new ScrollView();
             var container = new VisualElement();
             container.style.flexDirection = FlexDirection.Column;
             container.style.paddingLeft   = 10;
             container.style.paddingRight  = 10;
-            root.Add(scroll);
+            rootVisualElement.Add(scroll);
             scroll.Add(container);
+            return container;
+        }
 
-            //Create an ObjectField and HelpBox for the user to select the source Tilemap asset
+        private void CreateSourceField(VisualElement container)
+        {
             var sourceF = new ObjectField("Split Tilemap");
             var hp      = new HelpBox("Select the subject of the division", HelpBoxMessageType.Info);
             hp.visible = (source == null);
@@ -76,33 +92,37 @@ namespace TilemapSplitter
             sourceF.value      = source;
             sourceF.RegisterValueChangedCallback(evt =>
             {
-                source = evt.newValue as Tilemap;
+                source    = evt.newValue as Tilemap;
                 hp.visible = (source == null);
                 RefreshPreview();
             });
             container.Add(sourceF);
             container.Add(hp);
+        }
 
-            AddHorizontalSeparator(container);
-
-            //Create Split Settings Button
+        private void CreateResetButton(VisualElement container)
+        {
             var resetB = new Button(() =>
             {
                 ResetPrefs();
-                root.Clear();
+                rootVisualElement.Clear();
                 CreateGUI();
             });
             resetB.text            = "Reset Settings";
             resetB.style.marginTop = 5;
             container.Add(resetB);
+        }
 
-            //Create Colliders Attach Button
+        private void CreateColliderToggle(VisualElement container)
+        {
             var attachT = new Toggle("Attach Colliders");
             attachT.value = canAttachCollider;
             attachT.RegisterValueChangedCallback(evt => canAttachCollider = evt.newValue);
             container.Add(attachT);
+        }
 
-            //Create Vertical, Horizontal Edge Shape Settings UI
+        private void CreateMergeEdgeToggle(VisualElement container)
+        {
             var mergeT  = new Toggle("Merge VerticalEdge, HorizontalEdge");
             var mergeHB = new HelpBox("When merging, VerticalEdge shapeSettings take precedence",
                 HelpBoxMessageType.Info);
@@ -110,8 +130,10 @@ namespace TilemapSplitter
             mergeT.RegisterValueChangedCallback(evt => canMergeEdges = evt.newValue);
             container.Add(mergeT);
             container.Add(mergeHB);
+        }
 
-            //Create Split Each Shape Settings UI
+        private void CreateShapeFoldouts(VisualElement container)
+        {
             var infos = new (ShapeType type, string title)[]
             {
                 (ShapeType.VerticalEdge,   "VerticalEdge"),
@@ -135,8 +157,10 @@ namespace TilemapSplitter
                 }
                 AddHorizontalSeparator(container);
             }
+        }
 
-            //Add the Execute Splitting button at the bottom of the UI
+        private void CreateExecuteButton(VisualElement container)
+        {
             var splitB = new Button(() =>
             {
                 if (source == null)
@@ -149,8 +173,6 @@ namespace TilemapSplitter
             splitB.text            = "Execute Splitting";
             splitB.style.marginTop = 10;
             container.Add(splitB);
-
-            previewDrawer.Setup(source, settingsDict);
         }
 
         private static void AddHorizontalSeparator(VisualElement parentContainer)
