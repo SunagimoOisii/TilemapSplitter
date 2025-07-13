@@ -15,33 +15,33 @@ namespace TilemapSplitter
         private const string CornerObjName     = "CornerTiles";
         private const string IsolateObjName    = "IsolateTiles";
 
-        public static void GenerateSplitTilemaps(Tilemap source, ShapeCells sCells,
+        public static void GenerateSplitTilemaps(Tilemap source, ShapeCells sc,
             Dictionary<ShapeType, ShapeSetting> settings, bool mergeEdges)
         {
             if (mergeEdges)
             {
-                var mergedCells = new List<Vector3Int>(sCells.VerticalCells);
+                var mergedCells = new List<Vector3Int>(sc.VerticalCells);
                 var v           = settings[ShapeType.VerticalEdge];
                 v.flags         = ShapeFlags.Independent;
-                mergedCells.AddRange(sCells.HorizontalCells);
+                mergedCells.AddRange(sc.HorizontalCells);
                 CreateTilemapObjForCells(source, mergedCells, v, MergeObjName);
             }
             else
             {
                 var v = settings[ShapeType.VerticalEdge];
                 var h = settings[ShapeType.HorizontalEdge];
-                CreateTilemapObjForCells(source, sCells.VerticalCells, v, VerticalObjName);
-                CreateTilemapObjForCells(source, sCells.HorizontalCells, h, HorizontalObjName);
+                CreateTilemapObjForCells(source, sc.VerticalCells, v, VerticalObjName);
+                CreateTilemapObjForCells(source, sc.HorizontalCells, h, HorizontalObjName);
             }
 
             var cross   = settings[ShapeType.Cross];
             var t       = settings[ShapeType.TJunction];
             var corner  = settings[ShapeType.Corner];
             var isolate = settings[ShapeType.Isolate];
-            CreateTilemapObjForCells(source, sCells.CrossCells,     cross,   CrossObjName);
-            CreateTilemapObjForCells(source, sCells.TJunctionCells, t,       TJunctionObjName);
-            CreateTilemapObjForCells(source, sCells.CornerCells,    corner,  CornerObjName);
-            CreateTilemapObjForCells(source, sCells.IsolateCells,   isolate, IsolateObjName);
+            CreateTilemapObjForCells(source, sc.CrossCells,     cross,   CrossObjName);
+            CreateTilemapObjForCells(source, sc.TJunctionCells, t,       TJunctionObjName);
+            CreateTilemapObjForCells(source, sc.CornerCells,    corner,  CornerObjName);
+            CreateTilemapObjForCells(source, sc.IsolateCells,   isolate, IsolateObjName);
         }
 
         private static void CreateTilemapObjForCells(Tilemap source, List<Vector3Int> cells,

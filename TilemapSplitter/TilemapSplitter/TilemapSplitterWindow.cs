@@ -28,7 +28,7 @@ namespace TilemapSplitter
         private Foldout isolateFoldOut;
 
         private Tilemap source;
-        private ShapeCells result = new();
+        private ShapeCells shapeCells = new();
         private readonly TilemapPreviewDrawer previewDrawer = new();
 
         private bool canMergeEdges = false;
@@ -134,53 +134,6 @@ namespace TilemapSplitter
             parentContainer.Add(separator);
         }
 
-        private static void StartCoroutine(IEnumerator e)
-        {
-            EditorApplication.update += Update;
-
-            void Update()
-            {
-                if (e.MoveNext() == false) EditorApplication.update -= Update;
-            }
-        }
-
-        private IEnumerator SplitCoroutine()
-        {
-            result = new ShapeCells();
-            var  e = TileShapeClassifier.ClassifyCoroutine(source, settingsDict, result);
-
-            while (e.MoveNext()) yield return null;
-
-            TilemapCreator.GenerateSplitTilemaps(source, result, settingsDict, canMergeEdges);
-            RefreshPreview();
-        }
-
-        private (Toggle previewToggle, ColorField colorField) AddShapeSettingControls(Foldout fold,
-            ShapeSetting setting)
-        {
-            var layerField = new LayerField("Layer", setting.layer);
-            layerField.RegisterValueChangedCallback(evt => setting.layer = evt.newValue);
-            fold.Add(layerField);
-
-            var tagField = new TagField("Tag", setting.tag);
-            tagField.RegisterValueChangedCallback(evt => setting.tag = evt.newValue);
-            fold.Add(tagField);
-
-            var previewToggle = new Toggle("Preview") { value = setting.canPreview };
-            previewToggle.RegisterValueChangedCallback(evt =>
-            {
-                setting.canPreview = evt.newValue;
-                RefreshPreview();
-            });
-            fold.Add(previewToggle);
-
-            var colField = new ColorField("Preview Color") { value = setting.previewColor };
-            colField.RegisterValueChangedCallback(evt => setting.previewColor = evt.newValue);
-            fold.Add(colField);
-
-            return (previewToggle, colField);
-        }
-
         private Foldout CreateEdgeFoldout(VisualElement parentContainer, string title, ShapeType type)
         {
             var fold = new Foldout();
@@ -217,6 +170,32 @@ namespace TilemapSplitter
             return fold;
         }
 
+        private (Toggle previewToggle, ColorField colorField) AddShapeSettingControls(Foldout fold,
+            ShapeSetting setting)
+        {
+            var layerField = new LayerField("Layer", setting.layer);
+            layerField.RegisterValueChangedCallback(evt => setting.layer = evt.newValue);
+            fold.Add(layerField);
+
+            var tagField = new TagField("Tag", setting.tag);
+            tagField.RegisterValueChangedCallback(evt => setting.tag = evt.newValue);
+            fold.Add(tagField);
+
+            var previewToggle = new Toggle("Preview") { value = setting.canPreview };
+            previewToggle.RegisterValueChangedCallback(evt =>
+            {
+                setting.canPreview = evt.newValue;
+                RefreshPreview();
+            });
+            fold.Add(previewToggle);
+
+            var colField = new ColorField("Preview Color") { value = setting.previewColor };
+            colField.RegisterValueChangedCallback(evt => setting.previewColor = evt.newValue);
+            fold.Add(colField);
+
+            return (previewToggle, colField);
+        }
+
         private void RefreshFoldoutUI(ShapeSetting setting, Foldout fold,
             Toggle previewToggle, ColorField colField)
         {
@@ -241,6 +220,27 @@ namespace TilemapSplitter
             colField.visible      = isVisible;
         }
 
+        private static void StartCoroutine(IEnumerator e)
+        {
+            EditorApplication.update += Update;
+
+            void Update()
+            {
+                if (e.MoveNext() == false) EditorApplication.update -= Update;
+            }
+        }
+
+        private IEnumerator SplitCoroutine()
+        {
+            shapeCells = new ShapeCells();
+            var  e = TileShapeClassifier.ClassifyCoroutine(source, settingsDict, shapeCells);
+
+            while (e.MoveNext()) yield return null;
+
+            TilemapCreator.GenerateSplitTilemaps(source, shapeCells, settingsDict, canMergeEdges);
+            RefreshPreview();
+        }
+
         private void RefreshPreview()
         {
             if (source == null || isRefreshingPreview) return;
@@ -250,15 +250,15 @@ namespace TilemapSplitter
             {
                 isRefreshingPreview = true;
 
-                result = new ShapeCells();
-                var e = TileShapeClassifier.ClassifyCoroutine(source, settingsDict, result);
+                shapeCells = new ShapeCells();
+                var e = TileShapeClassifier.ClassifyCoroutine(source, settingsDict, shapeCells);
                 while (e.MoveNext())
                 {
                     yield return null;
                 }
 
                 previewDrawer.Setup(source, settingsDict);
-                previewDrawer.SetShapeResult(result);
+                previewDrawer.SetShapeCells(shapeCells);
                 SceneView.RepaintAll();
                 UpdateFoldoutTitles();
 
@@ -270,12 +270,12 @@ namespace TilemapSplitter
         {
             var list = new (Foldout f, string name, int count)[]
             {
-                (verticalEdgeFoldOut,   "VerticalEdge",   result.VerticalCells.Count),
-                (horizontalEdgeFoldOut, "HorizontalEdge", result.HorizontalCells.Count),
-                (crossFoldOut,          "CrossCells",     result.CrossCells.Count),
-                (tJunctionFoldOut,      "TJunctionCells", result.TJunctionCells.Count),
-                (cornerFoldOut,         "CornerCells",    result.CornerCells.Count),
-                (isolateFoldOut,        "IsolateCells",   result.IsolateCells.Count),
+                (verticalEdgeFoldOut,   "VerticalEdge",   shapeCells.VerticalCells.Count),
+                (horizontalEdgeFoldOut, "HorizontalEdge", shapeCells.HorizontalCells.Count),
+                (crossFoldOut,          "CrossCells",     shapeCells.CrossCells.Count),
+                (tJunctionFoldOut,      "TJunctionCells", shapeCells.TJunctionCells.Count),
+                (cornerFoldOut,         "CornerCells",    shapeCells.CornerCells.Count),
+                (isolateFoldOut,        "IsolateCells",   shapeCells.IsolateCells.Count),
             };
             foreach (var (f, name, count) in list)
             {

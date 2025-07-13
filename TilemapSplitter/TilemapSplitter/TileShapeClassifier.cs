@@ -53,14 +53,14 @@ namespace TilemapSplitter
         /// Compress the tilemap bounds to exclude empty rows and columns
         /// </summary>
         public static IEnumerator ClassifyCoroutine(Tilemap source, 
-            Dictionary<ShapeType, ShapeSetting> settings, ShapeCells result, int batch = 100)
+            Dictionary<ShapeType, ShapeSetting> settings, ShapeCells sc, int batch = 100)
         {
-            result.VerticalCells.Clear();
-            result.HorizontalCells.Clear();
-            result.CrossCells.Clear();
-            result.TJunctionCells.Clear();
-            result.CornerCells.Clear();
-            result.IsolateCells.Clear();
+            sc.VerticalCells.Clear();
+            sc.HorizontalCells.Clear();
+            sc.CrossCells.Clear();
+            sc.TJunctionCells.Clear();
+            sc.CornerCells.Clear();
+            sc.IsolateCells.Clear();
 
             //Compress the Tilemap’s cellBounds to skip empty rows and columns
             source.CompressBounds();
@@ -103,7 +103,7 @@ namespace TilemapSplitter
                 foreach (var cell in occupiedCells)
                 {
                     //Perform proximity determination for each cell
-                    ClassifyCellNeighbors(cell, occupiedCells, settings, result);
+                    ClassifyCellNeighbors(cell, occupiedCells, settings, sc);
 
                     processed++;
                     if (processed % batch == 0)

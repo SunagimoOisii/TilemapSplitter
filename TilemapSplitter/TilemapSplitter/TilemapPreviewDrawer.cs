@@ -20,7 +20,7 @@ namespace TilemapSplitter
             shapeSettings = settings;
         }
 
-        public void SetShapeResult(ShapeCells sc) => shapeCells = sc;
+        public void SetShapeCells(ShapeCells sc) => shapeCells = sc;
 
         public void Register() =>   SceneView.duringSceneGui += OnSceneGUI;
         public void Unregister() => SceneView.duringSceneGui -= OnSceneGUI;
