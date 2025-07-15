@@ -85,10 +85,7 @@ Unity の `Tilemap` を接続関係に基づき自動で分類し、用途に応
 6. 設定をリセットしたい場合は `Split Tilemap` の下にあるボタンを使用
 
 ツールウィンドウの例：
-
-```
 ![Image](https://github.com/user-attachments/assets/8d28e9a7-9b0e-409a-85b8-d4f6afb715c4)
-```
 
 分割結果の例：
 
