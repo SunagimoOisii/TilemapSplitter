@@ -29,17 +29,9 @@ TilemapSplitter is a Unity editor extension that automatically classifies tiles 
 5. Press `Execute Splitting` to generate new Tilemaps based on the classification
 6. Use the button under `Split Tilemap` to reset settings
 
-Example of the tool window:
+UseCase：
 
-```
-Place an image of the tool window here
-```
-
-Example of the split result:
-
-```
-Place an image of the split result here
-```
+![Image](https://github.com/user-attachments/assets/8d28e9a7-9b0e-409a-85b8-d4f6afb715c4)
 
 ## Requirements
 - **Unity 2023** or later
@@ -84,15 +76,9 @@ Unity の `Tilemap` を接続関係に基づき自動で分類し、用途に応
 5. `Execute Splitting` を押すと分類結果に応じた Tilemap が生成されます
 6. 設定をリセットしたい場合は `Split Tilemap` の下にあるボタンを使用
 
-ツールウィンドウの例：
+使用例：
 
 ![Image](https://github.com/user-attachments/assets/8d28e9a7-9b0e-409a-85b8-d4f6afb715c4)
-
-分割結果の例：
-
-```
-ここに分割結果の画像を配置
-```
 
 ## 動作環境
 
