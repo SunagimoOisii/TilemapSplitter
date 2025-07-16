@@ -40,7 +40,7 @@ UseCase：
 - .NET Standard 2.1
 
 ## License
-This repository is released under [CC0 1.0 Universal](LICENSE).
+This repository is released under [MIT LICENSE](LICENSE).
 
 ---
 
@@ -89,4 +89,4 @@ Unity の `Tilemap` を接続関係に基づき自動で分類し、用途に応
 
 ## ライセンス
 
-このリポジトリは [CC0 1.0 Universal](LICENSE) の下で公開されています。
+このリポジトリは [MIT LICENSE](LICENSE) の下で公開されています。
