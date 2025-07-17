@@ -24,7 +24,7 @@ TilemapSplitter is a Unity editor extension that automatically classifies tiles 
 2. Click the **+** button and select **Add package from git URL...**
 3. Enter the following URL:
 ```
-https://github.com/SunagimoOisii/TilemapSplitter.git
+https://github.com/SunagimoOisii/TilemapSplitter.git?path=/Packages/com.sunagimo.tilemapsplitter
 ```
 4. Press **Add** to install the package.
 
@@ -80,7 +80,7 @@ Unity の `Tilemap` を接続関係に基づき自動で分類し、用途に応
 2. 左上の **+** ボタンで **Add package from git URL...** を選択します
 3. 次の URL を入力して **Add** を押します
 ```
-https://github.com/SunagimoOisii/TilemapSplitter.git
+https://github.com/SunagimoOisii/TilemapSplitter.git?path=/Packages/com.sunagimo.tilemapsplitter
 ```
 4. 取り込みが完了するとパッケージが利用可能になります
 
