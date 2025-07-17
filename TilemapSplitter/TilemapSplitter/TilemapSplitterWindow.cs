@@ -57,22 +57,21 @@ namespace TilemapSplitter
 
         public void CreateGUI()
         {
-            var container = CreateScrollableContainer();
+            var c = CreateScrollableContainer();
 
-            CreateSourceField(container);
-            AddHorizontalSeparator(container);
-
-            CreateResetButton(container);
-            CreateColliderToggle(container);
-            CreateMergeEdgeToggle(container);
-            CreateShapeFoldouts(container);
-            CreateExecuteButton(container);
+            CreateSourceField(c);
+            CreateResetButton(c);
+            CreateColliderToggle(c);
+            CreateMergeEdgeToggle(c);
+            CreateShapeFoldouts(c);
+            CreateExecuteButton(c);
 
             previewDrawer.Setup(source, settingsDict);
         }
 
         private VisualElement CreateScrollableContainer()
         {
+            //Create a ScrollView and a container VisualElement
             var scroll    = new ScrollView();
             var container = new VisualElement();
             container.style.flexDirection = FlexDirection.Column;
@@ -80,6 +79,8 @@ namespace TilemapSplitter
             container.style.paddingRight  = 10;
             rootVisualElement.Add(scroll);
             scroll.Add(container);
+
+            AddHorizontalSeparator(container);
             return container;
         }
 
@@ -87,7 +88,6 @@ namespace TilemapSplitter
         {
             var sourceF = new ObjectField("Split Tilemap");
             var hp      = new HelpBox("Select the subject of the division", HelpBoxMessageType.Info);
-            hp.visible = (source == null);
             sourceF.objectType = typeof(Tilemap);
             sourceF.value      = source;
             sourceF.RegisterValueChangedCallback(evt =>
@@ -96,6 +96,7 @@ namespace TilemapSplitter
                 hp.visible = (source == null);
                 RefreshPreview();
             });
+            hp.visible = (source == null);
             container.Add(sourceF);
             container.Add(hp);
         }
