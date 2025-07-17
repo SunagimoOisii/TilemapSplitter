@@ -1,6 +1,0 @@
-{
-  "name": "TilemapSplitter.Editor",
-  "references": [],
-  "includePlatforms": ["Editor"],
-  "rootNamespace": "TilemapSplitter"
-}

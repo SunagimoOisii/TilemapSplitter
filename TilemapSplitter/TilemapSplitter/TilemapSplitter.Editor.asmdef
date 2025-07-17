@@ -1,0 +1,14 @@
+{
+  "name": "TilemapSplitter.Editor",
+  "rootNamespace": "TilemapSplitter.Editor",
+  "autoReferenced": false,
+  "includePlatforms": [
+    "Editor"
+  ],
+  "references": [],
+  "optionalUnityReferences": [
+    "UnityEngine.UIElementsModule",
+    "UnityEditor.UIElementsModule",
+    "UnityEngine.TilemapModule"
+  ]
+}
