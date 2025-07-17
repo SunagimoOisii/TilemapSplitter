@@ -1,11 +1,8 @@
 # Tilemap Splitter
-
-Tilemap を接続関係で分類し、用途別に分割する Unity Editor 拡張です。
+An Editor extension that categorises Tilemaps by connection relationships and divides them by use.
 
 ## インストール
-
-Unity Package Manager の Git URL から以下を追加してください。
-
+Add the following from the Git URL in the Package Manager
 ```
 https://github.com/SunagimoOisii/TilemapSplitter.git?path=/Packages/com.sunagimo.tilemapsplitter
 ```

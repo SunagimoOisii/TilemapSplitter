@@ -1,12 +1,12 @@
 {
-  "name": "com.sunagimo.tilemapsplitter",
-  "version": "0.1.0",
-  "displayName": "Tilemap Splitter",
-  "description": "Tilemap を接続関係で分類し、用途別に分割する Unity Editor 拡張",
-  "unity": "2023.1",
-  "author": {
-    "name": "Fukada_Ryuto",
-    "url": "https://github.com/SunagimoOisii"
-  },
-  "license": "MIT"
+    "name": "com.sunagimo.tilemapsplitter",
+    "version": "0.1.0",
+    "displayName": "Tilemap Splitter",
+    "description": "An Editor extension that categorises Tilemaps by connection relationships and divides them by use.",
+    "unity": "2023.1",
+    "author": {
+        "name": "Fukada_Ryuto",
+        "url": "https://github.com/SunagimoOisii"
+    },
+    "license": "MIT"
 }
