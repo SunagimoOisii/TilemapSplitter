@@ -1,0 +1,9 @@
+{
+  "name": "com.example.tilemapsplitter",
+  "version": "0.1.0",
+  "displayName": "Tilemap Splitter",
+  "description": "Unity editor extension to classify and split tilemaps by adjacency.",
+  "unity": "2023.1",
+  "author": "",
+  "type": "tool"
+}

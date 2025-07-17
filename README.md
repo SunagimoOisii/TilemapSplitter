@@ -19,6 +19,16 @@ TilemapSplitter is a Unity editor extension that automatically classifies tiles 
 - A reset button is available below the Split Tilemap field
 
 ## Installation
+### Using UPM
+1. Open **Window > Package Manager** in Unity
+2. Click the **+** button and select **Add package from git URL...**
+3. Enter the following URL:
+```
+https://github.com/SunagimoOisii/TilemapSplitter.git
+```
+4. Press **Add** to install the package.
+
+### Manual Install
 1. Clone this repository and place the `TilemapSplitter` folder under your `Assets`
 2. Restart Unity and **Tools/TilemapSplitter** will appear in the menu
 
@@ -65,6 +75,16 @@ Unity の `Tilemap` を接続関係に基づき自動で分類し、用途に応
 - `Split Tilemap` 欄の下にリセットボタンを配置
 
 ## インストール
+### UPM を利用する場合
+1. Unity メニューから **Window > Package Manager** を開きます
+2. 左上の **+** ボタンで **Add package from git URL...** を選択します
+3. 次の URL を入力して **Add** を押します
+```
+https://github.com/SunagimoOisii/TilemapSplitter.git
+```
+4. 取り込みが完了するとパッケージが利用可能になります
+
+### 手動インストール
 1. `TilemapSplitter` フォルダーを `Assets` 配下へ配置します
 2. Unity を再起動するとメニューに **Tools/TilemapSplitter** が追加されます
 
