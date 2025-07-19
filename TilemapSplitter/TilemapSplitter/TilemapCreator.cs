@@ -90,8 +90,11 @@ namespace TilemapSplitter
             if (canAttachCollider)
             {
                 var tmCol             = obj.AddComponent<TilemapCollider2D>();
+#if UNITY_6_0_OR_NEWER
+                tmCol.compositeOperation = Collider2D.CompositeOperation.Merge;
+#else
                 tmCol.usedByComposite = true;
-
+#endif
                 var rb = obj.AddComponent<Rigidbody2D>();
                 rb.bodyType = RigidbodyType2D.Static;
 
