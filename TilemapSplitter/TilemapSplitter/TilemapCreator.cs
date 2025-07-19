@@ -90,7 +90,7 @@ namespace TilemapSplitter
             if (canAttachCollider)
             {
                 var tmCol             = obj.AddComponent<TilemapCollider2D>();
-#if UNITY_6_0_OR_NEWER
+#if UNITY_2020_1_OR_NEWER
                 tmCol.compositeOperation = Collider2D.CompositeOperation.Merge;
 #else
                 tmCol.usedByComposite = true;
