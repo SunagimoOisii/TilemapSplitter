@@ -74,6 +74,7 @@ namespace TilemapSplitter
             int height = cellBounds.size.y;
             var occupiedCells = new HashSet<Vector3Int>();
 
+            bool isCancelled = false;
             try
             {
                 for (int y = 0; y < height; y++)
@@ -93,10 +94,15 @@ namespace TilemapSplitter
                     if (y % batch == 0)
                     {
                         float progress = (float)(y * width) / (width * height);
-                        EditorUtility.DisplayProgressBar("Classify", "Collecting cells...", progress);
+
+                        isCancelled = EditorUtility.DisplayCancelableProgressBar("Classify",
+                            "Collecting cells...", progress);
+                        if (isCancelled) break;
+
                         yield return null;
                     }
                 }
+                if (isCancelled) yield break;
 
                 int total     = occupiedCells.Count;
                 int processed = 0;
@@ -109,11 +115,15 @@ namespace TilemapSplitter
                     if (processed % batch == 0)
                     {
                         float progress = (float)processed / total;
-                        EditorUtility.DisplayProgressBar("Classify",
+
+                        isCancelled = EditorUtility.DisplayCancelableProgressBar("Classify",
                             $"Classifying... {processed}/{total}", progress);
+                        if(isCancelled) break;
+
                         yield return null;
                     }
                 }
+                if(isCancelled) yield break;
             }
             finally
             {

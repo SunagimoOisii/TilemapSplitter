@@ -1,6 +1,6 @@
 {
     "name": "com.sunagimo.tilemapsplitter",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "displayName": "Tilemap Splitter",
     "description": "An Editor extension that categorises Tilemaps by connection relationships and divides them by use.",
     "unity": "2023.1",
