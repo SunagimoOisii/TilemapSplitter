@@ -58,10 +58,11 @@ namespace TilemapSplitter
             if (cells == null || cells.Count == 0) return;
 
             Handles.color = new Color(c.r, c.g, c.b, 0.4f);
-            var cellSize  = tilemap.cellSize;
+            var cellSize = Vector3.Scale(tilemap.layoutGrid.cellSize, tilemap.transform.lossyScale);
             foreach (var cell in cells)
             {
-                var worldPos = tilemap.CellToWorld(cell) + new Vector3(cellSize.x / 2f, cellSize.y / 2f);
+                var worldPos = tilemap.CellToWorld(cell) +
+                    Vector3.Scale(tilemap.tileAnchor, tilemap.transform.lossyScale);
                 var rect = new Rect(
                     worldPos.x - cellSize.x / 2f,
                     worldPos.y - cellSize.y / 2f,
