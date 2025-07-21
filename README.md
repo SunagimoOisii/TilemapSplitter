@@ -1,4 +1,5 @@
 <img width="1280" height="720" alt="Image" src="https://github.com/user-attachments/assets/3034cf0e-753f-49b7-8661-e72ede76c0c6" />
+
 [English](#english) | [日本語](#japanese)
 
 <a name="english"></a>
