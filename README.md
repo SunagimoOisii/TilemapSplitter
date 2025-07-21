@@ -1,6 +1,8 @@
 <img width="1280" height="720" alt="Image" src="https://github.com/user-attachments/assets/3034cf0e-753f-49b7-8661-e72ede76c0c6" />
+[English](#english) | [日本語](#japanese)
 
-# TilemapSplitter
+<a name="english"></a>
+# English
 TilemapSplitter is a Unity editor extension that automatically classifies tiles in a Tilemap based on adjacency and reconstructs them into multiple Tilemaps for specific purposes.
 
 ## Features
@@ -55,7 +57,8 @@ This repository is released under [MIT LICENSE](LICENSE).
 ---
 
 
-# TilemapSplitter 日本語版
+<a name="japanese"></a>
+# 日本語
 Unity の `Tilemap` を接続関係に基づき自動で分類し、用途に応じた複数の Tilemap として再構成するエディタ拡張です。
 
 ## 特徴
