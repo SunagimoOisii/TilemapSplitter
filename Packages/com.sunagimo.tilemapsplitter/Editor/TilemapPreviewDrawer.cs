@@ -57,21 +57,20 @@ namespace TilemapSplitter
         {
             if (cells == null || cells.Count == 0) return;
 
-            Handles.color = new Color(c.r, c.g, c.b, 0.4f);
-
             //Convert cell size of Grid component to world coordinates
-            var cellSize = Vector3.Scale(tilemap.layoutGrid.cellSize, tilemap.transform.lossyScale);
-            var anchor   = Vector3.Scale(tilemap.tileAnchor, cellSize);
+            Handles.color = new Color(c.r, c.g, c.b, 0.4f);
             foreach (var cell in cells)
             {
-                //Position based on Grid layout taking anchor into account
-                var worldPos = tilemap.CellToWorld(cell) + anchor;
-                var rect     = new Rect(
-                    worldPos.x - cellSize.x / 2f,
-                    worldPos.y - cellSize.y / 2f,
-                    cellSize.x,
-                    cellSize.y);
-                Handles.DrawSolidRectangleWithOutline(rect, Handles.color, Color.clear);
+                var center = tilemap.GetCellCenterWorld(cell);
+                var right  = tilemap.GetCellCenterWorld(cell + Vector3Int.right) - center;
+                var up     = tilemap.GetCellCenterWorld(cell + Vector3Int.up)    - center;
+
+                var p0 = center - right * 0.5f - up * 0.5f;
+                var p1 = center + right * 0.5f - up * 0.5f;
+                var p2 = center + right * 0.5f + up * 0.5f;
+                var p3 = center - right * 0.5f + up * 0.5f;
+
+                Handles.DrawAAConvexPolygon(p0, p1, p2, p3);
             }
         }
     }
