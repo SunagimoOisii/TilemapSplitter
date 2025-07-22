@@ -70,16 +70,20 @@ namespace TilemapSplitter
             if (source.TryGetComponent<TilemapRenderer>(out var oriRenderer))
             {
                 renderer.sortingLayerID = oriRenderer.sortingLayerID;
-                renderer.sortingOrder = oriRenderer.sortingOrder;
+                renderer.sortingOrder   = oriRenderer.sortingOrder;
+                renderer.sortOrder      = oriRenderer.sortOrder;
+                renderer.mode           = oriRenderer.mode;
             }
             else
             {
-                Debug.LogWarning("Since TilemapRenderer is not attached to the split target, " +
+                Debug.LogWarning(
+                    "Since TilemapRenderer is not attached to the split target, " +
                     "the TilemapRenderer of the generated object was generated with the default shapeSettings.");
             }
 
             //Transfer tile data(sprite, color, transform matrix) from the original to the new tile
             var tm = obj.GetComponent<Tilemap>();
+            tm.tileAnchor = source.tileAnchor;
             foreach (var cell in cells)
             {
                 tm.SetTile(cell,  source.GetTile(cell));
