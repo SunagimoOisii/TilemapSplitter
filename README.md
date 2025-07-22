@@ -50,9 +50,11 @@ UseCase：
 ## Notes on Isometric Layouts
 Even when the Grid's Cell Layout is `Isometric` or `Isometric Z as Y`, this tool can be used.
 However, because Unity sorts tiles per Tilemap, the fine ordering between Tilemaps cannot match the original Tilemap.
-Therefore, the appearance after splitting often differs from before.
+Therefore, the appearance after splitting often differs from before.<br>
+It is possible to match **to some extent** by setting the Mode and Order In Layer of the TilemapRenderer as appropriate after splitting.
 
-![SplitDifference](https://github.com/user-attachments/assets/3034cf0e-753f-49b7-8661-e72ede76c0c6)
+- SplitDifference
+<img width="1058" height="439" alt="Image" src="https://github.com/user-attachments/assets/dc708b4e-9248-4bb9-9903-81b8933e5b2a" />
 
 
 ## Requirements
@@ -115,9 +117,11 @@ https://github.com/SunagimoOisii/TilemapSplitter.git?path=/Packages/com.sunagimo
 
 ## 注意点
 Grid の CellLayout が `Isometric` または `Isometric Z as Y` の場合でも本ツールは使用できます。
-ただし Unity の仕様上、Tilemap 間で細かな並び替えができないため、分割後の見た目が元の Tilemap と異なる可能性が高いです。
+ただし Unity の仕様上、Tilemap 間で細かな並び替えができないため、分割後の見た目が元の Tilemap と異なる可能性が高いです。<br>
+分割後に TilemapRenderer の Mode や Order In Layer を適宜設定することで**ある程度**一致させることはできます
 
-![分割前後のタイルの様子](https://github.com/user-attachments/assets/3034cf0e-753f-49b7-8661-e72ede76c0c6)
+- 分割前後のタイルの様子
+<img width="1058" height="439" alt="Image" src="https://github.com/user-attachments/assets/dc708b4e-9248-4bb9-9903-81b8933e5b2a" />
 
 ## 動作環境
 
