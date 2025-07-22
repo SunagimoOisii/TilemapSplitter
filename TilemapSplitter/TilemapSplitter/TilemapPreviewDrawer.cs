@@ -58,25 +58,19 @@ namespace TilemapSplitter
         {
             if (cells == null || cells.Count == 0) return;
 
+            //Convert cell size of Grid component to world coordinates
             Handles.color = new Color(c.r, c.g, c.b, 0.4f);
-
-            var polys = new List<(float y, Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3)>();
             foreach (var cell in cells)
             {
                 var center = tilemap.GetCellCenterWorld(cell);
                 var right  = tilemap.GetCellCenterWorld(cell + Vector3Int.right) - center;
-                var up     = tilemap.GetCellCenterWorld(cell + Vector3Int.up) - center;
+                var up     = tilemap.GetCellCenterWorld(cell + Vector3Int.up)    - center;
 
                 var p0 = center - right * 0.5f - up * 0.5f;
                 var p1 = center + right * 0.5f - up * 0.5f;
                 var p2 = center + right * 0.5f + up * 0.5f;
                 var p3 = center - right * 0.5f + up * 0.5f;
 
-                polys.Add((center.y, p0, p1, p2, p3));
-            }
-
-            foreach (var (_, p0, p1, p2, p3) in polys.OrderBy(p => p.y))
-            {
                 Handles.DrawAAConvexPolygon(p0, p1, p2, p3);
             }
         }
