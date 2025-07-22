@@ -47,6 +47,13 @@ https://github.com/SunagimoOisii/TilemapSplitter.git?path=/Packages/com.sunagimo
 UseCase：
 
 ![Image](https://github.com/user-attachments/assets/8d28e9a7-9b0e-409a-85b8-d4f6afb715c4)
+## Notes on Isometric Layouts
+Even when the Grid's Cell Layout is `Isometric` or `Isometric Z as Y`, this tool can be used.
+However, because Unity sorts tiles per Tilemap, the fine ordering between Tilemaps cannot match the original Tilemap.
+Therefore, the appearance after splitting often differs from before.
+
+![SplitDifference](https://github.com/user-attachments/assets/3034cf0e-753f-49b7-8661-e72ede76c0c6)
+
 
 ## Requirements
 - **Unity 2023** or later
@@ -105,6 +112,12 @@ https://github.com/SunagimoOisii/TilemapSplitter.git?path=/Packages/com.sunagimo
 使用例：
 
 ![Image](https://github.com/user-attachments/assets/8d28e9a7-9b0e-409a-85b8-d4f6afb715c4)
+
+## 注意点
+Grid の CellLayout が `Isometric` または `Isometric Z as Y` の場合でも本ツールは使用できます。
+ただし Unity の仕様上、Tilemap 間で細かな並び替えができないため、分割後の見た目が元の Tilemap と異なる可能性が高いです。
+
+![分割前後のタイルの様子](https://github.com/user-attachments/assets/3034cf0e-753f-49b7-8661-e72ede76c0c6)
 
 ## 動作環境
 
