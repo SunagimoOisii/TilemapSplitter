@@ -71,7 +71,7 @@ Therefore, the appearance after splitting often differs from before.<br>
 It is possible to match **to some extent** by setting the Mode and Order In Layer of the TilemapRenderer as appropriate after splitting.
 
 - SplitDifference
-<img width="1058" height="439" alt="Image" src="https://github.com/user-attachments/assets/dc708b4e-9248-4bb9-9903-81b8933e5b2a" />
+<img width="1035" height="430" alt="Image" src="https://github.com/user-attachments/assets/d9410b2b-746b-4034-9e93-6e92b319b529" />
 
 <a name="requirements"></a>
 ## Requirements
@@ -156,7 +156,7 @@ Grid の CellLayout が `Isometric` または `Isometric Z as Y` の場合でも
 分割後に TilemapRenderer の Mode や Order In Layer を適宜設定することで**ある程度**一致させることはできます
 
 - 分割前後のタイルの様子
-<img width="1058" height="439" alt="Image" src="https://github.com/user-attachments/assets/dc708b4e-9248-4bb9-9903-81b8933e5b2a" />
+<img width="1035" height="430" alt="Image" src="https://github.com/user-attachments/assets/d9410b2b-746b-4034-9e93-6e92b319b529" />
 
 <a name="動作環境"></a>
 ## 動作環境
