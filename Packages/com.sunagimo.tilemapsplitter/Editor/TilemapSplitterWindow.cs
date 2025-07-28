@@ -118,6 +118,9 @@ namespace TilemapSplitter
             {
                 source    = evt.newValue as Tilemap;
                 hp.visible = (source == null);
+
+                rootVisualElement.Clear();
+                CreateGUI();
                 RefreshPreview();
             });
             hp.visible = (source == null);

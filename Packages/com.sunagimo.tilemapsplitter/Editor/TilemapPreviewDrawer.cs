@@ -45,19 +45,19 @@ namespace TilemapSplitter
             {
                 var full     = hexShapeSettings[HexShapeType.Full];
                 var junction = hexShapeSettings[HexShapeType.Junction];
-                var corner   = hexShapeSettings[HexShapeType.Corner];
+                var co       = hexShapeSettings[HexShapeType.Corner];
                 var edge     = hexShapeSettings[HexShapeType.Edge];
                 var tip      = hexShapeSettings[HexShapeType.Tip];
-                var isolate  = hexShapeSettings[HexShapeType.Isolate];
+                var i        = hexShapeSettings[HexShapeType.Isolate];
 
                 var previewSettings = new (List<Vector3Int> cells, Color c, bool canPreview)[]
                 {
                     (hexShapeCells.FullCells,     full.previewColor,     full.canPreview),
                     (hexShapeCells.JunctionCells, junction.previewColor, junction.canPreview),
-                    (hexShapeCells.CornerCells,   corner.previewColor,   corner.canPreview),
+                    (hexShapeCells.CornerCells,   co.previewColor,   co.canPreview),
                     (hexShapeCells.EdgeCells,     edge.previewColor,     edge.canPreview),
                     (hexShapeCells.TipCells,      tip.previewColor,      tip.canPreview),
-                    (hexShapeCells.IsolateCells,  isolate.previewColor,  isolate.canPreview)
+                    (hexShapeCells.IsolateCells,  i.previewColor,  i.canPreview)
                 };
                 foreach (var (cells, c, canPreview) in previewSettings)
                 {
