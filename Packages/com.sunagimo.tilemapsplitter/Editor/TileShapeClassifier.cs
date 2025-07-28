@@ -25,6 +25,16 @@ namespace TilemapSplitter
         Isolate,
     }
 
+    internal enum HexShapeType
+    {
+        Full = 0,
+        Junction,
+        Corner,
+        Edge,
+        Tip,
+        Isolate,
+    }
+
     internal class ShapeSetting
     {
         public ShapeFlags flags;
@@ -45,6 +55,16 @@ namespace TilemapSplitter
         public readonly List<Vector3Int> TJunctionCells  = new();
         public readonly List<Vector3Int> CornerCells     = new();
         public readonly List<Vector3Int> IsolateCells    = new();
+    }
+
+    internal class HexShapeCells
+    {
+        public readonly List<Vector3Int> FullCells     = new();
+        public readonly List<Vector3Int> JunctionCells = new();
+        public readonly List<Vector3Int> CornerCells   = new();
+        public readonly List<Vector3Int> EdgeCells     = new();
+        public readonly List<Vector3Int> TipCells      = new();
+        public readonly List<Vector3Int> IsolateCells  = new();
     }
 
     internal static class TileShapeClassifier
@@ -75,7 +95,7 @@ namespace TilemapSplitter
         /// <summary>
         /// Compress the tilemap bounds to exclude empty rows and columns
         /// </summary>
-        public static IEnumerator ClassifyCoroutine(Tilemap source, 
+        public static IEnumerator ClassifyCoroutine(Tilemap source,
             Dictionary<ShapeType, ShapeSetting> settings, ShapeCells sc, int batch = 100)
         {
             sc.VerticalCells.Clear();
@@ -148,6 +168,88 @@ namespace TilemapSplitter
                     }
                 }
                 if(isCancelled) yield break;
+            }
+            finally
+            {
+                EditorUtility.ClearProgressBar();
+            }
+        }
+
+        public static IEnumerator ClassifyCoroutine(Tilemap source,
+            Dictionary<HexShapeType, ShapeSetting> settings, HexShapeCells sc,
+            int batch = 100)
+        {
+            sc.FullCells.Clear();
+            sc.JunctionCells.Clear();
+            sc.CornerCells.Clear();
+            sc.EdgeCells.Clear();
+            sc.TipCells.Clear();
+            sc.IsolateCells.Clear();
+
+            source.CompressBounds();
+
+            var cellBounds    = source.cellBounds;
+            var tilesInBounds = source.GetTilesBlock(cellBounds);
+
+            int width  = cellBounds.size.x;
+            int height = cellBounds.size.y;
+            var occupiedCells = new HashSet<Vector3Int>();
+
+            bool isCancelled = false;
+            try
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        int index = x + y * width;
+                        if (tilesInBounds[index] == null) continue;
+
+                        var cell = new Vector3Int(cellBounds.xMin + x,
+                                                  cellBounds.yMin + y,
+                                                  cellBounds.zMin);
+                        occupiedCells.Add(cell);
+                    }
+
+                    if (y % batch == 0)
+                    {
+                        float progress = (float)(y * width) / (width * height);
+
+                        isCancelled = EditorUtility.DisplayCancelableProgressBar(
+                            "Classify", "Collecting cells...", progress);
+                        if (isCancelled) break;
+
+                        yield return null;
+                    }
+                }
+                if (isCancelled) yield break;
+
+                var layout    = source.layoutGrid.cellLayout;
+                var offsets   = GetNeighborOffsets(layout);
+                int total     = occupiedCells.Count;
+                int processed = 0;
+                foreach (var cell in occupiedCells)
+                {
+                    int count = 0;
+                    for (int i = 0; i < offsets.Count; i++)
+                    {
+                        if (occupiedCells.Contains(cell + offsets[i])) count++;
+                    }
+                    ClassifyHex(cell, count, settings, sc);
+
+                    processed++;
+                    if (processed % batch == 0)
+                    {
+                        float progress = (float)processed / total;
+
+                        isCancelled = EditorUtility.DisplayCancelableProgressBar(
+                            "Classify", $"Classifying... {processed}/{total}", progress);
+                        if (isCancelled) break;
+
+                        yield return null;
+                    }
+                }
+                if (isCancelled) yield break;
             }
             finally
             {
@@ -234,6 +336,44 @@ namespace TilemapSplitter
                     ApplyShapeFlags(cell, settings[ShapeType.Isolate].flags, sc, sc.IsolateCells);
                     break;
             }
+        }
+
+        private static void ClassifyHex(Vector3Int cell, int neighborCount,
+            Dictionary<HexShapeType, ShapeSetting> settings, HexShapeCells sc)
+        {
+            switch (neighborCount)
+            {
+                case 6:
+                    ApplyHexShapeFlags(cell, settings[HexShapeType.Full].flags, sc, sc.FullCells);
+                    break;
+
+                case 5:
+                case 4:
+                    ApplyHexShapeFlags(cell, settings[HexShapeType.Junction].flags, sc, sc.JunctionCells);
+                    break;
+
+                case 3:
+                    ApplyHexShapeFlags(cell, settings[HexShapeType.Corner].flags, sc, sc.CornerCells);
+                    break;
+
+                case 2:
+                    ApplyHexShapeFlags(cell, settings[HexShapeType.Edge].flags, sc, sc.EdgeCells);
+                    break;
+
+                case 1:
+                    ApplyHexShapeFlags(cell, settings[HexShapeType.Tip].flags, sc, sc.TipCells);
+                    break;
+
+                default:
+                    ApplyHexShapeFlags(cell, settings[HexShapeType.Isolate].flags, sc, sc.IsolateCells);
+                    break;
+            }
+        }
+
+        private static void ApplyHexShapeFlags(Vector3Int cell, ShapeFlags flags,
+            HexShapeCells sc, List<Vector3Int> indepCells)
+        {
+            if (flags.HasFlag(ShapeFlags.Independent)) indepCells?.Add(cell);
         }
 
         /// <summary>

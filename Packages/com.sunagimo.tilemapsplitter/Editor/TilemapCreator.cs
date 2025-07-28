@@ -14,6 +14,11 @@ namespace TilemapSplitter
         private const string TJunctionObjName  = "TJunctionTiles";
         private const string CornerObjName     = "CornerTiles";
         private const string IsolateObjName    = "IsolateTiles";
+        private const string FullObjName       = "FullTiles";
+        private const string JunctionObjName   = "JunctionTiles";
+        private const string HexCornerObjName  = "HexCornerTiles";
+        private const string HexEdgeObjName    = "HexEdgeTiles";
+        private const string TipObjName        = "TipTiles";
 
         public static void GenerateSplitTilemaps(Tilemap source, ShapeCells sc,
             Dictionary<ShapeType, ShapeSetting> settings, bool mergeEdges, bool canAttachCollider)
@@ -44,14 +49,28 @@ namespace TilemapSplitter
             CreateTilemapObjForCells(source, sc.IsolateCells,   isolate, IsolateObjName,   canAttachCollider);
         }
 
+        public static void GenerateSplitTilemaps(Tilemap source, HexShapeCells sc,
+            Dictionary<HexShapeType, ShapeSetting> settings, bool canAttachCollider)
+        {
+            CreateTilemapObjForCells(source, sc.FullCells,     settings[HexShapeType.Full],     FullObjName,     canAttachCollider);
+            CreateTilemapObjForCells(source, sc.JunctionCells, settings[HexShapeType.Junction], JunctionObjName, canAttachCollider);
+            CreateTilemapObjForCells(source, sc.CornerCells,   settings[HexShapeType.Corner],   HexCornerObjName,canAttachCollider);
+            CreateTilemapObjForCells(source, sc.EdgeCells,     settings[HexShapeType.Edge],     HexEdgeObjName,  canAttachCollider);
+            CreateTilemapObjForCells(source, sc.TipCells,      settings[HexShapeType.Tip],      TipObjName,      canAttachCollider);
+            CreateTilemapObjForCells(source, sc.IsolateCells,  settings[HexShapeType.Isolate],  IsolateObjName,  canAttachCollider);
+        }
+
         private static void CreateTilemapObjForCells(Tilemap source,
             List<Vector3Int> cells, ShapeSetting setting, string name, bool canAttachCollider)
         {
             if (cells == null || cells.Count == 0) return;
 
             //Skip instantiating this tile collection when the Independent flag is not enabled in settings
-            bool isRequiredIndependentFlag = name == CrossObjName  || name == TJunctionObjName ||
-                                             name == CornerObjName || name == IsolateObjName;
+            bool isRequiredIndependentFlag = name == CrossObjName   || name == TJunctionObjName ||
+                                             name == CornerObjName  || name == IsolateObjName   ||
+                                             name == FullObjName    || name == JunctionObjName  ||
+                                             name == HexCornerObjName || name == HexEdgeObjName ||
+                                             name == TipObjName;
             if (isRequiredIndependentFlag &&
                 setting.flags.HasFlag(ShapeFlags.Independent) == false) return;
 
