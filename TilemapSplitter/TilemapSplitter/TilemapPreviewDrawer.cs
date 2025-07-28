@@ -13,24 +13,61 @@ namespace TilemapSplitter
     {
         private Tilemap tilemap;
         private Dictionary<ShapeType, ShapeSetting> shapeSettings;
+        private Dictionary<HexShapeType, ShapeSetting> hexShapeSettings;
         private ShapeCells shapeCells;
+        private HexShapeCells hexShapeCells;
 
         public void Setup(Tilemap source, Dictionary<ShapeType, ShapeSetting> settings)
         {
-            tilemap       = source;
-            shapeSettings = settings;
+            tilemap         = source;
+            shapeSettings   = settings;
+            hexShapeSettings = null;
+        }
+
+        public void Setup(Tilemap source, Dictionary<HexShapeType, ShapeSetting> settings)
+        {
+            tilemap         = source;
+            hexShapeSettings = settings;
+            shapeSettings    = null;
         }
 
         public void SetShapeCells(ShapeCells sc) => shapeCells = sc;
+        public void SetShapeCells(HexShapeCells sc) => hexShapeCells = sc;
 
         public void Register() =>   SceneView.duringSceneGui += OnSceneGUI;
         public void Unregister() => SceneView.duringSceneGui -= OnSceneGUI;
 
         private void OnSceneGUI(SceneView sv)
         {
-            if (tilemap == null || shapeCells == null) return;
+            if (tilemap == null) return;
 
-            //Read preview settings(color, visibility) for each tile classification
+            if (hexShapeSettings != null && hexShapeCells != null)
+            {
+                var full     = hexShapeSettings[HexShapeType.Full];
+                var junction = hexShapeSettings[HexShapeType.Junction];
+                var corner   = hexShapeSettings[HexShapeType.Corner];
+                var edge     = hexShapeSettings[HexShapeType.Edge];
+                var tip      = hexShapeSettings[HexShapeType.Tip];
+                var isolate  = hexShapeSettings[HexShapeType.Isolate];
+
+                var previewSettings = new (List<Vector3Int> cells, Color c, bool canPreview)[]
+                {
+                    (hexShapeCells.FullCells,     full.previewColor,     full.canPreview),
+                    (hexShapeCells.JunctionCells, junction.previewColor, junction.canPreview),
+                    (hexShapeCells.CornerCells,   corner.previewColor,   corner.canPreview),
+                    (hexShapeCells.EdgeCells,     edge.previewColor,     edge.canPreview),
+                    (hexShapeCells.TipCells,      tip.previewColor,      tip.canPreview),
+                    (hexShapeCells.IsolateCells,  isolate.previewColor,  isolate.canPreview)
+                };
+                foreach (var (cells, c, canPreview) in previewSettings)
+                {
+                    if (canPreview) DrawCellPreviews(cells, c);
+                }
+                return;
+            }
+
+            if (shapeSettings == null || shapeCells == null) return;
+
             var v       = shapeSettings[ShapeType.VerticalEdge];
             var h       = shapeSettings[ShapeType.HorizontalEdge];
             var cross   = shapeSettings[ShapeType.Cross];
@@ -38,8 +75,7 @@ namespace TilemapSplitter
             var corner  = shapeSettings[ShapeType.Corner];
             var isolate = shapeSettings[ShapeType.Isolate];
 
-            //Draw each cell only if its preview flag is enabled, using the specified preview color
-            var previewSettings = new (List<Vector3Int> cells, Color c, bool canPreview)[]
+            var previewSettingsRect = new (List<Vector3Int> cells, Color c, bool canPreview)[]
             {
                 (shapeCells.VerticalCells,   v.previewColor,       v.canPreview),
                 (shapeCells.HorizontalCells, h.previewColor,       h.canPreview),
@@ -48,7 +84,7 @@ namespace TilemapSplitter
                 (shapeCells.CornerCells,     corner.previewColor,  corner.canPreview),
                 (shapeCells.IsolateCells,    isolate.previewColor, isolate.canPreview)
             };
-            foreach (var (cells, c, canPreview) in previewSettings)
+            foreach (var (cells, c, canPreview) in previewSettingsRect)
             {
                 if (canPreview) DrawCellPreviews(cells, c);
             }
