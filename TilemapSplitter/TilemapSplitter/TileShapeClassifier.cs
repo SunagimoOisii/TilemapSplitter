@@ -49,6 +49,29 @@ namespace TilemapSplitter
 
     internal static class TileShapeClassifier
     {
+        private static readonly Vector3Int[] RectNeighbors =
+        {
+            Vector3Int.up,
+            Vector3Int.down,
+            Vector3Int.left,
+            Vector3Int.right,
+        };
+
+        private static readonly Vector3Int[] HexNeighbors =
+        {
+            new(1, 0, 0),
+            new(1, -1, 0),
+            new(0, -1, 0),
+            new(-1, 0, 0),
+            new(-1, 1, 0),
+            new(0, 1, 0),
+        };
+
+        internal static IReadOnlyList<Vector3Int> GetNeighborOffsets(GridLayout.CellLayout lo)
+        {
+            return lo == GridLayout.CellLayout.Hexagon ? HexNeighbors : RectNeighbors;
+        }
+
         /// <summary>
         /// Compress the tilemap bounds to exclude empty rows and columns
         /// </summary>
@@ -104,12 +127,13 @@ namespace TilemapSplitter
                 }
                 if (isCancelled) yield break;
 
+                var layout    = source.layoutGrid.cellLayout;
                 int total     = occupiedCells.Count;
                 int processed = 0;
                 foreach (var cell in occupiedCells)
                 {
                     //Perform proximity determination for each cell
-                    ClassifyCellNeighbors(cell, occupiedCells, settings, sc);
+                    ClassifyCellNeighbors(layout, cell, occupiedCells, settings, sc);
 
                     processed++;
                     if (processed % batch == 0)
@@ -132,45 +156,82 @@ namespace TilemapSplitter
         }
 
         /// <summary>
-        /// Classify the specified cell based on the four neighbouring cells
+        /// Classify the specified cell based on neighbouring cells
         /// </summary>
-        private static void ClassifyCellNeighbors(Vector3Int cell, HashSet<Vector3Int> cells,
+        private static void ClassifyCellNeighbors(GridLayout.CellLayout layout,
+            Vector3Int cell, HashSet<Vector3Int> cells,
             Dictionary<ShapeType, ShapeSetting> settings, ShapeCells sc)
         {
-            //Determine whether adjacent cells exist
-            bool up    = cells.Contains(cell + Vector3Int.up);
-            bool down  = cells.Contains(cell + Vector3Int.down);
-            bool left  = cells.Contains(cell + Vector3Int.left);
-            bool right = cells.Contains(cell + Vector3Int.right);
+            var offsets = GetNeighborOffsets(layout);
+            var exist = new bool[offsets.Count];
+            int count = 0;
+            for (int i = 0; i < offsets.Count; i++)
+            {
+                exist[i] = cells.Contains(cell + offsets[i]);
+                if (exist[i]) count++;
+            }
+
+            if (layout is GridLayout.CellLayout.Hexagon) ClassifyHex(cell, count, settings, sc);
+            else                                         ClassifyRect(cell, exist, count, settings, sc);
+        }
+
+        private static void ClassifyRect(Vector3Int cell, bool[] exist,
+            int neighborCount, Dictionary<ShapeType, ShapeSetting> settings, ShapeCells sc)
+        {
+            bool up    = exist[0];
+            bool down  = exist[1];
+            bool left  = exist[2];
+            bool right = exist[3];
             bool anyV  = up || down;
             bool anyH  = left || right;
 
-            //Add to collection by Classification
-            int neighborCount  = (up ? 1 : 0) + (down ? 1 : 0) + (left ? 1 : 0) + (right ? 1 : 0);
             switch (neighborCount)
             {
                 case 4: //Cross
                     ApplyShapeFlags(cell, settings[ShapeType.Cross].flags, sc, sc.CrossCells);
                     break;
-                case 3: //TJunction
+
+                case 3: //T-Junction
                     ApplyShapeFlags(cell, settings[ShapeType.TJunction].flags, sc, sc.TJunctionCells);
                     break;
+
                 case 2 when anyV && anyH: //Corner
                     ApplyShapeFlags(cell, settings[ShapeType.Corner].flags, sc, sc.CornerCells);
                     break;
-                default:
-                    if (anyV && anyH == false) //Vertical
-                    {
-                        sc.VerticalCells.Add(cell);
-                    }
-                    else if (anyH && anyV == false) //Horizontal
-                    {
-                        sc.HorizontalCells.Add(cell);
-                    }
-                    else if (neighborCount == 0) //Isolate
-                    {
+
+                default: //Vertical, Horizontal, Isolate
+                    if      (anyV && !anyH) sc.VerticalCells.Add(cell);
+                    else if (anyH && !anyV) sc.HorizontalCells.Add(cell);
+                    else if (neighborCount == 0)
                         ApplyShapeFlags(cell, settings[ShapeType.Isolate].flags, sc, sc.IsolateCells);
-                    }
+                    break;
+            }
+        }
+
+        private static void ClassifyHex(Vector3Int cell, int neighborCount,
+            Dictionary<ShapeType, ShapeSetting> settings, ShapeCells sc)
+        {
+            switch (neighborCount)
+            {
+                case 6: //Cross
+                    ApplyShapeFlags(cell, settings[ShapeType.Cross].flags, sc, sc.CrossCells);
+                    break;
+
+                case 5: case 4: //TJunction
+                    ApplyShapeFlags(cell, settings[ShapeType.TJunction].flags, sc, sc.TJunctionCells);
+                    break;
+
+                case 3: //Corner
+                    ApplyShapeFlags(cell, settings[ShapeType.Corner].flags, sc, sc.CornerCells);
+                    break;
+
+                case 2: //Edge
+                case 1: //Tip
+                    sc.VerticalCells.Add(cell);
+                    break;
+
+                default: //Isolate
+                    ApplyShapeFlags(cell, settings[ShapeType.Isolate].flags, sc, sc.IsolateCells);
                     break;
             }
         }

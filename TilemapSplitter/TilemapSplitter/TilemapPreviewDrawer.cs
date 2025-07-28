@@ -58,20 +58,67 @@ namespace TilemapSplitter
         {
             if (cells == null || cells.Count == 0) return;
 
-            //Convert cell size of Grid component to world coordinates
             Handles.color = new Color(c.r, c.g, c.b, 0.4f);
-            foreach (var cell in cells)
+            var layout = tilemap.layoutGrid.cellLayout;
+            if (layout is GridLayout.CellLayout.Hexagon)
             {
-                var center = tilemap.GetCellCenterWorld(cell);
-                var right  = tilemap.GetCellCenterWorld(cell + Vector3Int.right) - center;
-                var up     = tilemap.GetCellCenterWorld(cell + Vector3Int.up)    - center;
+                DrawHex(cells);
+            }
+            else
+            {
+                DrawRect(cells);
+            }
 
-                var p0 = center - right * 0.5f - up * 0.5f;
-                var p1 = center + right * 0.5f - up * 0.5f;
-                var p2 = center + right * 0.5f + up * 0.5f;
-                var p3 = center - right * 0.5f + up * 0.5f;
+            void DrawRect(List<Vector3Int> list)
+            {
+                foreach (var cell in list)
+                {
+                    var center = tilemap.GetCellCenterWorld(cell);
+                    var right  = tilemap.GetCellCenterWorld(cell + Vector3Int.right) - center;
+                    var up     = tilemap.GetCellCenterWorld(cell + Vector3Int.up)    - center;
 
-                Handles.DrawAAConvexPolygon(p0, p1, p2, p3);
+                    var p0 = center - right * 0.5f - up * 0.5f;
+                    var p1 = center + right * 0.5f - up * 0.5f;
+                    var p2 = center + right * 0.5f + up * 0.5f;
+                    var p3 = center - right * 0.5f + up * 0.5f;
+
+                    Handles.DrawAAConvexPolygon(p0, p1, p2, p3);
+                }
+            }
+
+            /// <summary>
+            /// Calculates hexagon corners directly from Grid.cellSize:
+            /// - Replaces previous midpoint-based sampling which could yield duplicate or missing vertices, causing malformed shapes
+            /// - Reduces GetCellCenterWorld calls for better performance
+            /// - Prevents distortion if an adjacent cell is missing
+            /// </summary>
+            void DrawHex(List<Vector3Int> cells)
+            {
+                var layout = tilemap.layoutGrid.cellLayout;
+                if (layout != GridLayout.CellLayout.Hexagon) return;
+
+                var size = tilemap.layoutGrid.cellSize;
+                float halfW = size.x * 0.5f;
+                float halfH = size.y * 0.5f;
+
+                foreach (var cell in cells)
+                {
+                    Vector3 center  = tilemap.GetCellCenterWorld(cell);
+                    Vector3[] verts = new Vector3[6];
+
+                    for (int i = 0; i < 6; i++)
+                    {
+                        float angleDeg = 60f * i + 30f;
+                        float rad = Mathf.Deg2Rad * angleDeg;
+                        verts[i] = new Vector3(
+                            center.x + halfW * Mathf.Cos(rad),
+                            center.y + halfH * Mathf.Sin(rad),
+                            center.z
+                        );
+                    }
+                    Handles.color = new Color(c.r, c.g, c.b, 0.4f);
+                    Handles.DrawAAConvexPolygon(verts);
+                }
             }
         }
     }
