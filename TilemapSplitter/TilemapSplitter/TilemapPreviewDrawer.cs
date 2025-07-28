@@ -1,7 +1,6 @@
 namespace TilemapSplitter
 {
     using System.Collections.Generic;
-    using System.Linq;
     using UnityEditor;
     using UnityEngine;
     using UnityEngine.Tilemaps;
@@ -12,27 +11,27 @@ namespace TilemapSplitter
     internal class TilemapPreviewDrawer
     {
         private Tilemap tilemap;
-        private Dictionary<ShapeType, ShapeSetting> shapeSettings;
-        private Dictionary<HexShapeType, ShapeSetting> hexShapeSettings;
-        private ShapeCells shapeCells;
-        private HexShapeCells hexShapeCells;
+        private Dictionary<ShapeType_Rect, ShapeSetting> shapeSettings_Rect;
+        private Dictionary<ShapeType_Hex, ShapeSetting> shapeSettings_Hex;
+        private ShapeCells_Rect shapeCells;
+        private ShapeCells_Hex hexShapeCells;
 
-        public void Setup(Tilemap source, Dictionary<ShapeType, ShapeSetting> settings)
+        public void Setup_Rect(Tilemap source, Dictionary<ShapeType_Rect, ShapeSetting> settings)
         {
-            tilemap         = source;
-            shapeSettings   = settings;
-            hexShapeSettings = null;
+            tilemap            = source;
+            shapeSettings_Rect = settings;
+            shapeSettings_Hex  = null;
         }
 
-        public void Setup(Tilemap source, Dictionary<HexShapeType, ShapeSetting> settings)
+        public void Setup_Hex(Tilemap source, Dictionary<ShapeType_Hex, ShapeSetting> settings)
         {
-            tilemap         = source;
-            hexShapeSettings = settings;
-            shapeSettings    = null;
+            tilemap            = source;
+            shapeSettings_Hex  = settings;
+            shapeSettings_Rect = null;
         }
 
-        public void SetShapeCells(ShapeCells sc) => shapeCells = sc;
-        public void SetShapeCells(HexShapeCells sc) => hexShapeCells = sc;
+        public void SetShapeCells(ShapeCells_Rect sc) => shapeCells = sc;
+        public void SetShapeCells(ShapeCells_Hex sc) => hexShapeCells = sc;
 
         public void Register() =>   SceneView.duringSceneGui += OnSceneGUI;
         public void Unregister() => SceneView.duringSceneGui -= OnSceneGUI;
@@ -41,23 +40,23 @@ namespace TilemapSplitter
         {
             if (tilemap == null) return;
 
-            if (hexShapeSettings != null && hexShapeCells != null)
+            if (shapeSettings_Hex != null && hexShapeCells != null)
             {
-                var full     = hexShapeSettings[HexShapeType.Full];
-                var junction = hexShapeSettings[HexShapeType.Junction];
-                var co       = hexShapeSettings[HexShapeType.Corner];
-                var edge     = hexShapeSettings[HexShapeType.Edge];
-                var tip      = hexShapeSettings[HexShapeType.Tip];
-                var i        = hexShapeSettings[HexShapeType.Isolate];
+                var full     = shapeSettings_Hex[ShapeType_Hex.Full];
+                var junction = shapeSettings_Hex[ShapeType_Hex.Junction];
+                var co       = shapeSettings_Hex[ShapeType_Hex.Corner];
+                var edge     = shapeSettings_Hex[ShapeType_Hex.Edge];
+                var tip      = shapeSettings_Hex[ShapeType_Hex.Tip];
+                var i        = shapeSettings_Hex[ShapeType_Hex.Isolate];
 
                 var previewSettings = new (List<Vector3Int> cells, Color c, bool canPreview)[]
                 {
-                    (hexShapeCells.FullCells,     full.previewColor,     full.canPreview),
-                    (hexShapeCells.JunctionCells, junction.previewColor, junction.canPreview),
-                    (hexShapeCells.CornerCells,   co.previewColor,   co.canPreview),
-                    (hexShapeCells.EdgeCells,     edge.previewColor,     edge.canPreview),
-                    (hexShapeCells.TipCells,      tip.previewColor,      tip.canPreview),
-                    (hexShapeCells.IsolateCells,  i.previewColor,  i.canPreview)
+                    (hexShapeCells.Full,     full.previewColor,     full.canPreview),
+                    (hexShapeCells.Junction, junction.previewColor, junction.canPreview),
+                    (hexShapeCells.Corner,   co.previewColor,   co.canPreview),
+                    (hexShapeCells.Edge,     edge.previewColor,     edge.canPreview),
+                    (hexShapeCells.Tip,      tip.previewColor,      tip.canPreview),
+                    (hexShapeCells.Isolate,  i.previewColor,  i.canPreview)
                 };
                 foreach (var (cells, c, canPreview) in previewSettings)
                 {
@@ -66,23 +65,23 @@ namespace TilemapSplitter
                 return;
             }
 
-            if (shapeSettings == null || shapeCells == null) return;
+            if (shapeSettings_Rect == null || shapeCells == null) return;
 
-            var v       = shapeSettings[ShapeType.VerticalEdge];
-            var h       = shapeSettings[ShapeType.HorizontalEdge];
-            var cross   = shapeSettings[ShapeType.Cross];
-            var t       = shapeSettings[ShapeType.TJunction];
-            var corner  = shapeSettings[ShapeType.Corner];
-            var isolate = shapeSettings[ShapeType.Isolate];
+            var v       = shapeSettings_Rect[ShapeType_Rect.VerticalEdge];
+            var h       = shapeSettings_Rect[ShapeType_Rect.HorizontalEdge];
+            var cross   = shapeSettings_Rect[ShapeType_Rect.Cross];
+            var t       = shapeSettings_Rect[ShapeType_Rect.TJunction];
+            var corner  = shapeSettings_Rect[ShapeType_Rect.Corner];
+            var isolate = shapeSettings_Rect[ShapeType_Rect.Isolate];
 
             var previewSettingsRect = new (List<Vector3Int> cells, Color c, bool canPreview)[]
             {
-                (shapeCells.VerticalCells,   v.previewColor,       v.canPreview),
-                (shapeCells.HorizontalCells, h.previewColor,       h.canPreview),
-                (shapeCells.CrossCells,      cross.previewColor,   cross.canPreview),
-                (shapeCells.TJunctionCells,  t.previewColor ,      t.canPreview),
-                (shapeCells.CornerCells,     corner.previewColor,  corner.canPreview),
-                (shapeCells.IsolateCells,    isolate.previewColor, isolate.canPreview)
+                (shapeCells.Vertical,   v.previewColor,       v.canPreview),
+                (shapeCells.Horizontal, h.previewColor,       h.canPreview),
+                (shapeCells.Cross,      cross.previewColor,   cross.canPreview),
+                (shapeCells.TJunction,  t.previewColor ,      t.canPreview),
+                (shapeCells.Corner,     corner.previewColor,  corner.canPreview),
+                (shapeCells.Isolate,    isolate.previewColor, isolate.canPreview)
             };
             foreach (var (cells, c, canPreview) in previewSettingsRect)
             {
@@ -98,14 +97,14 @@ namespace TilemapSplitter
             var layout = tilemap.layoutGrid.cellLayout;
             if (layout is GridLayout.CellLayout.Hexagon)
             {
-                DrawHex(cells);
+                Draw_Hex(cells);
             }
             else
             {
-                DrawRect(cells);
+                Draw_Rect(cells);
             }
 
-            void DrawRect(List<Vector3Int> list)
+            void Draw_Rect(List<Vector3Int> list)
             {
                 foreach (var cell in list)
                 {
@@ -128,7 +127,7 @@ namespace TilemapSplitter
             /// - Reduces GetCellCenterWorld calls for better performance
             /// - Prevents distortion if an adjacent cell is missing
             /// </summary>
-            void DrawHex(List<Vector3Int> cells)
+            void Draw_Hex(List<Vector3Int> cells)
             {
                 var layout = tilemap.layoutGrid.cellLayout;
                 if (layout != GridLayout.CellLayout.Hexagon) return;

@@ -14,35 +14,37 @@ namespace TilemapSplitter
         private const string PrefPrefix = "TilemapSplitter.";
         private static string CreateKey(string name) => PrefPrefix + name;
 
-        private Dictionary<ShapeType, ShapeSetting> settingsDict = CreateDefaultSettings();
-        private Dictionary<HexShapeType, ShapeSetting> hexSettingsDict = CreateDefaultHexSettings();
+        private Dictionary<ShapeType_Rect, ShapeSetting>    settingsDict_rect = CreateDefaultSettings_Rect();
+        private Dictionary<ShapeType_Hex, ShapeSetting> settingsDict_hex  = CreateDefaultSettings_Hex();
 
-        private static Dictionary<ShapeType, ShapeSetting> CreateDefaultSettings() => new()
+        private static Dictionary<ShapeType_Rect, ShapeSetting> CreateDefaultSettings_Rect() => new()
         {
-            [ShapeType.VerticalEdge]   = new() { flags = ShapeFlags.VerticalEdge,   previewColor = Color.green  },
-            [ShapeType.HorizontalEdge] = new() { flags = ShapeFlags.HorizontalEdge, previewColor = Color.yellow },
-            [ShapeType.Cross]          = new() { flags = ShapeFlags.Independent,    previewColor = Color.red    },
-            [ShapeType.TJunction]      = new() { flags = ShapeFlags.Independent,    previewColor = Color.blue   },
-            [ShapeType.Corner]         = new() { flags = ShapeFlags.Independent,    previewColor = Color.cyan   },
-            [ShapeType.Isolate]        = new() { flags = ShapeFlags.Independent,    previewColor = Color.magenta },
+            [ShapeType_Rect.VerticalEdge]   = new() { flags = ShapeFlags.VerticalEdge,   previewColor = Color.green  },
+            [ShapeType_Rect.HorizontalEdge] = new() { flags = ShapeFlags.HorizontalEdge, previewColor = Color.yellow },
+            [ShapeType_Rect.Cross]          = new() { flags = ShapeFlags.Independent,    previewColor = Color.red    },
+            [ShapeType_Rect.TJunction]      = new() { flags = ShapeFlags.Independent,    previewColor = Color.blue   },
+            [ShapeType_Rect.Corner]         = new() { flags = ShapeFlags.Independent,    previewColor = Color.cyan   },
+            [ShapeType_Rect.Isolate]        = new() { flags = ShapeFlags.Independent,    previewColor = Color.magenta },
         };
 
-        private static Dictionary<HexShapeType, ShapeSetting> CreateDefaultHexSettings() => new()
+        private static Dictionary<ShapeType_Hex, ShapeSetting> CreateDefaultSettings_Hex() => new()
         {
-            [HexShapeType.Full]     = new() { flags = ShapeFlags.Independent, previewColor = Color.red    },
-            [HexShapeType.Junction] = new() { flags = ShapeFlags.Independent, previewColor = Color.blue   },
-            [HexShapeType.Corner]   = new() { flags = ShapeFlags.Independent, previewColor = Color.cyan   },
-            [HexShapeType.Edge]     = new() { flags = ShapeFlags.Independent, previewColor = Color.green  },
-            [HexShapeType.Tip]      = new() { flags = ShapeFlags.Independent, previewColor = Color.yellow },
-            [HexShapeType.Isolate]  = new() { flags = ShapeFlags.Independent, previewColor = Color.magenta },
+            [ShapeType_Hex.Full]     = new() { flags = ShapeFlags.Independent, previewColor = Color.red    },
+            [ShapeType_Hex.Junction] = new() { flags = ShapeFlags.Independent, previewColor = Color.blue   },
+            [ShapeType_Hex.Corner]   = new() { flags = ShapeFlags.Independent, previewColor = Color.cyan   },
+            [ShapeType_Hex.Edge]     = new() { flags = ShapeFlags.Independent, previewColor = Color.green  },
+            [ShapeType_Hex.Tip]      = new() { flags = ShapeFlags.Independent, previewColor = Color.yellow },
+            [ShapeType_Hex.Isolate]  = new() { flags = ShapeFlags.Independent, previewColor = Color.magenta },
         };
 
+        //For Rectangle or Isolate
         private Foldout verticalEdgeFoldOut;
         private Foldout horizontalEdgeFoldOut;
         private Foldout crossFoldOut;
         private Foldout tJunctionFoldOut;
         private Foldout cornerFoldOut;
         private Foldout isolateFoldOut;
+        //For Hexagon
         private Foldout fullFoldOut;
         private Foldout junctionFoldOut;
         private Foldout hexCornerFoldOut;
@@ -50,9 +52,10 @@ namespace TilemapSplitter
         private Foldout tipFoldOut;
         private Foldout hexIsolateFoldOut;
 
-        private Tilemap source;
-        private ShapeCells shapeCells = new();
-        private HexShapeCells hexShapeCells = new();
+        private Tilemap       source;
+        private ShapeCells_Rect    shapeCells = new();
+        private ShapeCells_Hex hexShapeCells = new();
+
         private readonly TilemapPreviewDrawer previewDrawer = new();
 
         private bool canMergeEdges       = false;
@@ -82,15 +85,17 @@ namespace TilemapSplitter
             CreateResetButton(c);
             CreateColliderToggle(c);
             CreateMergeEdgeToggle(c);
-            if (source != null && source.layoutGrid.cellLayout == GridLayout.CellLayout.Hexagon)
-                CreateHexShapeFoldouts(c);
-            else
-                CreateShapeFoldouts(c);
+
+            if (source == null) return;
+
+            var layout = source.layoutGrid.cellLayout;
+            if (layout == GridLayout.CellLayout.Hexagon) CreateShapeFoldouts_Hex(c);
+            else                                         CreateShapeFoldouts_Rect(c);
+
             CreateExecuteButton(c);
-            if (source != null && source.layoutGrid.cellLayout == GridLayout.CellLayout.Hexagon)
-                previewDrawer.Setup(source, hexSettingsDict);
-            else
-                previewDrawer.Setup(source, settingsDict);
+
+            if (layout == GridLayout.CellLayout.Hexagon) previewDrawer.Setup_Hex(source, settingsDict_hex);
+            else                                         previewDrawer.Setup_Rect(source, settingsDict_rect);
         }
 
         private VisualElement CreateScrollableContainer()
@@ -116,7 +121,7 @@ namespace TilemapSplitter
             sourceF.value      = source;
             sourceF.RegisterValueChangedCallback(evt =>
             {
-                source    = evt.newValue as Tilemap;
+                source     = evt.newValue as Tilemap;
                 hp.visible = (source == null);
 
                 rootVisualElement.Clear();
@@ -143,7 +148,7 @@ namespace TilemapSplitter
 
         private void CreateColliderToggle(VisualElement container)
         {
-            var attachT = new Toggle("Attach Colliders");
+            var attachT   = new Toggle("Attach Colliders");
             attachT.value = canAttachCollider;
             attachT.RegisterValueChangedCallback(evt => canAttachCollider = evt.newValue);
             container.Add(attachT);
@@ -152,7 +157,7 @@ namespace TilemapSplitter
         private void CreateMergeEdgeToggle(VisualElement container)
         {
             var mergeT  = new Toggle("Merge VerticalEdge, HorizontalEdge");
-            var mergeHB = new HelpBox("When merging, VerticalEdge shapeSettings take precedence",
+            var mergeHB = new HelpBox("When merging, VerticalEdge shapeSettings_Rect take precedence",
                 HelpBoxMessageType.Info);
             mergeT.value = canMergeEdges;
             mergeT.RegisterValueChangedCallback(evt => canMergeEdges = evt.newValue);
@@ -160,55 +165,55 @@ namespace TilemapSplitter
             container.Add(mergeHB);
         }
 
-        private void CreateShapeFoldouts(VisualElement container)
+        private void CreateShapeFoldouts_Rect(VisualElement container)
         {
-            var infos = new (ShapeType type, string title)[]
+            var infos = new (ShapeType_Rect type, string title)[]
             {
-                (ShapeType.VerticalEdge,   "VerticalEdge"),
-                (ShapeType.HorizontalEdge, "HorizontalEdge"),
-                (ShapeType.Cross,          "Cross"),
-                (ShapeType.TJunction,      "T-Junction"),
-                (ShapeType.Corner,         "Corner"),
-                (ShapeType.Isolate,        "Isolate")
+                (ShapeType_Rect.VerticalEdge,   "VerticalEdge"),
+                (ShapeType_Rect.HorizontalEdge, "HorizontalEdge"),
+                (ShapeType_Rect.Cross,          "Cross"),
+                (ShapeType_Rect.TJunction,      "T-Junction"),
+                (ShapeType_Rect.Corner,         "Corner"),
+                (ShapeType_Rect.Isolate,        "Isolate")
             };
             foreach (var info in infos)
             {
-                var fold = CreateFoldout(container, info.type, info.title);
+                var fold = CreateFoldout_Rect(container, info.type, info.title);
                 switch (info.type)
                 {
-                    case ShapeType.VerticalEdge:   verticalEdgeFoldOut   = fold; break;
-                    case ShapeType.HorizontalEdge: horizontalEdgeFoldOut = fold; break;
-                    case ShapeType.Cross:          crossFoldOut          = fold; break;
-                    case ShapeType.TJunction:      tJunctionFoldOut      = fold; break;
-                    case ShapeType.Corner:         cornerFoldOut         = fold; break;
-                    case ShapeType.Isolate:        isolateFoldOut        = fold; break;
+                    case ShapeType_Rect.VerticalEdge:   verticalEdgeFoldOut   = fold; break;
+                    case ShapeType_Rect.HorizontalEdge: horizontalEdgeFoldOut = fold; break;
+                    case ShapeType_Rect.Cross:          crossFoldOut          = fold; break;
+                    case ShapeType_Rect.TJunction:      tJunctionFoldOut      = fold; break;
+                    case ShapeType_Rect.Corner:         cornerFoldOut         = fold; break;
+                    case ShapeType_Rect.Isolate:        isolateFoldOut        = fold; break;
                 }
                 AddHorizontalSeparator(container);
             }
         }
 
-        private void CreateHexShapeFoldouts(VisualElement container)
+        private void CreateShapeFoldouts_Hex(VisualElement container)
         {
-            var infos = new (HexShapeType type, string title)[]
+            var infos = new (ShapeType_Hex type, string title)[]
             {
-                (HexShapeType.Full,     "Full"),
-                (HexShapeType.Junction, "Junction"),
-                (HexShapeType.Corner,   "Corner"),
-                (HexShapeType.Edge,     "Edge"),
-                (HexShapeType.Tip,      "Tip"),
-                (HexShapeType.Isolate,  "Isolate")
+                (ShapeType_Hex.Full,     "Full"),
+                (ShapeType_Hex.Junction, "Junction"),
+                (ShapeType_Hex.Corner,   "Corner"),
+                (ShapeType_Hex.Edge,     "Edge"),
+                (ShapeType_Hex.Tip,      "Tip"),
+                (ShapeType_Hex.Isolate,  "Isolate")
             };
             foreach (var info in infos)
             {
-                var fold = CreateFoldout(container, info.type, info.title);
+                var fold = CreateFoldout_Hex(container, info.type, info.title);
                 switch (info.type)
                 {
-                    case HexShapeType.Full:     fullFoldOut     = fold; break;
-                    case HexShapeType.Junction: junctionFoldOut = fold; break;
-                    case HexShapeType.Corner:   hexCornerFoldOut = fold; break;
-                    case HexShapeType.Edge:     edgeFoldOut     = fold; break;
-                    case HexShapeType.Tip:      tipFoldOut      = fold; break;
-                    case HexShapeType.Isolate:  hexIsolateFoldOut = fold; break;
+                    case ShapeType_Hex.Full:     fullFoldOut       = fold; break;
+                    case ShapeType_Hex.Junction: junctionFoldOut   = fold; break;
+                    case ShapeType_Hex.Corner:   hexCornerFoldOut  = fold; break;
+                    case ShapeType_Hex.Edge:     edgeFoldOut       = fold; break;
+                    case ShapeType_Hex.Tip:      tipFoldOut        = fold; break;
+                    case ShapeType_Hex.Isolate:  hexIsolateFoldOut = fold; break;
                 }
                 AddHorizontalSeparator(container);
             }
@@ -237,19 +242,18 @@ namespace TilemapSplitter
             separator.style.borderBottomColor = Color.gray;
             separator.style.marginTop         = 5;
             separator.style.marginBottom      = 5;
-
             parentContainer.Add(separator);
         }
 
-        private Foldout CreateFoldout(VisualElement parentContainer, ShapeType type, string title)
+        private Foldout CreateFoldout_Rect(VisualElement parentContainer, ShapeType_Rect type, string title)
         {
             var fold = new Foldout();
             fold.text                          = title;
             fold.style.unityFontStyleAndWeight = FontStyle.Bold;
 
-            var setting = settingsDict[type];
-            if (type == ShapeType.VerticalEdge ||
-                type == ShapeType.HorizontalEdge)
+            var setting = settingsDict_rect[type];
+            if (type == ShapeType_Rect.VerticalEdge ||
+                type == ShapeType_Rect.HorizontalEdge)
             {
                 AddShapeSettingControls(fold, setting);
             }
@@ -276,13 +280,13 @@ namespace TilemapSplitter
             return fold;
         }
 
-        private Foldout CreateFoldout(VisualElement parentContainer, HexShapeType type, string title)
+        private Foldout CreateFoldout_Hex(VisualElement parentContainer, ShapeType_Hex type, string title)
         {
             var fold = new Foldout();
             fold.text                          = title;
             fold.style.unityFontStyleAndWeight = FontStyle.Bold;
 
-            var setting = hexSettingsDict[type];
+            var setting = settingsDict_hex[type];
             AddShapeSettingControls(fold, setting);
 
             parentContainer.Add(fold);
@@ -324,8 +328,8 @@ namespace TilemapSplitter
             if (exist != null) fold.Remove(exist);
 
             string msg   = null;
-            string helpV = "The canPreview complies with VerticalEdge shapeSettings.";
-            string helpH = "The canPreview complies with HorizontalEdge shapeSettings.";
+            string helpV = "The canPreview complies with VerticalEdge shapeSettings_Rect.";
+            string helpH = "The canPreview complies with HorizontalEdge shapeSettings_Rect.";
             if      (opt.HasFlag(ShapeFlags.VerticalEdge))   msg = helpV;
             else if (opt.HasFlag(ShapeFlags.HorizontalEdge)) msg = helpH;
 
@@ -355,24 +359,24 @@ namespace TilemapSplitter
             IEnumerator e;
             if (isHex)
             {
-                hexShapeCells = new HexShapeCells();
-                e = TileShapeClassifier.ClassifyCoroutine(source, hexSettingsDict, hexShapeCells);
+                hexShapeCells = new ShapeCells_Hex();
+                e = TileShapeClassifier.ClassifyCoroutine_Hex(source, settingsDict_hex, hexShapeCells);
             }
             else
             {
-                shapeCells = new ShapeCells();
-                e = TileShapeClassifier.ClassifyCoroutine(source, settingsDict, shapeCells);
+                shapeCells = new ShapeCells_Rect();
+                e = TileShapeClassifier.ClassifyCoroutine_Rect(source, settingsDict_rect, shapeCells);
             }
 
             while (e.MoveNext()) yield return null;
 
             if (isHex)
             {
-                TilemapCreator.GenerateSplitTilemaps(source, hexShapeCells, hexSettingsDict, canAttachCollider);
+                TilemapCreator.GenerateSplitTilemaps_Hex(source, hexShapeCells, settingsDict_hex, canAttachCollider);
             }
             else
             {
-                TilemapCreator.GenerateSplitTilemaps(source, shapeCells, settingsDict,
+                TilemapCreator.GenerateSplitTilemaps_Rect(source, shapeCells, settingsDict_rect,
                     canMergeEdges, canAttachCollider);
             }
             RefreshPreview();
@@ -391,13 +395,13 @@ namespace TilemapSplitter
                 IEnumerator e;
                 if (isHex)
                 {
-                    hexShapeCells = new HexShapeCells();
-                    e = TileShapeClassifier.ClassifyCoroutine(source, hexSettingsDict, hexShapeCells);
+                    hexShapeCells = new ShapeCells_Hex();
+                    e = TileShapeClassifier.ClassifyCoroutine_Hex(source, settingsDict_hex, hexShapeCells);
                 }
                 else
                 {
-                    shapeCells = new ShapeCells();
-                    e = TileShapeClassifier.ClassifyCoroutine(source, settingsDict, shapeCells);
+                    shapeCells = new ShapeCells_Rect();
+                    e = TileShapeClassifier.ClassifyCoroutine_Rect(source, settingsDict_rect, shapeCells);
                 }
                 while (e.MoveNext())
                 {
@@ -406,12 +410,12 @@ namespace TilemapSplitter
 
                 if (isHex)
                 {
-                    previewDrawer.Setup(source, hexSettingsDict);
+                    previewDrawer.Setup_Hex(source, settingsDict_hex);
                     previewDrawer.SetShapeCells(hexShapeCells);
                 }
                 else
                 {
-                    previewDrawer.Setup(source, settingsDict);
+                    previewDrawer.Setup_Rect(source, settingsDict_rect);
                     previewDrawer.SetShapeCells(shapeCells);
                 }
                 SceneView.RepaintAll();
@@ -423,16 +427,16 @@ namespace TilemapSplitter
 
         private void UpdateFoldoutTitles()
         {
-            if (source != null && source.layoutGrid.cellLayout == GridLayout.CellLayout.Hexagon)
+            if (source.layoutGrid.cellLayout == GridLayout.CellLayout.Hexagon)
             {
                 var list = new (Foldout f, string name, int count)[]
                 {
-                    (fullFoldOut,     "Full",     hexShapeCells.FullCells.Count),
-                    (junctionFoldOut, "Junction", hexShapeCells.JunctionCells.Count),
-                    (hexCornerFoldOut,"Corner",   hexShapeCells.CornerCells.Count),
-                    (edgeFoldOut,     "Edge",     hexShapeCells.EdgeCells.Count),
-                    (tipFoldOut,      "Tip",      hexShapeCells.TipCells.Count),
-                    (hexIsolateFoldOut,"Isolate", hexShapeCells.IsolateCells.Count),
+                    (fullFoldOut,     "Full",     hexShapeCells.Full.Count),
+                    (junctionFoldOut, "Junction", hexShapeCells.Junction.Count),
+                    (hexCornerFoldOut,"Corner",   hexShapeCells.Corner.Count),
+                    (edgeFoldOut,     "Edge",     hexShapeCells.Edge.Count),
+                    (tipFoldOut,      "Tip",      hexShapeCells.Tip.Count),
+                    (hexIsolateFoldOut,"Isolate", hexShapeCells.Isolate.Count),
                 };
                 foreach (var (f, name, count) in list)
                 {
@@ -443,12 +447,12 @@ namespace TilemapSplitter
             {
                 var list = new (Foldout f, string name, int count)[]
                 {
-                    (verticalEdgeFoldOut,   "VerticalEdge",   shapeCells.VerticalCells.Count),
-                    (horizontalEdgeFoldOut, "HorizontalEdge", shapeCells.HorizontalCells.Count),
-                    (crossFoldOut,          "CrossCells",     shapeCells.CrossCells.Count),
-                    (tJunctionFoldOut,      "TJunctionCells", shapeCells.TJunctionCells.Count),
-                    (cornerFoldOut,         "CornerCells",    shapeCells.CornerCells.Count),
-                    (isolateFoldOut,        "IsolateCells",   shapeCells.IsolateCells.Count),
+                    (verticalEdgeFoldOut,   "VerticalEdge",   shapeCells.Vertical.Count),
+                    (horizontalEdgeFoldOut, "HorizontalEdge", shapeCells.Horizontal.Count),
+                    (crossFoldOut,          "Cross",     shapeCells.Cross.Count),
+                    (tJunctionFoldOut,      "TJunction", shapeCells.TJunction.Count),
+                    (cornerFoldOut,         "Corner",    shapeCells.Corner.Count),
+                    (isolateFoldOut,        "Isolate",   shapeCells.Isolate.Count),
                 };
                 foreach (var (f, name, count) in list)
                 {
@@ -474,7 +478,7 @@ namespace TilemapSplitter
             EditorPrefs.SetBool(CreateKey("CanMergeEdges"),  canMergeEdges);
             EditorPrefs.SetBool(CreateKey("AttachCollider"), canAttachCollider);
 
-            foreach (var kv in settingsDict)
+            foreach (var kv in settingsDict_rect)
             {
                 string name = kv.Key.ToString();
                 var setting = kv.Value;
@@ -486,7 +490,7 @@ namespace TilemapSplitter
                     ColorUtility.ToHtmlStringRGBA(setting.previewColor));
             }
 
-            foreach (var kv in hexSettingsDict)
+            foreach (var kv in settingsDict_hex)
             {
                 string name = kv.Key.ToString();
                 var setting = kv.Value;
@@ -510,7 +514,7 @@ namespace TilemapSplitter
             canMergeEdges     = EditorPrefs.GetBool(CreateKey("CanMergeEdges"), canMergeEdges);
             canAttachCollider = EditorPrefs.GetBool(CreateKey("AttachCollider"), canAttachCollider);
 
-            foreach (var kv in settingsDict)
+            foreach (var kv in settingsDict_rect)
             {
                 var name    = kv.Key.ToString();
                 var setting = kv.Value;
@@ -525,7 +529,7 @@ namespace TilemapSplitter
                 }
             }
 
-            foreach (var kv in hexSettingsDict)
+            foreach (var kv in settingsDict_hex)
             {
                 var name    = kv.Key.ToString();
                 var setting = kv.Value;
@@ -547,7 +551,7 @@ namespace TilemapSplitter
             EditorPrefs.DeleteKey(CreateKey("CanMergeEdges"));
             EditorPrefs.DeleteKey(CreateKey("AttachCollider"));
 
-            foreach (ShapeType t in Enum.GetValues(typeof(ShapeType)))
+            foreach (ShapeType_Rect t in Enum.GetValues(typeof(ShapeType_Rect)))
             {
                 string name = t.ToString();
                 EditorPrefs.DeleteKey(CreateKey($"{name}.Flags"));
@@ -557,7 +561,7 @@ namespace TilemapSplitter
                 EditorPrefs.DeleteKey(CreateKey($"{name}.Color"));
             }
 
-            foreach (HexShapeType t in Enum.GetValues(typeof(HexShapeType)))
+            foreach (ShapeType_Hex t in Enum.GetValues(typeof(ShapeType_Hex)))
             {
                 string name = t.ToString();
                 EditorPrefs.DeleteKey(CreateKey($"Hex.{name}.Flags"));
@@ -567,8 +571,8 @@ namespace TilemapSplitter
                 EditorPrefs.DeleteKey(CreateKey($"Hex.{name}.Color"));
             }
 
-            settingsDict      = CreateDefaultSettings();
-            hexSettingsDict   = CreateDefaultHexSettings();
+            settingsDict_rect      = CreateDefaultSettings_Rect();
+            settingsDict_hex   = CreateDefaultSettings_Hex();
             source            = null;
             canMergeEdges     = false;
             canAttachCollider = false;

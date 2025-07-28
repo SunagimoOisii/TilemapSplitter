@@ -15,7 +15,7 @@ namespace TilemapSplitter
         Independent    = 1 << 2,
     }
 
-    internal enum ShapeType
+    internal enum ShapeType_Rect
     {
         VerticalEdge = 0,
         HorizontalEdge,
@@ -25,7 +25,7 @@ namespace TilemapSplitter
         Isolate,
     }
 
-    internal enum HexShapeType
+    internal enum ShapeType_Hex
     {
         Full = 0,
         Junction,
@@ -47,29 +47,29 @@ namespace TilemapSplitter
     /// <summary>
     /// Store cell coordinates for each tile classification
     /// </summary>
-    internal class ShapeCells
+    internal class ShapeCells_Rect
     {
-        public readonly List<Vector3Int> VerticalCells   = new();
-        public readonly List<Vector3Int> HorizontalCells = new();
-        public readonly List<Vector3Int> CrossCells      = new();
-        public readonly List<Vector3Int> TJunctionCells  = new();
-        public readonly List<Vector3Int> CornerCells     = new();
-        public readonly List<Vector3Int> IsolateCells    = new();
+        public readonly List<Vector3Int> Vertical   = new();
+        public readonly List<Vector3Int> Horizontal = new();
+        public readonly List<Vector3Int> Cross      = new();
+        public readonly List<Vector3Int> TJunction  = new();
+        public readonly List<Vector3Int> Corner     = new();
+        public readonly List<Vector3Int> Isolate    = new();
     }
 
-    internal class HexShapeCells
+    internal class ShapeCells_Hex
     {
-        public readonly List<Vector3Int> FullCells     = new();
-        public readonly List<Vector3Int> JunctionCells = new();
-        public readonly List<Vector3Int> CornerCells   = new();
-        public readonly List<Vector3Int> EdgeCells     = new();
-        public readonly List<Vector3Int> TipCells      = new();
-        public readonly List<Vector3Int> IsolateCells  = new();
+        public readonly List<Vector3Int> Full     = new();
+        public readonly List<Vector3Int> Junction = new();
+        public readonly List<Vector3Int> Corner   = new();
+        public readonly List<Vector3Int> Edge     = new();
+        public readonly List<Vector3Int> Tip      = new();
+        public readonly List<Vector3Int> Isolate  = new();
     }
 
     internal static class TileShapeClassifier
     {
-        private static readonly Vector3Int[] RectNeighbors =
+        private static readonly Vector3Int[] neighbors_Rect =
         {
             Vector3Int.up,
             Vector3Int.down,
@@ -77,7 +77,7 @@ namespace TilemapSplitter
             Vector3Int.right,
         };
 
-        private static readonly Vector3Int[] HexNeighbors =
+        private static readonly Vector3Int[] neighbors_Hex =
         {
             new(1, 0, 0),
             new(1, -1, 0),
@@ -89,21 +89,21 @@ namespace TilemapSplitter
 
         internal static IReadOnlyList<Vector3Int> GetNeighborOffsets(GridLayout.CellLayout lo)
         {
-            return lo == GridLayout.CellLayout.Hexagon ? HexNeighbors : RectNeighbors;
+            return lo == GridLayout.CellLayout.Hexagon ? neighbors_Hex : neighbors_Rect;
         }
 
         /// <summary>
         /// Compress the tilemap bounds to exclude empty rows and columns
         /// </summary>
-        public static IEnumerator ClassifyCoroutine(Tilemap source,
-            Dictionary<ShapeType, ShapeSetting> settings, ShapeCells sc, int batch = 100)
+        public static IEnumerator ClassifyCoroutine_Rect(Tilemap source,
+            Dictionary<ShapeType_Rect, ShapeSetting> settings, ShapeCells_Rect sc, int batch = 100)
         {
-            sc.VerticalCells.Clear();
-            sc.HorizontalCells.Clear();
-            sc.CrossCells.Clear();
-            sc.TJunctionCells.Clear();
-            sc.CornerCells.Clear();
-            sc.IsolateCells.Clear();
+            sc.Vertical.Clear();
+            sc.Horizontal.Clear();
+            sc.Cross.Clear();
+            sc.TJunction.Clear();
+            sc.Corner.Clear();
+            sc.Isolate.Clear();
 
             //Compress the Tilemap’s cellBounds to skip empty rows and columns
             source.CompressBounds();
@@ -138,7 +138,7 @@ namespace TilemapSplitter
                     {
                         float progress = (float)(y * width) / (width * height);
 
-                        isCancelled = EditorUtility.DisplayCancelableProgressBar("Classify",
+                        isCancelled = EditorUtility.DisplayCancelableProgressBar("Classify_Rect",
                             "Collecting cells...", progress);
                         if (isCancelled) break;
 
@@ -160,7 +160,7 @@ namespace TilemapSplitter
                     {
                         float progress = (float)processed / total;
 
-                        isCancelled = EditorUtility.DisplayCancelableProgressBar("Classify",
+                        isCancelled = EditorUtility.DisplayCancelableProgressBar("Classify_Rect",
                             $"Classifying... {processed}/{total}", progress);
                         if(isCancelled) break;
 
@@ -175,16 +175,15 @@ namespace TilemapSplitter
             }
         }
 
-        public static IEnumerator ClassifyCoroutine(Tilemap source,
-            Dictionary<HexShapeType, ShapeSetting> settings, HexShapeCells sc,
-            int batch = 100)
+        public static IEnumerator ClassifyCoroutine_Hex(Tilemap source,
+            Dictionary<ShapeType_Hex, ShapeSetting> settings, ShapeCells_Hex sc, int batch = 100)
         {
-            sc.FullCells.Clear();
-            sc.JunctionCells.Clear();
-            sc.CornerCells.Clear();
-            sc.EdgeCells.Clear();
-            sc.TipCells.Clear();
-            sc.IsolateCells.Clear();
+            sc.Full.Clear();
+            sc.Junction.Clear();
+            sc.Corner.Clear();
+            sc.Edge.Clear();
+            sc.Tip.Clear();
+            sc.Isolate.Clear();
 
             source.CompressBounds();
 
@@ -216,7 +215,7 @@ namespace TilemapSplitter
                         float progress = (float)(y * width) / (width * height);
 
                         isCancelled = EditorUtility.DisplayCancelableProgressBar(
-                            "Classify", "Collecting cells...", progress);
+                            "Classify_Rect", "Collecting cells...", progress);
                         if (isCancelled) break;
 
                         yield return null;
@@ -235,7 +234,7 @@ namespace TilemapSplitter
                     {
                         if (occupiedCells.Contains(cell + offsets[i])) count++;
                     }
-                    ClassifyHex(cell, count, settings, sc);
+                    Classify_Hex(cell, count, settings, sc);
 
                     processed++;
                     if (processed % batch == 0)
@@ -243,7 +242,7 @@ namespace TilemapSplitter
                         float progress = (float)processed / total;
 
                         isCancelled = EditorUtility.DisplayCancelableProgressBar(
-                            "Classify", $"Classifying... {processed}/{total}", progress);
+                            "Classify_Rect", $"Classifying... {processed}/{total}", progress);
                         if (isCancelled) break;
 
                         yield return null;
@@ -262,7 +261,7 @@ namespace TilemapSplitter
         /// </summary>
         private static void ClassifyCellNeighbors(GridLayout.CellLayout layout,
             Vector3Int cell, HashSet<Vector3Int> cells,
-            Dictionary<ShapeType, ShapeSetting> settings, ShapeCells sc)
+            Dictionary<ShapeType_Rect, ShapeSetting> settings, ShapeCells_Rect sc)
         {
             var offsets = GetNeighborOffsets(layout);
             var exist = new bool[offsets.Count];
@@ -273,12 +272,12 @@ namespace TilemapSplitter
                 if (exist[i]) count++;
             }
 
-            if (layout is GridLayout.CellLayout.Hexagon) ClassifyHex(cell, count, settings, sc);
-            else                                         ClassifyRect(cell, exist, count, settings, sc);
+            if (layout is GridLayout.CellLayout.Hexagon) Classify_Rect(cell, count, settings, sc);
+            else                                         Classify_Rect(cell, exist, count, settings, sc);
         }
 
-        private static void ClassifyRect(Vector3Int cell, bool[] exist,
-            int neighborCount, Dictionary<ShapeType, ShapeSetting> settings, ShapeCells sc)
+        private static void Classify_Rect(Vector3Int cell, bool[] exist,
+            int neighborCount, Dictionary<ShapeType_Rect, ShapeSetting> settings, ShapeCells_Rect sc)
         {
             bool up    = exist[0];
             bool down  = exist[1];
@@ -290,88 +289,86 @@ namespace TilemapSplitter
             switch (neighborCount)
             {
                 case 4: //Cross
-                    ApplyShapeFlags(cell, settings[ShapeType.Cross].flags, sc, sc.CrossCells);
+                    ApplyShapeFlags_Rect(cell, settings[ShapeType_Rect.Cross].flags, sc, sc.Cross);
                     break;
 
                 case 3: //T-Junction
-                    ApplyShapeFlags(cell, settings[ShapeType.TJunction].flags, sc, sc.TJunctionCells);
+                    ApplyShapeFlags_Rect(cell, settings[ShapeType_Rect.TJunction].flags, sc, sc.TJunction);
                     break;
 
                 case 2 when anyV && anyH: //Corner
-                    ApplyShapeFlags(cell, settings[ShapeType.Corner].flags, sc, sc.CornerCells);
+                    ApplyShapeFlags_Rect(cell, settings[ShapeType_Rect.Corner].flags, sc, sc.Corner);
                     break;
 
                 default: //Vertical, Horizontal, Isolate
-                    if      (anyV && !anyH) sc.VerticalCells.Add(cell);
-                    else if (anyH && !anyV) sc.HorizontalCells.Add(cell);
+                    if      (anyV && !anyH) sc.Vertical.Add(cell);
+                    else if (anyH && !anyV) sc.Horizontal.Add(cell);
                     else if (neighborCount == 0)
-                        ApplyShapeFlags(cell, settings[ShapeType.Isolate].flags, sc, sc.IsolateCells);
+                        ApplyShapeFlags_Rect(cell, settings[ShapeType_Rect.Isolate].flags, sc, sc.Isolate);
                     break;
             }
         }
 
-        private static void ClassifyHex(Vector3Int cell, int neighborCount,
-            Dictionary<ShapeType, ShapeSetting> settings, ShapeCells sc)
+        private static void Classify_Rect(Vector3Int cell, int neighborCount,
+            Dictionary<ShapeType_Rect, ShapeSetting> settings, ShapeCells_Rect sc)
         {
             switch (neighborCount)
             {
                 case 6: //Cross
-                    ApplyShapeFlags(cell, settings[ShapeType.Cross].flags, sc, sc.CrossCells);
+                    ApplyShapeFlags_Rect(cell, settings[ShapeType_Rect.Cross].flags, sc, sc.Cross);
                     break;
 
                 case 5: case 4: //TJunction
-                    ApplyShapeFlags(cell, settings[ShapeType.TJunction].flags, sc, sc.TJunctionCells);
+                    ApplyShapeFlags_Rect(cell, settings[ShapeType_Rect.TJunction].flags, sc, sc.TJunction);
                     break;
 
                 case 3: //Corner
-                    ApplyShapeFlags(cell, settings[ShapeType.Corner].flags, sc, sc.CornerCells);
+                    ApplyShapeFlags_Rect(cell, settings[ShapeType_Rect.Corner].flags, sc, sc.Corner);
                     break;
 
-                case 2: //Edge
-                case 1: //Tip
-                    sc.VerticalCells.Add(cell);
+                case 2: case 1: //Edge, Tip
+                    sc.Vertical.Add(cell);
                     break;
 
                 default: //Isolate
-                    ApplyShapeFlags(cell, settings[ShapeType.Isolate].flags, sc, sc.IsolateCells);
+                    ApplyShapeFlags_Rect(cell, settings[ShapeType_Rect.Isolate].flags, sc, sc.Isolate);
                     break;
             }
         }
 
-        private static void ClassifyHex(Vector3Int cell, int neighborCount,
-            Dictionary<HexShapeType, ShapeSetting> settings, HexShapeCells sc)
+        private static void Classify_Hex(Vector3Int cell, int neighborCount,
+            Dictionary<ShapeType_Hex, ShapeSetting> settings, ShapeCells_Hex sc)
         {
             switch (neighborCount)
             {
                 case 6:
-                    ApplyHexShapeFlags(cell, settings[HexShapeType.Full].flags, sc, sc.FullCells);
+                    ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Full].flags, sc, sc.Full);
                     break;
 
-                case 5:
-                case 4:
-                    ApplyHexShapeFlags(cell, settings[HexShapeType.Junction].flags, sc, sc.JunctionCells);
+                case 5: case 4:
+                    ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Junction].flags, sc, sc.Junction);
                     break;
 
                 case 3:
-                    ApplyHexShapeFlags(cell, settings[HexShapeType.Corner].flags, sc, sc.CornerCells);
+                    ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Corner].flags, sc, sc.Corner);
                     break;
 
                 case 2:
-                    ApplyHexShapeFlags(cell, settings[HexShapeType.Edge].flags, sc, sc.EdgeCells);
+                    ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Edge].flags, sc, sc.Edge);
                     break;
 
                 case 1:
-                    ApplyHexShapeFlags(cell, settings[HexShapeType.Tip].flags, sc, sc.TipCells);
+                    ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Tip].flags, sc, sc.Tip);
                     break;
 
                 default:
-                    ApplyHexShapeFlags(cell, settings[HexShapeType.Isolate].flags, sc, sc.IsolateCells);
+                    ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Isolate].flags, sc, sc.Isolate);
                     break;
             }
         }
 
-        private static void ApplyHexShapeFlags(Vector3Int cell, ShapeFlags flags,
-            HexShapeCells sc, List<Vector3Int> indepCells)
+        private static void ApplyShapeFlags_Hex(Vector3Int cell, ShapeFlags flags,
+            ShapeCells_Hex sc, List<Vector3Int> indepCells)
         {
             if (flags.HasFlag(ShapeFlags.Independent)) indepCells?.Add(cell);
         }
@@ -379,11 +376,11 @@ namespace TilemapSplitter
         /// <summary>
         /// Add to each collection according to the settings
         /// </summary>
-        private static void ApplyShapeFlags(Vector3Int cell, ShapeFlags flags,
-            ShapeCells sc, List<Vector3Int> indepCells)
+        private static void ApplyShapeFlags_Rect(Vector3Int cell, ShapeFlags flags,
+            ShapeCells_Rect sc, List<Vector3Int> indepCells)
         {
-            if (flags.HasFlag(ShapeFlags.VerticalEdge))   sc.VerticalCells?.Add(cell);
-            if (flags.HasFlag(ShapeFlags.HorizontalEdge)) sc.HorizontalCells?.Add(cell);
+            if (flags.HasFlag(ShapeFlags.VerticalEdge))   sc.Vertical?.Add(cell);
+            if (flags.HasFlag(ShapeFlags.HorizontalEdge)) sc.Horizontal?.Add(cell);
             if (flags.HasFlag(ShapeFlags.Independent))    indepCells?.Add(cell);
         }
     }

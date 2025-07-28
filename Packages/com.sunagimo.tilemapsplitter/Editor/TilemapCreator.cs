@@ -7,6 +7,7 @@ namespace TilemapSplitter
 
     internal static class TilemapCreator
     {
+        //For Rectangle or Isolate
         private const string VerticalObjName   = "VerticalEdge";
         private const string HorizontalObjName = "HorizontalEdge";
         private const string MergeObjName      = "EdgeTiles";
@@ -14,50 +15,51 @@ namespace TilemapSplitter
         private const string TJunctionObjName  = "TJunctionTiles";
         private const string CornerObjName     = "CornerTiles";
         private const string IsolateObjName    = "IsolateTiles";
+        //For Hexagon
         private const string FullObjName       = "FullTiles";
         private const string JunctionObjName   = "JunctionTiles";
         private const string HexCornerObjName  = "HexCornerTiles";
         private const string HexEdgeObjName    = "HexEdgeTiles";
         private const string TipObjName        = "TipTiles";
 
-        public static void GenerateSplitTilemaps(Tilemap source, ShapeCells sc,
-            Dictionary<ShapeType, ShapeSetting> settings, bool mergeEdges, bool canAttachCollider)
+        public static void GenerateSplitTilemaps_Rect(Tilemap source, ShapeCells_Rect sc,
+            Dictionary<ShapeType_Rect, ShapeSetting> settings, bool mergeEdges, bool canAttachCollider)
         {
             if (mergeEdges)
             {
-                var mergedCells = new List<Vector3Int>(sc.VerticalCells);
-                var v           = settings[ShapeType.VerticalEdge];
+                var mergedCells = new List<Vector3Int>(sc.Vertical);
+                var v           = settings[ShapeType_Rect.VerticalEdge];
                 v.flags         = ShapeFlags.Independent;
-                mergedCells.AddRange(sc.HorizontalCells);
+                mergedCells.AddRange(sc.Horizontal);
                 CreateTilemapObjForCells(source, mergedCells, v, MergeObjName, canAttachCollider);
             }
             else
             {
-                var v = settings[ShapeType.VerticalEdge];
-                var h = settings[ShapeType.HorizontalEdge];
-                CreateTilemapObjForCells(source, sc.VerticalCells,   v, VerticalObjName,   canAttachCollider);
-                CreateTilemapObjForCells(source, sc.HorizontalCells, h, HorizontalObjName, canAttachCollider);
+                var v = settings[ShapeType_Rect.VerticalEdge];
+                var h = settings[ShapeType_Rect.HorizontalEdge];
+                CreateTilemapObjForCells(source, sc.Vertical,   v, VerticalObjName,   canAttachCollider);
+                CreateTilemapObjForCells(source, sc.Horizontal, h, HorizontalObjName, canAttachCollider);
             }
 
-            var cross   = settings[ShapeType.Cross];
-            var t       = settings[ShapeType.TJunction];
-            var corner  = settings[ShapeType.Corner];
-            var isolate = settings[ShapeType.Isolate];
-            CreateTilemapObjForCells(source, sc.CrossCells,     cross,   CrossObjName,     canAttachCollider);
-            CreateTilemapObjForCells(source, sc.TJunctionCells, t,       TJunctionObjName, canAttachCollider);
-            CreateTilemapObjForCells(source, sc.CornerCells,    corner,  CornerObjName,    canAttachCollider);
-            CreateTilemapObjForCells(source, sc.IsolateCells,   isolate, IsolateObjName,   canAttachCollider);
+            var cross   = settings[ShapeType_Rect.Cross];
+            var t       = settings[ShapeType_Rect.TJunction];
+            var corner  = settings[ShapeType_Rect.Corner];
+            var isolate = settings[ShapeType_Rect.Isolate];
+            CreateTilemapObjForCells(source, sc.Cross,     cross,   CrossObjName,     canAttachCollider);
+            CreateTilemapObjForCells(source, sc.TJunction, t,       TJunctionObjName, canAttachCollider);
+            CreateTilemapObjForCells(source, sc.Corner,    corner,  CornerObjName,    canAttachCollider);
+            CreateTilemapObjForCells(source, sc.Isolate,   isolate, IsolateObjName,   canAttachCollider);
         }
 
-        public static void GenerateSplitTilemaps(Tilemap source, HexShapeCells sc,
-            Dictionary<HexShapeType, ShapeSetting> settings, bool canAttachCollider)
+        public static void GenerateSplitTilemaps_Hex(Tilemap source, ShapeCells_Hex sc,
+            Dictionary<ShapeType_Hex, ShapeSetting> settings, bool canAttachCollider)
         {
-            CreateTilemapObjForCells(source, sc.FullCells,     settings[HexShapeType.Full],     FullObjName,     canAttachCollider);
-            CreateTilemapObjForCells(source, sc.JunctionCells, settings[HexShapeType.Junction], JunctionObjName, canAttachCollider);
-            CreateTilemapObjForCells(source, sc.CornerCells,   settings[HexShapeType.Corner],   HexCornerObjName,canAttachCollider);
-            CreateTilemapObjForCells(source, sc.EdgeCells,     settings[HexShapeType.Edge],     HexEdgeObjName,  canAttachCollider);
-            CreateTilemapObjForCells(source, sc.TipCells,      settings[HexShapeType.Tip],      TipObjName,      canAttachCollider);
-            CreateTilemapObjForCells(source, sc.IsolateCells,  settings[HexShapeType.Isolate],  IsolateObjName,  canAttachCollider);
+            CreateTilemapObjForCells(source, sc.Full,     settings[ShapeType_Hex.Full],     FullObjName,     canAttachCollider);
+            CreateTilemapObjForCells(source, sc.Junction, settings[ShapeType_Hex.Junction], JunctionObjName, canAttachCollider);
+            CreateTilemapObjForCells(source, sc.Corner,   settings[ShapeType_Hex.Corner],   HexCornerObjName,canAttachCollider);
+            CreateTilemapObjForCells(source, sc.Edge,     settings[ShapeType_Hex.Edge],     HexEdgeObjName,  canAttachCollider);
+            CreateTilemapObjForCells(source, sc.Tip,      settings[ShapeType_Hex.Tip],      TipObjName,      canAttachCollider);
+            CreateTilemapObjForCells(source, sc.Isolate,  settings[ShapeType_Hex.Isolate],  IsolateObjName,  canAttachCollider);
         }
 
         private static void CreateTilemapObjForCells(Tilemap source,
@@ -97,7 +99,7 @@ namespace TilemapSplitter
             {
                 Debug.LogWarning(
                     "Since TilemapRenderer is not attached to the split target, " +
-                    "the TilemapRenderer of the generated object was generated with the default shapeSettings.");
+                    "the TilemapRenderer of the generated object was generated with the default shapeSettings_Rect.");
             }
 
             //Transfer tile data(sprite, color, transform matrix) from the original to the new tile
@@ -121,7 +123,7 @@ namespace TilemapSplitter
                 obj.AddComponent<CompositeCollider2D>();
             }
 
-            Undo.RegisterCreatedObjectUndo(obj, "GenerateSplitTilemaps " + name);
+            Undo.RegisterCreatedObjectUndo(obj, "GenerateSplitTilemaps_Rect " + name);
         }
     }
 }
