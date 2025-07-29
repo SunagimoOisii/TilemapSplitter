@@ -105,12 +105,9 @@ namespace TilemapSplitter
 
         private static bool IsPointTopLayout(GridLayout grid)
         {
-            var c0 = grid.CellToWorld(Vector3Int.zero);
+            var c0  = grid.CellToWorld(Vector3Int.zero);
             var cUp = grid.CellToWorld(Vector3Int.up);
-            var cRight = grid.CellToWorld(Vector3Int.right);
-            float dxUp = Mathf.Abs(cUp.x - c0.x);
-            float dxRight = Mathf.Abs(cRight.x - c0.x);
-            return dxUp > dxRight;
+            return !Mathf.Approximately(cUp.x, c0.x);
         }
 
         private static IReadOnlyList<Vector3Int> GetNeighborOffsets_Hex(Vector3Int cell, bool isPointTop)
