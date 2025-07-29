@@ -77,20 +77,53 @@ namespace TilemapSplitter
             Vector3Int.right,
         };
 
-        private static readonly Vector3Int[] neighbors_Hex =
+        private static readonly Vector3Int[] neighbors_PointTop_Even =
         {
-            new(1, 0, 0),
-            new(1, -1, 0),
-            new(0, -1, 0),
-            new(-1, 0, 0),
-            new(-1, 1, 0),
-            new(0, 1, 0),
+            new(1, 0, 0), new(0, -1, 0), new(-1, -1, 0),
+            new(-1, 0, 0), new(-1, 1, 0), new(0, 1, 0)
         };
 
-        internal static IReadOnlyList<Vector3Int> GetNeighborOffsets(GridLayout.CellLayout lo)
+        private static readonly Vector3Int[] neighbors_PointTop_Odd =
         {
-            return lo == GridLayout.CellLayout.Hexagon ? neighbors_Hex : neighbors_Rect;
+            new(1, 0, 0), new(1, -1, 0), new(0, -1, 0),
+            new(-1, 0, 0), new(0, 1, 0), new(1, 1, 0)
+        };
+
+        private static readonly Vector3Int[] neighbors_FlatTop_Even =
+        {
+            new(1, 0, 0), new(1, 1, 0), new(0, 1, 0),
+            new(-1, 0, 0), new(0, -1, 0), new(1, -1, 0)
+        };
+
+        private static readonly Vector3Int[] neighbors_FlatTop_Odd =
+        {
+            new(1, 0, 0), new(0, 1, 0), new(-1, 1, 0),
+            new(-1, 0, 0), new(-1, -1, 0), new(0, -1, 0)
+        };
+
+        private static bool IsPointTopLayout(GridLayout grid)
+        {
+            var c0 = grid.CellToWorld(Vector3Int.zero);
+            var cUp = grid.CellToWorld(Vector3Int.up);
+            var cRight = grid.CellToWorld(Vector3Int.right);
+            float dxUp = Mathf.Abs(cUp.x - c0.x);
+            float dxRight = Mathf.Abs(cRight.x - c0.x);
+            return dxUp > dxRight;
         }
+
+        private static IReadOnlyList<Vector3Int> GetNeighborOffsets_Hex(Vector3Int cell, bool isPointTop)
+        {
+            if (isPointTop)
+            {
+                return (cell.y & 1) == 0 ? neighbors_PointTop_Even : neighbors_PointTop_Odd;
+            }
+            else
+            {
+                return (cell.x & 1) == 0 ? neighbors_FlatTop_Even : neighbors_FlatTop_Odd;
+            }
+        }
+
+        internal static IReadOnlyList<Vector3Int> GetNeighborOffsets_Rect() => neighbors_Rect;
 
         /// <summary>
         /// Compress the tilemap bounds to exclude empty rows and columns
@@ -153,7 +186,7 @@ namespace TilemapSplitter
                 foreach (var cell in occupiedCells)
                 {
                     //Perform proximity determination for each cell
-                    ClassifyCellNeighbors(layout, cell, occupiedCells, settings, sc);
+                    ClassifyCellNeighbors(cell, occupiedCells, settings, sc);
 
                     processed++;
                     if (processed % batch == 0)
@@ -223,17 +256,17 @@ namespace TilemapSplitter
                 }
                 if (isCancelled) yield break;
 
-                var layout  = source.layoutGrid.cellLayout;
-                var offsets = GetNeighborOffsets(layout);
+                bool isPointTop = IsPointTopLayout(source.layoutGrid);
                 int total     = occupiedCells.Count;
                 int processed = 0;
                 foreach (var cell in occupiedCells)
                 {
-                    var exist = new bool[offsets.Count];
-                    int count = 0;
+                    var offsets = GetNeighborOffsets_Hex(cell, isPointTop);
+                    var exist   = new bool[offsets.Count];
+                    int count   = 0;
                     for (int i = 0; i < offsets.Count; i++)
                     {
-                        bool e  = occupiedCells.Contains(cell + offsets[i]);
+                        bool e    = occupiedCells.Contains(cell + offsets[i]);
                         exist[i] = e;
                         if (e) count++;
                     }
@@ -262,11 +295,10 @@ namespace TilemapSplitter
         /// <summary>
         /// Classify the specified cell based on neighbouring cells
         /// </summary>
-        private static void ClassifyCellNeighbors(GridLayout.CellLayout layout,
-            Vector3Int cell, HashSet<Vector3Int> cells,
+        private static void ClassifyCellNeighbors(Vector3Int cell, HashSet<Vector3Int> cells,
             Dictionary<ShapeType_Rect, ShapeSetting> settings, ShapeCells_Rect sc)
         {
-            var offsets = GetNeighborOffsets(layout);
+            var offsets = GetNeighborOffsets_Rect();
             var exist = new bool[offsets.Count];
             int count = 0;
             for (int i = 0; i < offsets.Count; i++)
