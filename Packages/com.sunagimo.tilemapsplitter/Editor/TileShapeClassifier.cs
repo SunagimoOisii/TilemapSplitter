@@ -223,18 +223,21 @@ namespace TilemapSplitter
                 }
                 if (isCancelled) yield break;
 
-                var layout    = source.layoutGrid.cellLayout;
-                var offsets   = GetNeighborOffsets(layout);
+                var layout  = source.layoutGrid.cellLayout;
+                var offsets = GetNeighborOffsets(layout);
                 int total     = occupiedCells.Count;
                 int processed = 0;
                 foreach (var cell in occupiedCells)
                 {
+                    var exist = new bool[offsets.Count];
                     int count = 0;
                     for (int i = 0; i < offsets.Count; i++)
                     {
-                        if (occupiedCells.Contains(cell + offsets[i])) count++;
+                        bool e  = occupiedCells.Contains(cell + offsets[i]);
+                        exist[i] = e;
+                        if (e) count++;
                     }
-                    Classify_Hex(cell, count, settings, sc);
+                    Classify_Hex(cell, exist, count, settings, sc);
 
                     processed++;
                     if (processed % batch == 0)
@@ -272,8 +275,7 @@ namespace TilemapSplitter
                 if (exist[i]) count++;
             }
 
-            if (layout is GridLayout.CellLayout.Hexagon) Classify_Rect(cell, count, settings, sc);
-            else                                         Classify_Rect(cell, exist, count, settings, sc);
+            Classify_Rect(cell, exist, count, settings, sc);
         }
 
         private static void Classify_Rect(Vector3Int cell, bool[] exist,
@@ -309,52 +311,39 @@ namespace TilemapSplitter
             }
         }
 
-        private static void Classify_Rect(Vector3Int cell, int neighborCount,
-            Dictionary<ShapeType_Rect, ShapeSetting> settings, ShapeCells_Rect sc)
-        {
-            switch (neighborCount)
-            {
-                case 6: //Cross
-                    ApplyShapeFlags_Rect(cell, settings[ShapeType_Rect.Cross].flags, sc, sc.Cross);
-                    break;
 
-                case 5: case 4: //TJunction
-                    ApplyShapeFlags_Rect(cell, settings[ShapeType_Rect.TJunction].flags, sc, sc.TJunction);
-                    break;
-
-                case 3: //Corner
-                    ApplyShapeFlags_Rect(cell, settings[ShapeType_Rect.Corner].flags, sc, sc.Corner);
-                    break;
-
-                case 2: case 1: //Edge, Tip
-                    sc.Vertical.Add(cell);
-                    break;
-
-                default: //Isolate
-                    ApplyShapeFlags_Rect(cell, settings[ShapeType_Rect.Isolate].flags, sc, sc.Isolate);
-                    break;
-            }
-        }
-
-        private static void Classify_Hex(Vector3Int cell, int neighborCount,
+        private static void Classify_Hex(Vector3Int cell, bool[] exist, int neighborCount,
             Dictionary<ShapeType_Hex, ShapeSetting> settings, ShapeCells_Hex sc)
         {
+            int mask = 0;
+            for (int i = 0; i < exist.Length; i++)
+            {
+                if (exist[i]) mask |= 1 << i;
+            }
+
             switch (neighborCount)
             {
                 case 6:
                     ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Full].flags, sc, sc.Full);
                     break;
 
-                case 5: case 4:
+                case 5:
+                case 4:
                     ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Junction].flags, sc, sc.Junction);
                     break;
 
                 case 3:
-                    ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Corner].flags, sc, sc.Corner);
+                    if (HasConsecutiveBits(mask, 3))
+                        ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Corner].flags, sc, sc.Corner);
+                    else
+                        ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Junction].flags, sc, sc.Junction);
                     break;
 
                 case 2:
-                    ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Edge].flags, sc, sc.Edge);
+                    if (IsOpposite(mask))
+                        ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Edge].flags, sc, sc.Edge);
+                    else
+                        ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Corner].flags, sc, sc.Corner);
                     break;
 
                 case 1:
@@ -365,6 +354,25 @@ namespace TilemapSplitter
                     ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Isolate].flags, sc, sc.Isolate);
                     break;
             }
+        }
+
+        private static bool HasConsecutiveBits(int mask, int length)
+        {
+            int bits = mask | (mask << 6);
+            int seq  = (1 << length) - 1;
+            for (int i = 0; i < 6; i++)
+            {
+                if ((bits & (seq << i)) == (seq << i)) return true;
+            }
+            return false;
+        }
+
+        private static bool IsOpposite(int mask)
+        {
+            const int pair0 = (1 << 0) | (1 << 3);
+            const int pair1 = (1 << 1) | (1 << 4);
+            const int pair2 = (1 << 2) | (1 << 5);
+            return mask == pair0 || mask == pair1 || mask == pair2;
         }
 
         private static void ApplyShapeFlags_Hex(Vector3Int cell, ShapeFlags flags,
