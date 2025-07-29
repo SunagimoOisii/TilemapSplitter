@@ -81,26 +81,24 @@ namespace TilemapSplitter
 
         private static readonly Vector3Int[] neighbors_PointTop_Even =
         {
-            new(1, 0, 0), new(0, -1, 0), new(-1, -1, 0),
-            new(-1, 0, 0), new(-1, 1, 0), new(0, 1, 0)
+            new( 1, 0, 0), new( 0, -1, 0), new(-1, -1, 0),
+            new(-1, 0, 0), new(-1,  1, 0), new( 0,  1, 0)
         };
-
         private static readonly Vector3Int[] neighbors_PointTop_Odd =
         {
-            new(1, 0, 0), new(1, -1, 0), new(0, -1, 0),
-            new(-1, 0, 0), new(0, 1, 0), new(1, 1, 0)
+            new( 1, 0, 0), new(1, -1, 0), new(0, -1, 0),
+            new(-1, 0, 0), new(0,  1, 0), new(1,  1, 0)
         };
 
         private static readonly Vector3Int[] neighbors_FlatTop_Even =
         {
-            new(1, 0, 0), new(1, 1, 0), new(0, 1, 0),
+            new( 1, 0, 0), new(1,  1, 0), new(0,  1, 0),
             new(-1, 0, 0), new(0, -1, 0), new(1, -1, 0)
         };
-
         private static readonly Vector3Int[] neighbors_FlatTop_Odd =
         {
-            new(1, 0, 0), new(0, 1, 0), new(-1, 1, 0),
-            new(-1, 0, 0), new(-1, -1, 0), new(0, -1, 0)
+            new( 1, 0, 0), new( 0,  1, 0), new(-1,  1, 0),
+            new(-1, 0, 0), new(-1, -1, 0), new( 0, -1, 0)
         };
 
         private static bool IsPointTopLayout(GridLayout grid)
@@ -110,19 +108,13 @@ namespace TilemapSplitter
             return !Mathf.Approximately(cUp.x, c0.x);
         }
 
+        private static IReadOnlyList<Vector3Int> GetNeighborOffsets_Rect() => neighbors_Rect;
+
         private static IReadOnlyList<Vector3Int> GetNeighborOffsets_Hex(Vector3Int cell, bool isPointTop)
         {
-            if (isPointTop)
-            {
-                return (cell.y & 1) == 0 ? neighbors_PointTop_Even : neighbors_PointTop_Odd;
-            }
-            else
-            {
-                return (cell.x & 1) == 0 ? neighbors_FlatTop_Even : neighbors_FlatTop_Odd;
-            }
+            if (isPointTop) return (cell.y & 1) == 0 ? neighbors_PointTop_Even : neighbors_PointTop_Odd;
+            else            return (cell.x & 1) == 0 ? neighbors_FlatTop_Even : neighbors_FlatTop_Odd;
         }
-
-        internal static IReadOnlyList<Vector3Int> GetNeighborOffsets_Rect() => neighbors_Rect;
 
         /// <summary>
         /// Compress the tilemap bounds to exclude empty rows and columns
@@ -343,57 +335,37 @@ namespace TilemapSplitter
             }
         }
 
-
         private static void Classify_Hex(Vector3Int cell, bool[] exist, int neighborCount,
             Dictionary<ShapeType_Hex, ShapeSetting> settings, ShapeCells_Hex sc)
         {
             switch (neighborCount)
             {
                 case 6:
-                    ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Full].flags, sc, sc.Full);
+                    ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Full].flags, sc.Full);
                     break;
                 case 5:
-                    ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Junction5].flags, sc, sc.Junction5);
+                    ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Junction5].flags, sc.Junction5);
                     break;
                 case 4:
-                    ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Junction4].flags, sc, sc.Junction4);
+                    ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Junction4].flags, sc.Junction4);
                     break;
                 case 3:
-                    ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Junction3].flags, sc, sc.Junction3);
+                    ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Junction3].flags, sc.Junction3);
                     break;
                 case 2:
-                    ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Edge].flags, sc, sc.Edge);
+                    ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Edge].flags, sc.Edge);
                     break;
                 case 1:
-                    ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Tip].flags, sc, sc.Tip);
+                    ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Tip].flags, sc.Tip);
                     break;
                 default:
-                    ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Isolate].flags, sc, sc.Isolate);
+                    ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Isolate].flags, sc.Isolate);
                     break;
             }
-        }
-
-        private static bool HasConsecutiveBits(int mask, int length)
-        {
-            int bits = mask | (mask << 6);
-            int seq  = (1 << length) - 1;
-            for (int i = 0; i < 6; i++)
-            {
-                if ((bits & (seq << i)) == (seq << i)) return true;
-            }
-            return false;
-        }
-
-        private static bool IsOpposite(int mask)
-        {
-            const int pair0 = (1 << 0) | (1 << 3);
-            const int pair1 = (1 << 1) | (1 << 4);
-            const int pair2 = (1 << 2) | (1 << 5);
-            return mask == pair0 || mask == pair1 || mask == pair2;
         }
 
         private static void ApplyShapeFlags_Hex(Vector3Int cell, ShapeFlags flags,
-            ShapeCells_Hex sc, List<Vector3Int> indepCells)
+            List<Vector3Int> indepCells)
         {
             if (flags.HasFlag(ShapeFlags.Independent)) indepCells?.Add(cell);
         }
