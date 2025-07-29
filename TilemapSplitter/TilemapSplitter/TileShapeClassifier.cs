@@ -167,7 +167,7 @@ namespace TilemapSplitter
                 int processed = 0;
                 foreach (var cell in occupiedCells)
                 {
-                    ClassifyCellNeighbors(cell, occupiedCells, settings, sc);
+                    Classify_Rect(cell, occupiedCells, settings, sc);
 
                     processed++;
                     if (processed % batch == 0)
@@ -239,31 +239,18 @@ namespace TilemapSplitter
         /// <summary>
         /// Classify the specified cell based on neighbouring cells
         /// </summary>
-        private static void ClassifyCellNeighbors(Vector3Int cell, HashSet<Vector3Int> cells,
+        private static void Classify_Rect(Vector3Int cell, HashSet<Vector3Int> cells,
             Dictionary<ShapeType_Rect, ShapeSetting> settings, ShapeCells_Rect sc)
         {
             var offsets = GetNeighborOffsets_Rect();
-            var exist = new bool[offsets.Count];
-            int count = 0;
-            for (int i = 0; i < offsets.Count; i++)
-            {
-                exist[i] = cells.Contains(cell + offsets[i]);
-                if (exist[i]) count++;
-            }
-
-            Classify_Rect(cell, exist, count, settings, sc);
-        }
-
-        private static void Classify_Rect(Vector3Int cell, bool[] exist,
-            int neighborCount, Dictionary<ShapeType_Rect, ShapeSetting> settings, ShapeCells_Rect sc)
-        {
-            bool up    = exist[0];
-            bool down  = exist[1];
-            bool left  = exist[2];
-            bool right = exist[3];
-            bool anyV  = up || down;
+            bool up    = cells.Contains(cell + offsets[0]);
+            bool down  = cells.Contains(cell + offsets[1]);
+            bool left  = cells.Contains(cell + offsets[2]);
+            bool right = cells.Contains(cell + offsets[3]);
+            bool anyV  = up   || down;
             bool anyH  = left || right;
 
+            int neighborCount = (up?1:0) + (down?1:0) + (left?1:0) + (right?1:0);
             switch (neighborCount)
             {
                 case 4: //Cross
