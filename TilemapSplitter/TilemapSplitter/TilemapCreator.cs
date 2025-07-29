@@ -20,7 +20,7 @@ namespace TilemapSplitter
         private const string Junction5ObjName = "Junction5Tiles";
         private const string Junction4ObjName = "Junction4Tiles";
         private const string Junction3ObjName = "Junction3Tiles";
-        private const string HexEdgeObjName   = "HexEdgeTiles";
+        private const string HexEdgeObjName   = "EdgeTiles";
         private const string TipObjName       = "TipTiles";
 
         public static void GenerateSplitTilemaps_Rect(Tilemap source, ShapeCells_Rect sc,
@@ -70,11 +70,11 @@ namespace TilemapSplitter
             if (cells == null || cells.Count == 0) return;
 
             //Skip instantiating this tile collection when the Independent flag is not enabled in settings
-            bool isRequiredIndependentFlag = name == CrossObjName    || name == TJunctionObjName ||
-                                             name == CornerObjName   || name == IsolateObjName   ||
-                                             name == FullObjName     || name == Junction5ObjName ||
+            bool isRequiredIndependentFlag = name == CrossObjName     || name == TJunctionObjName ||
+                                             name == CornerObjName    || name == IsolateObjName   ||
+                                             name == FullObjName      || name == Junction5ObjName ||
                                              name == Junction4ObjName || name == Junction3ObjName ||
-                                             name == HexEdgeObjName  || name == TipObjName;
+                                             name == HexEdgeObjName   || name == TipObjName;
             if (isRequiredIndependentFlag &&
                 setting.flags.HasFlag(ShapeFlags.Independent) == false) return;
 

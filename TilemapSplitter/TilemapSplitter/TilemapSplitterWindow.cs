@@ -14,8 +14,8 @@ namespace TilemapSplitter
         private const string PrefPrefix = "TilemapSplitter.";
         private static string CreateKey(string name) => PrefPrefix + name;
 
-        private Dictionary<ShapeType_Rect, ShapeSetting>    settingsDict_rect = CreateDefaultSettings_Rect();
-        private Dictionary<ShapeType_Hex, ShapeSetting> settingsDict_hex  = CreateDefaultSettings_Hex();
+        private Dictionary<ShapeType_Rect, ShapeSetting> settingsDict_rect = CreateDefaultSettings_Rect();
+        private Dictionary<ShapeType_Hex, ShapeSetting>  settingsDict_hex  = CreateDefaultSettings_Hex();
 
         private static Dictionary<ShapeType_Rect, ShapeSetting> CreateDefaultSettings_Rect() => new()
         {
@@ -26,7 +26,6 @@ namespace TilemapSplitter
             [ShapeType_Rect.Corner]         = new() { flags = ShapeFlags.Independent,    previewColor = Color.cyan   },
             [ShapeType_Rect.Isolate]        = new() { flags = ShapeFlags.Independent,    previewColor = Color.magenta },
         };
-
         private static Dictionary<ShapeType_Hex, ShapeSetting> CreateDefaultSettings_Hex() => new()
         {
             [ShapeType_Hex.Full]      = new() { flags = ShapeFlags.Independent, previewColor = Color.red    },
@@ -54,7 +53,8 @@ namespace TilemapSplitter
         private Foldout tipFoldOut;
         private Foldout hexIsolateFoldOut;
 
-        private Tilemap       source;
+        private Tilemap source;
+
         private ShapeCells_Rect    shapeCells = new();
         private ShapeCells_Hex hexShapeCells = new();
 
@@ -82,7 +82,6 @@ namespace TilemapSplitter
         public void CreateGUI()
         {
             var c = CreateScrollableContainer();
-
             CreateSourceField(c);
             CreateResetButton(c);
             CreateColliderToggle(c);
