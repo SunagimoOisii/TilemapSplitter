@@ -117,6 +117,36 @@ namespace TilemapSplitter
         }
 
         /// <summary>
+        /// Collect all non-empty cells from the Tilemap.
+        /// </summary>
+        private static HashSet<Vector3Int> CollectOccupiedCells(Tilemap source)
+        {
+            source.CompressBounds();
+            var cellBounds    = source.cellBounds;
+            var tilesInBounds = source.GetTilesBlock(cellBounds);
+
+            int width  = cellBounds.size.x;
+            int height = cellBounds.size.y;
+            var occupiedCells = new HashSet<Vector3Int>();
+
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    int index = x + y * width;
+                    if (tilesInBounds[index] != null)
+                    {
+                        var cell = new Vector3Int(cellBounds.xMin + x,
+                                                  cellBounds.yMin + y,
+                                                  cellBounds.zMin);
+                        occupiedCells.Add(cell);
+                    }
+                }
+            }
+            return occupiedCells;
+        }
+
+        /// <summary>
         /// Compress the tilemap bounds to exclude empty rows and columns
         /// </summary>
         public static IEnumerator ClassifyCoroutine_Rect(Tilemap source,
@@ -129,69 +159,28 @@ namespace TilemapSplitter
             sc.Corner.Clear();
             sc.Isolate.Clear();
 
-            //Compress the Tilemap’s cellBounds to skip empty rows and columns
-            source.CompressBounds();
-
-            //Get the bounding box in cell coordinates and retrieve all tiles inside it(empty slots = null)
-            var cellBounds    = source.cellBounds;
-            var tilesInBounds = source.GetTilesBlock(cellBounds);
-
-            //Only cells containing tiles are stored in the collection
-            int width  = cellBounds.size.x;
-            int height = cellBounds.size.y;
-            var occupiedCells = new HashSet<Vector3Int>();
-
-            bool isCancelled = false;
+            var occupiedCells = CollectOccupiedCells(source);
+            bool isCancelled  = false;
             try
             {
-                for (int y = 0; y < height; y++)
-                {
-                    for (int x = 0; x < width; x++)
-                    {
-                        int index = x + y * width;
-                        if (tilesInBounds[index] == null) continue;
-
-                        //Calculate the world-space offset from the lower-left cell to origin
-                        var cell = new Vector3Int(cellBounds.xMin + x,
-                                                  cellBounds.yMin + y,
-                                                  cellBounds.zMin);
-                        occupiedCells.Add(cell);
-                    }
-
-                    if (y % batch == 0)
-                    {
-                        float progress = (float)(y * width) / (width * height);
-
-                        isCancelled = EditorUtility.DisplayCancelableProgressBar("Classify_Rect",
-                            "Collecting cells...", progress);
-                        if (isCancelled) break;
-
-                        yield return null;
-                    }
-                }
-                if (isCancelled) yield break;
-
-                var layout    = source.layoutGrid.cellLayout;
                 int total     = occupiedCells.Count;
                 int processed = 0;
                 foreach (var cell in occupiedCells)
                 {
-                    //Perform proximity determination for each cell
                     ClassifyCellNeighbors(cell, occupiedCells, settings, sc);
 
                     processed++;
                     if (processed % batch == 0)
                     {
                         float progress = (float)processed / total;
-
                         isCancelled = EditorUtility.DisplayCancelableProgressBar("Classify_Rect",
                             $"Classifying... {processed}/{total}", progress);
-                        if(isCancelled) break;
+                        if (isCancelled) break;
 
                         yield return null;
                     }
                 }
-                if(isCancelled) yield break;
+                if (isCancelled) yield break;
             }
             finally
             {
@@ -210,57 +199,21 @@ namespace TilemapSplitter
             sc.Junction5.Clear();
             sc.Full.Clear();
 
-            source.CompressBounds();
-
-            var cellBounds    = source.cellBounds;
-            var tilesInBounds = source.GetTilesBlock(cellBounds);
-
-            int width  = cellBounds.size.x;
-            int height = cellBounds.size.y;
-            var occupiedCells = new HashSet<Vector3Int>();
-
+            var occupiedCells = CollectOccupiedCells(source);
             bool isCancelled = false;
             try
             {
-                for (int y = 0; y < height; y++)
-                {
-                    for (int x = 0; x < width; x++)
-                    {
-                        int index = x + y * width;
-                        if (tilesInBounds[index] == null) continue;
-
-                        var cell = new Vector3Int(cellBounds.xMin + x,
-                                                  cellBounds.yMin + y,
-                                                  cellBounds.zMin);
-                        occupiedCells.Add(cell);
-                    }
-
-                    if (y % batch == 0)
-                    {
-                        float progress = (float)(y * width) / (width * height);
-
-                        isCancelled = EditorUtility.DisplayCancelableProgressBar(
-                            "Classify_Rect", "Collecting cells...", progress);
-                        if (isCancelled) break;
-
-                        yield return null;
-                    }
-                }
-                if (isCancelled) yield break;
-
                 bool isPointTop = IsPointTopLayout(source.layoutGrid);
                 int  total      = occupiedCells.Count;
                 int  processed  = 0;
                 foreach (var cell in occupiedCells)
                 {
                     var offsets = GetNeighborOffsets_Hex(cell, isPointTop);
-                    var exist   = new bool[offsets.Count];
                     int count   = 0;
-                    for (int i = 0; i < offsets.Count; i++)
+                    foreach (var offset in offsets)
                     {
-                        bool e   = occupiedCells.Contains(cell + offsets[i]);
-                        exist[i] = e;
-                        if (e) count++;
+                        if (occupiedCells.Contains(cell + offset))
+                            count++;
                     }
                     Classify_Hex(cell, count, settings, sc);
 
@@ -268,9 +221,8 @@ namespace TilemapSplitter
                     if (processed % batch == 0)
                     {
                         float progress = (float)processed / total;
-
-                        isCancelled = EditorUtility.DisplayCancelableProgressBar(
-                            "Classify_Rect", $"Classifying... {processed}/{total}", progress);
+                        isCancelled = EditorUtility.DisplayCancelableProgressBar("Classify_Hex",
+                            $"Classifying... {processed}/{total}", progress);
                         if (isCancelled) break;
 
                         yield return null;
