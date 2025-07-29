@@ -42,21 +42,23 @@ namespace TilemapSplitter
 
             if (shapeSettings_Hex != null && hexShapeCells != null)
             {
-                var full     = shapeSettings_Hex[ShapeType_Hex.Full];
-                var junction = shapeSettings_Hex[ShapeType_Hex.Junction];
-                var co       = shapeSettings_Hex[ShapeType_Hex.Corner];
-                var edge     = shapeSettings_Hex[ShapeType_Hex.Edge];
-                var tip      = shapeSettings_Hex[ShapeType_Hex.Tip];
-                var i        = shapeSettings_Hex[ShapeType_Hex.Isolate];
+                var full      = shapeSettings_Hex[ShapeType_Hex.Full];
+                var j5        = shapeSettings_Hex[ShapeType_Hex.Junction5];
+                var j4        = shapeSettings_Hex[ShapeType_Hex.Junction4];
+                var j3        = shapeSettings_Hex[ShapeType_Hex.Junction3];
+                var edge      = shapeSettings_Hex[ShapeType_Hex.Edge];
+                var tip       = shapeSettings_Hex[ShapeType_Hex.Tip];
+                var i         = shapeSettings_Hex[ShapeType_Hex.Isolate];
 
                 var previewSettings = new (List<Vector3Int> cells, Color c, bool canPreview)[]
                 {
-                    (hexShapeCells.Full,     full.previewColor,     full.canPreview),
-                    (hexShapeCells.Junction, junction.previewColor, junction.canPreview),
-                    (hexShapeCells.Corner,   co.previewColor,   co.canPreview),
-                    (hexShapeCells.Edge,     edge.previewColor,     edge.canPreview),
-                    (hexShapeCells.Tip,      tip.previewColor,      tip.canPreview),
-                    (hexShapeCells.Isolate,  i.previewColor,  i.canPreview)
+                    (hexShapeCells.Full,      full.previewColor,      full.canPreview),
+                    (hexShapeCells.Junction5, j5.previewColor,        j5.canPreview),
+                    (hexShapeCells.Junction4, j4.previewColor,        j4.canPreview),
+                    (hexShapeCells.Junction3, j3.previewColor,        j3.canPreview),
+                    (hexShapeCells.Edge,      edge.previewColor,      edge.canPreview),
+                    (hexShapeCells.Tip,       tip.previewColor,       tip.canPreview),
+                    (hexShapeCells.Isolate,   i.previewColor,         i.canPreview)
                 };
                 foreach (var (cells, c, canPreview) in previewSettings)
                 {

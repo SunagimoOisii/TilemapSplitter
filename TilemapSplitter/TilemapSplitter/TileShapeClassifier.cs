@@ -27,12 +27,13 @@ namespace TilemapSplitter
 
     internal enum ShapeType_Hex
     {
-        Full = 0,
-        Junction,
-        Corner,
-        Edge,
+        Isolate = 0,
         Tip,
-        Isolate,
+        Edge,
+        Junction3,
+        Junction4,
+        Junction5,
+        Full,
     }
 
     internal class ShapeSetting
@@ -59,12 +60,13 @@ namespace TilemapSplitter
 
     internal class ShapeCells_Hex
     {
-        public readonly List<Vector3Int> Full     = new();
-        public readonly List<Vector3Int> Junction = new();
-        public readonly List<Vector3Int> Corner   = new();
-        public readonly List<Vector3Int> Edge     = new();
-        public readonly List<Vector3Int> Tip      = new();
-        public readonly List<Vector3Int> Isolate  = new();
+        public readonly List<Vector3Int> Isolate   = new();
+        public readonly List<Vector3Int> Tip       = new();
+        public readonly List<Vector3Int> Edge      = new();
+        public readonly List<Vector3Int> Junction3 = new();
+        public readonly List<Vector3Int> Junction4 = new();
+        public readonly List<Vector3Int> Junction5 = new();
+        public readonly List<Vector3Int> Full      = new();
     }
 
     internal static class TileShapeClassifier
@@ -211,12 +213,13 @@ namespace TilemapSplitter
         public static IEnumerator ClassifyCoroutine_Hex(Tilemap source,
             Dictionary<ShapeType_Hex, ShapeSetting> settings, ShapeCells_Hex sc, int batch = 100)
         {
-            sc.Full.Clear();
-            sc.Junction.Clear();
-            sc.Corner.Clear();
-            sc.Edge.Clear();
-            sc.Tip.Clear();
             sc.Isolate.Clear();
+            sc.Tip.Clear();
+            sc.Edge.Clear();
+            sc.Junction3.Clear();
+            sc.Junction4.Clear();
+            sc.Junction5.Clear();
+            sc.Full.Clear();
 
             source.CompressBounds();
 
@@ -347,41 +350,26 @@ namespace TilemapSplitter
         private static void Classify_Hex(Vector3Int cell, bool[] exist, int neighborCount,
             Dictionary<ShapeType_Hex, ShapeSetting> settings, ShapeCells_Hex sc)
         {
-            int mask = 0;
-            for (int i = 0; i < exist.Length; i++)
-            {
-                if (exist[i]) mask |= 1 << i;
-            }
-
             switch (neighborCount)
             {
                 case 6:
                     ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Full].flags, sc, sc.Full);
                     break;
-
                 case 5:
+                    ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Junction5].flags, sc, sc.Junction5);
+                    break;
                 case 4:
-                    ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Junction].flags, sc, sc.Junction);
+                    ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Junction4].flags, sc, sc.Junction4);
                     break;
-
                 case 3:
-                    if (HasConsecutiveBits(mask, 3))
-                        ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Corner].flags, sc, sc.Corner);
-                    else
-                        ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Junction].flags, sc, sc.Junction);
+                    ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Junction3].flags, sc, sc.Junction3);
                     break;
-
                 case 2:
-                    if (IsOpposite(mask))
-                        ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Edge].flags, sc, sc.Edge);
-                    else
-                        ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Corner].flags, sc, sc.Corner);
+                    ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Edge].flags, sc, sc.Edge);
                     break;
-
                 case 1:
                     ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Tip].flags, sc, sc.Tip);
                     break;
-
                 default:
                     ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Isolate].flags, sc, sc.Isolate);
                     break;
