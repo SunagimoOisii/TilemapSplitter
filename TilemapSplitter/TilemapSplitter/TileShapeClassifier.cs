@@ -249,8 +249,8 @@ namespace TilemapSplitter
                 if (isCancelled) yield break;
 
                 bool isPointTop = IsPointTopLayout(source.layoutGrid);
-                int total     = occupiedCells.Count;
-                int processed = 0;
+                int  total      = occupiedCells.Count;
+                int  processed  = 0;
                 foreach (var cell in occupiedCells)
                 {
                     var offsets = GetNeighborOffsets_Hex(cell, isPointTop);
@@ -258,11 +258,11 @@ namespace TilemapSplitter
                     int count   = 0;
                     for (int i = 0; i < offsets.Count; i++)
                     {
-                        bool e    = occupiedCells.Contains(cell + offsets[i]);
+                        bool e   = occupiedCells.Contains(cell + offsets[i]);
                         exist[i] = e;
                         if (e) count++;
                     }
-                    Classify_Hex(cell, exist, count, settings, sc);
+                    Classify_Hex(cell, count, settings, sc);
 
                     processed++;
                     if (processed % batch == 0)
@@ -335,35 +335,38 @@ namespace TilemapSplitter
             }
         }
 
-        private static void Classify_Hex(Vector3Int cell, bool[] exist, int neighborCount,
+        private static void Classify_Hex(Vector3Int cell, int neighborCount,
             Dictionary<ShapeType_Hex, ShapeSetting> settings, ShapeCells_Hex sc)
         {
             switch (neighborCount)
             {
-                case 6:
+                case 6:  //Full
                     ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Full].flags, sc.Full);
                     break;
-                case 5:
+                case 5:  //Junction5
                     ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Junction5].flags, sc.Junction5);
                     break;
-                case 4:
+                case 4:  //Junction4
                     ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Junction4].flags, sc.Junction4);
                     break;
-                case 3:
+                case 3:  //Junction3
                     ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Junction3].flags, sc.Junction3);
                     break;
-                case 2:
+                case 2:  //Edge
                     ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Edge].flags, sc.Edge);
                     break;
-                case 1:
+                case 1:  //Tip
                     ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Tip].flags, sc.Tip);
                     break;
-                default:
+                default: //Isolate
                     ApplyShapeFlags_Hex(cell, settings[ShapeType_Hex.Isolate].flags, sc.Isolate);
                     break;
             }
         }
 
+        /// <summary>
+        /// Add to each collection according to the settings
+        /// </summary>
         private static void ApplyShapeFlags_Hex(Vector3Int cell, ShapeFlags flags,
             List<Vector3Int> indepCells)
         {
