@@ -250,7 +250,7 @@ namespace TilemapSplitter
             bool anyV  = up   || down;
             bool anyH  = left || right;
 
-            int neighborCount = (up?1:0) + (down?1:0) + (left?1:0) + (right?1:0);
+            int neighborCount = (up ? 1 : 0) + (down ? 1 : 0) + (left ? 1 : 0) + (right ? 1 : 0);
             switch (neighborCount)
             {
                 case 4: //Cross
@@ -309,7 +309,7 @@ namespace TilemapSplitter
         private static void ApplyShapeFlags_Hex(Vector3Int cell, ShapeFlags flags,
             List<Vector3Int> indepCells)
         {
-            if (flags.HasFlag(ShapeFlags.Independent)) indepCells?.Add(cell);
+            if (flags.HasFlag(ShapeFlags.Independent)) indepCells.Add(cell);
         }
 
         /// <summary>
@@ -318,9 +318,9 @@ namespace TilemapSplitter
         private static void ApplyShapeFlags_Rect(Vector3Int cell, ShapeFlags flags,
             ShapeCells_Rect sc, List<Vector3Int> indepCells)
         {
-            if (flags.HasFlag(ShapeFlags.VerticalEdge))   sc.Vertical?.Add(cell);
-            if (flags.HasFlag(ShapeFlags.HorizontalEdge)) sc.Horizontal?.Add(cell);
-            if (flags.HasFlag(ShapeFlags.Independent))    indepCells?.Add(cell);
+            if (flags.HasFlag(ShapeFlags.VerticalEdge))   sc.Vertical.Add(cell);
+            if (flags.HasFlag(ShapeFlags.HorizontalEdge)) sc.Horizontal.Add(cell);
+            if (flags.HasFlag(ShapeFlags.Independent))    indepCells.Add(cell);
         }
     }
 }
