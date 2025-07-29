@@ -67,6 +67,12 @@ namespace TilemapSplitter
         public readonly List<Vector3Int> Isolate  = new();
     }
 
+    internal enum HexOrientation
+    {
+        PointTop,
+        FlatTop,
+    }
+
     internal static class TileShapeClassifier
     {
         private static readonly Vector3Int[] neighbors_Rect =
@@ -77,19 +83,62 @@ namespace TilemapSplitter
             Vector3Int.right,
         };
 
-        private static readonly Vector3Int[] neighbors_Hex =
+        private static readonly Vector3Int[] neighbors_Hex_PointTop_Even =
+        {
+            new(1, 0, 0),
+            new(0, 1, 0),
+            new(-1, 1, 0),
+            new(-1, 0, 0),
+            new(-1, -1, 0),
+            new(0, -1, 0),
+        };
+
+        private static readonly Vector3Int[] neighbors_Hex_PointTop_Odd =
+        {
+            new(1, 0, 0),
+            new(1, 1, 0),
+            new(0, 1, 0),
+            new(-1, 0, 0),
+            new(0, -1, 0),
+            new(1, -1, 0),
+        };
+
+        private static readonly Vector3Int[] neighbors_Hex_FlatTop_Even =
         {
             new(1, 0, 0),
             new(1, -1, 0),
             new(0, -1, 0),
             new(-1, 0, 0),
+            new(0, 1, 0),
+            new(1, 1, 0),
+        };
+
+        private static readonly Vector3Int[] neighbors_Hex_FlatTop_Odd =
+        {
+            new(1, 0, 0),
+            new(0, -1, 0),
+            new(-1, -1, 0),
+            new(-1, 0, 0),
             new(-1, 1, 0),
             new(0, 1, 0),
         };
 
-        internal static IReadOnlyList<Vector3Int> GetNeighborOffsets(GridLayout.CellLayout lo)
+        internal static IReadOnlyList<Vector3Int> GetNeighborOffsets(GridLayout.CellLayout lo,
+            HexOrientation orientation, Vector3Int cell)
         {
-            return lo == GridLayout.CellLayout.Hexagon ? neighbors_Hex : neighbors_Rect;
+            if (lo != GridLayout.CellLayout.Hexagon) return neighbors_Rect;
+
+            bool odd;
+            switch (orientation)
+            {
+                case HexOrientation.FlatTop:
+                    odd = (cell.y & 1) != 0;
+                    return odd ? neighbors_Hex_FlatTop_Odd : neighbors_Hex_FlatTop_Even;
+
+                default:
+                    odd = (cell.x & 1) != 0;
+                    return odd ? neighbors_Hex_PointTop_Odd : neighbors_Hex_PointTop_Even;
+            }
         }
 
         /// <summary>
@@ -176,7 +225,8 @@ namespace TilemapSplitter
         }
 
         public static IEnumerator ClassifyCoroutine_Hex(Tilemap source,
-            Dictionary<ShapeType_Hex, ShapeSetting> settings, ShapeCells_Hex sc, int batch = 100)
+            Dictionary<ShapeType_Hex, ShapeSetting> settings, ShapeCells_Hex sc,
+            HexOrientation orientation = HexOrientation.PointTop, int batch = 100)
         {
             sc.Full.Clear();
             sc.Junction.Clear();
@@ -224,16 +274,16 @@ namespace TilemapSplitter
                 if (isCancelled) yield break;
 
                 var layout  = source.layoutGrid.cellLayout;
-                var offsets = GetNeighborOffsets(layout);
                 int total     = occupiedCells.Count;
                 int processed = 0;
                 foreach (var cell in occupiedCells)
                 {
-                    var exist = new bool[offsets.Count];
-                    int count = 0;
+                    var offsets = GetNeighborOffsets(layout, orientation, cell);
+                    var exist   = new bool[offsets.Count];
+                    int count   = 0;
                     for (int i = 0; i < offsets.Count; i++)
                     {
-                        bool e  = occupiedCells.Contains(cell + offsets[i]);
+                        bool e    = occupiedCells.Contains(cell + offsets[i]);
                         exist[i] = e;
                         if (e) count++;
                     }
@@ -266,7 +316,7 @@ namespace TilemapSplitter
             Vector3Int cell, HashSet<Vector3Int> cells,
             Dictionary<ShapeType_Rect, ShapeSetting> settings, ShapeCells_Rect sc)
         {
-            var offsets = GetNeighborOffsets(layout);
+            var offsets = GetNeighborOffsets(layout, HexOrientation.PointTop, cell);
             var exist = new bool[offsets.Count];
             int count = 0;
             for (int i = 0; i < offsets.Count; i++)

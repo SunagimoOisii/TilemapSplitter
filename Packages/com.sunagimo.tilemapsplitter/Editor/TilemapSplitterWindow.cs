@@ -360,7 +360,7 @@ namespace TilemapSplitter
             if (isHex)
             {
                 hexShapeCells = new ShapeCells_Hex();
-                e = TileShapeClassifier.ClassifyCoroutine_Hex(source, settingsDict_hex, hexShapeCells);
+                e = TileShapeClassifier.ClassifyCoroutine_Hex(source, settingsDict_hex, hexShapeCells, HexOrientation.PointTop);
             }
             else
             {
@@ -396,7 +396,7 @@ namespace TilemapSplitter
                 if (isHex)
                 {
                     hexShapeCells = new ShapeCells_Hex();
-                    e = TileShapeClassifier.ClassifyCoroutine_Hex(source, settingsDict_hex, hexShapeCells);
+                    e = TileShapeClassifier.ClassifyCoroutine_Hex(source, settingsDict_hex, hexShapeCells, HexOrientation.PointTop);
                 }
                 else
                 {
