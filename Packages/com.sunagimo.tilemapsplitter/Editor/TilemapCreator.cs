@@ -67,7 +67,7 @@ namespace TilemapSplitter
         private static void CreateTilemapObjForCells(Tilemap source,
             List<Vector3Int> cells, ShapeSetting setting, string name, bool canAttachCollider)
         {
-            if (cells == null || cells.Count == 0) return;
+            if (cells.Count == 0) return;
 
             //Skip instantiating this tile collection when the Independent flag is not enabled in settings
             bool isRequiredIndependentFlag = name == CrossObjName     || name == TJunctionObjName ||

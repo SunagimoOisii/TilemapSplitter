@@ -63,36 +63,35 @@ namespace TilemapSplitter
                 {
                     if (canPreview) DrawCellPreviews(cells, c);
                 }
-                return;
             }
-
-            if (shapeSettings_Rect == null || shapeCells_Rect == null) return;
-
-            var v       = shapeSettings_Rect[ShapeType_Rect.VerticalEdge];
-            var h       = shapeSettings_Rect[ShapeType_Rect.HorizontalEdge];
-            var cross   = shapeSettings_Rect[ShapeType_Rect.Cross];
-            var t       = shapeSettings_Rect[ShapeType_Rect.TJunction];
-            var corner  = shapeSettings_Rect[ShapeType_Rect.Corner];
-            var isolate = shapeSettings_Rect[ShapeType_Rect.Isolate];
-
-            var previewSettingsRect = new (List<Vector3Int> cells, Color c, bool canPreview)[]
+            else if (shapeSettings_Rect != null && shapeCells_Rect != null)
             {
-                (shapeCells_Rect.Vertical,   v.previewColor,       v.canPreview),
-                (shapeCells_Rect.Horizontal, h.previewColor,       h.canPreview),
-                (shapeCells_Rect.Cross,      cross.previewColor,   cross.canPreview),
-                (shapeCells_Rect.TJunction,  t.previewColor ,      t.canPreview),
-                (shapeCells_Rect.Corner,     corner.previewColor,  corner.canPreview),
-                (shapeCells_Rect.Isolate,    isolate.previewColor, isolate.canPreview)
-            };
-            foreach (var (cells, c, canPreview) in previewSettingsRect)
-            {
-                if (canPreview) DrawCellPreviews(cells, c);
+                var v       = shapeSettings_Rect[ShapeType_Rect.VerticalEdge];
+                var h       = shapeSettings_Rect[ShapeType_Rect.HorizontalEdge];
+                var cross   = shapeSettings_Rect[ShapeType_Rect.Cross];
+                var t       = shapeSettings_Rect[ShapeType_Rect.TJunction];
+                var corner  = shapeSettings_Rect[ShapeType_Rect.Corner];
+                var isolate = shapeSettings_Rect[ShapeType_Rect.Isolate];
+
+                var previewSettingsRect = new (List<Vector3Int> cells, Color c, bool canPreview)[]
+                {
+                    (shapeCells_Rect.Vertical,   v.previewColor,       v.canPreview),
+                    (shapeCells_Rect.Horizontal, h.previewColor,       h.canPreview),
+                    (shapeCells_Rect.Cross,      cross.previewColor,   cross.canPreview),
+                    (shapeCells_Rect.TJunction,  t.previewColor ,      t.canPreview),
+                    (shapeCells_Rect.Corner,     corner.previewColor,  corner.canPreview),
+                    (shapeCells_Rect.Isolate,    isolate.previewColor, isolate.canPreview)
+                };
+                foreach (var (cells, c, canPreview) in previewSettingsRect)
+                {
+                    if (canPreview) DrawCellPreviews(cells, c);
+                }
             }
         }
 
         private void DrawCellPreviews(List<Vector3Int> cells, Color c)
         {
-            if (cells == null || cells.Count == 0) return;
+            if (cells.Count == 0) return;
 
             var layout = tilemap.layoutGrid.cellLayout;
             if (layout is GridLayout.CellLayout.Hexagon) Draw_Hex(cells,  c);
