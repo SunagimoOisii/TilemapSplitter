@@ -242,6 +242,7 @@ namespace TilemapSplitter
         private static void Classify_Rect(Vector3Int cell, HashSet<Vector3Int> cells,
             Dictionary<ShapeType_Rect, ShapeSetting> settings, ShapeCells_Rect sc)
         {
+            //Obtain the positional relationship of adjacent tiles.
             var offsets = GetNeighborOffsets_Rect();
             bool up    = cells.Contains(cell + offsets[0]);
             bool down  = cells.Contains(cell + offsets[1]);
