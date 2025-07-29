@@ -29,12 +29,13 @@ namespace TilemapSplitter
 
         private static Dictionary<ShapeType_Hex, ShapeSetting> CreateDefaultSettings_Hex() => new()
         {
-            [ShapeType_Hex.Full]     = new() { flags = ShapeFlags.Independent, previewColor = Color.red    },
-            [ShapeType_Hex.Junction] = new() { flags = ShapeFlags.Independent, previewColor = Color.blue   },
-            [ShapeType_Hex.Corner]   = new() { flags = ShapeFlags.Independent, previewColor = Color.cyan   },
-            [ShapeType_Hex.Edge]     = new() { flags = ShapeFlags.Independent, previewColor = Color.green  },
-            [ShapeType_Hex.Tip]      = new() { flags = ShapeFlags.Independent, previewColor = Color.yellow },
-            [ShapeType_Hex.Isolate]  = new() { flags = ShapeFlags.Independent, previewColor = Color.magenta },
+            [ShapeType_Hex.Full]      = new() { flags = ShapeFlags.Independent, previewColor = Color.red    },
+            [ShapeType_Hex.Junction5] = new() { flags = ShapeFlags.Independent, previewColor = Color.blue   },
+            [ShapeType_Hex.Junction4] = new() { flags = ShapeFlags.Independent, previewColor = Color.cyan   },
+            [ShapeType_Hex.Junction3] = new() { flags = ShapeFlags.Independent, previewColor = Color.green  },
+            [ShapeType_Hex.Edge]      = new() { flags = ShapeFlags.Independent, previewColor = Color.yellow },
+            [ShapeType_Hex.Tip]       = new() { flags = ShapeFlags.Independent, previewColor = Color.magenta },
+            [ShapeType_Hex.Isolate]   = new() { flags = ShapeFlags.Independent, previewColor = Color.gray   },
         };
 
         //For Rectangle or Isolate
@@ -46,8 +47,9 @@ namespace TilemapSplitter
         private Foldout isolateFoldOut;
         //For Hexagon
         private Foldout fullFoldOut;
-        private Foldout junctionFoldOut;
-        private Foldout hexCornerFoldOut;
+        private Foldout junction5FoldOut;
+        private Foldout junction4FoldOut;
+        private Foldout junction3FoldOut;
         private Foldout edgeFoldOut;
         private Foldout tipFoldOut;
         private Foldout hexIsolateFoldOut;
@@ -196,24 +198,26 @@ namespace TilemapSplitter
         {
             var infos = new (ShapeType_Hex type, string title)[]
             {
-                (ShapeType_Hex.Full,     "Full"),
-                (ShapeType_Hex.Junction, "Junction"),
-                (ShapeType_Hex.Corner,   "Corner"),
-                (ShapeType_Hex.Edge,     "Edge"),
-                (ShapeType_Hex.Tip,      "Tip"),
-                (ShapeType_Hex.Isolate,  "Isolate")
+                (ShapeType_Hex.Full,      "Full"),
+                (ShapeType_Hex.Junction5, "Junction5"),
+                (ShapeType_Hex.Junction4, "Junction4"),
+                (ShapeType_Hex.Junction3, "Junction3"),
+                (ShapeType_Hex.Edge,      "Edge"),
+                (ShapeType_Hex.Tip,       "Tip"),
+                (ShapeType_Hex.Isolate,   "Isolate")
             };
             foreach (var info in infos)
             {
                 var fold = CreateFoldout_Hex(container, info.type, info.title);
                 switch (info.type)
                 {
-                    case ShapeType_Hex.Full:     fullFoldOut       = fold; break;
-                    case ShapeType_Hex.Junction: junctionFoldOut   = fold; break;
-                    case ShapeType_Hex.Corner:   hexCornerFoldOut  = fold; break;
-                    case ShapeType_Hex.Edge:     edgeFoldOut       = fold; break;
-                    case ShapeType_Hex.Tip:      tipFoldOut        = fold; break;
-                    case ShapeType_Hex.Isolate:  hexIsolateFoldOut = fold; break;
+                    case ShapeType_Hex.Full:      fullFoldOut        = fold; break;
+                    case ShapeType_Hex.Junction5: junction5FoldOut   = fold; break;
+                    case ShapeType_Hex.Junction4: junction4FoldOut   = fold; break;
+                    case ShapeType_Hex.Junction3: junction3FoldOut   = fold; break;
+                    case ShapeType_Hex.Edge:      edgeFoldOut        = fold; break;
+                    case ShapeType_Hex.Tip:       tipFoldOut         = fold; break;
+                    case ShapeType_Hex.Isolate:   hexIsolateFoldOut  = fold; break;
                 }
                 AddHorizontalSeparator(container);
             }
@@ -431,12 +435,13 @@ namespace TilemapSplitter
             {
                 var list = new (Foldout f, string name, int count)[]
                 {
-                    (fullFoldOut,     "Full",     hexShapeCells.Full.Count),
-                    (junctionFoldOut, "Junction", hexShapeCells.Junction.Count),
-                    (hexCornerFoldOut,"Corner",   hexShapeCells.Corner.Count),
-                    (edgeFoldOut,     "Edge",     hexShapeCells.Edge.Count),
-                    (tipFoldOut,      "Tip",      hexShapeCells.Tip.Count),
-                    (hexIsolateFoldOut,"Isolate", hexShapeCells.Isolate.Count),
+                    (fullFoldOut,      "Full",      hexShapeCells.Full.Count),
+                    (junction5FoldOut, "Junction5", hexShapeCells.Junction5.Count),
+                    (junction4FoldOut, "Junction4", hexShapeCells.Junction4.Count),
+                    (junction3FoldOut, "Junction3", hexShapeCells.Junction3.Count),
+                    (edgeFoldOut,      "Edge",      hexShapeCells.Edge.Count),
+                    (tipFoldOut,       "Tip",       hexShapeCells.Tip.Count),
+                    (hexIsolateFoldOut,"Isolate",  hexShapeCells.Isolate.Count),
                 };
                 foreach (var (f, name, count) in list)
                 {
