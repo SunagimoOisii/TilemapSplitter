@@ -90,30 +90,11 @@ namespace TilemapSplitter
             new(-1, 0, 0), new(0,  1, 0), new(1,  1, 0)
         };
 
-        private static readonly Vector3Int[] neighbors_FlatTop_Even =
-        {
-            new( 1, 0, 0), new(1,  1, 0), new(0,  1, 0),
-            new(-1, 0, 0), new(0, -1, 0), new(1, -1, 0)
-        };
-        private static readonly Vector3Int[] neighbors_FlatTop_Odd =
-        {
-            new( 1, 0, 0), new( 0,  1, 0), new(-1,  1, 0),
-            new(-1, 0, 0), new(-1, -1, 0), new( 0, -1, 0)
-        };
-
-        private static bool IsPointTopLayout(GridLayout grid)
-        {
-            var c0  = grid.CellToWorld(Vector3Int.zero);
-            var cUp = grid.CellToWorld(Vector3Int.up);
-            return !Mathf.Approximately(cUp.x, c0.x);
-        }
-
         private static IReadOnlyList<Vector3Int> GetNeighborOffsets_Rect() => neighbors_Rect;
 
-        private static IReadOnlyList<Vector3Int> GetNeighborOffsets_Hex(Vector3Int cell, bool isPointTop)
+        private static IReadOnlyList<Vector3Int> GetNeighborOffsets_Hex(Vector3Int cell)
         {
-            if (isPointTop) return (cell.y & 1) == 0 ? neighbors_PointTop_Even : neighbors_PointTop_Odd;
-            else            return (cell.x & 1) == 0 ? neighbors_FlatTop_Even : neighbors_FlatTop_Odd;
+            return (cell.y & 1) == 0 ? neighbors_PointTop_Even : neighbors_PointTop_Odd;
         }
 
         /// <summary>
@@ -203,12 +184,11 @@ namespace TilemapSplitter
             bool isCancelled = false;
             try
             {
-                bool isPointTop = IsPointTopLayout(source.layoutGrid);
                 int  total      = occupiedCells.Count;
                 int  processed  = 0;
                 foreach (var cell in occupiedCells)
                 {
-                    var offsets = GetNeighborOffsets_Hex(cell, isPointTop);
+                    var offsets = GetNeighborOffsets_Hex(cell);
                     int count   = 0;
                     foreach (var offset in offsets)
                     {
@@ -242,7 +222,7 @@ namespace TilemapSplitter
         private static void Classify_Rect(Vector3Int cell, HashSet<Vector3Int> cells,
             Dictionary<ShapeType_Rect, ShapeSetting> settings, ShapeCells_Rect sc)
         {
-            //Obtain the positional relationship of adjacent tiles.
+            //Obtain the positional relationship of adjacent tiles
             var offsets = GetNeighborOffsets_Rect();
             bool up    = cells.Contains(cell + offsets[0]);
             bool down  = cells.Contains(cell + offsets[1]);
