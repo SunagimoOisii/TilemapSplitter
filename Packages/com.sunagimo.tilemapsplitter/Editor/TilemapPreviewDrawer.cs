@@ -40,7 +40,7 @@ namespace TilemapSplitter
 
         private void OnSceneGUI(SceneView sv)
         {
-            if (tilemap == null) return;
+            if (tilemap == null || tilemap.gameObject.activeInHierarchy == false) return;
 
             if (shapeSettings_Hex != null && shapeCells_Hex != null)
             {

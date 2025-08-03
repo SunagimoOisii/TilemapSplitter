@@ -72,7 +72,7 @@ namespace TilemapSplitter
             CreateResetButton(c);
             CreateColliderToggle(c);
 
-            if (source == null) return;
+            if (source == null || source.gameObject.activeInHierarchy == false) return;
 
             var layout = source.layoutGrid.cellLayout;
             layoutStrategy = (layout == GridLayout.CellLayout.Hexagon)
