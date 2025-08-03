@@ -15,6 +15,7 @@ namespace TilemapSplitter
         private Dictionary<ShapeType_Hex, ShapeSetting>  shapeSettings_Hex;
         private ShapeCells_Rect shapeCells_Rect;
         private ShapeCells_Hex  shapeCells_Hex;
+        private bool            isPointTop = true;
 
         public void Setup_Rect(Tilemap source, Dictionary<ShapeType_Rect, ShapeSetting> settings)
         {
@@ -27,6 +28,14 @@ namespace TilemapSplitter
             tilemap            = source;
             shapeSettings_Hex  = settings;
             shapeSettings_Rect = null;
+            DetermineHexOrientation();
+        }
+
+        private void DetermineHexOrientation()
+        {
+            var center = tilemap.GetCellCenterWorld(Vector3Int.zero);
+            var right  = tilemap.GetCellCenterWorld(Vector3Int.right);
+            isPointTop = Mathf.Approximately(center.y, right.y);
         }
 
         public void SetShapeCells(ShapeCells_Rect sc) => shapeCells_Rect = sc;
@@ -135,9 +144,10 @@ namespace TilemapSplitter
                 Vector3 center  = tilemap.GetCellCenterWorld(cell);
                 Vector3[] verts = new Vector3[6];
 
+                float startDeg = isPointTop ? 30f : 0f;
                 for (int i = 0; i < 6; i++)
                 {
-                    float angleDeg = 60f * i + 30f;
+                    float angleDeg = 60f * i + startDeg;
                     float rad = Mathf.Deg2Rad * angleDeg;
                     verts[i] = new Vector3(center.x + halfW * Mathf.Cos(rad),
                         center.y + halfH * Mathf.Sin(rad),
