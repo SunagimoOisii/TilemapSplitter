@@ -127,34 +127,22 @@ namespace TilemapSplitter
             return occupiedCells;
         }
 
-        /// <summary>
-        /// Compress the tilemap bounds to exclude empty rows and columns
-        /// </summary>
-        public static IEnumerator ClassifyCoroutine_Rect(Tilemap source,
-            Dictionary<ShapeType_Rect, ShapeSetting> settings, ShapeCells_Rect sc, int batch = 100)
+        private static IEnumerator ProcessCells(HashSet<Vector3Int> occupiedCells, int batch, string progressTitle, Action<Vector3Int> perCell)
         {
-            sc.Vertical.Clear();
-            sc.Horizontal.Clear();
-            sc.Cross.Clear();
-            sc.TJunction.Clear();
-            sc.Corner.Clear();
-            sc.Isolate.Clear();
-
-            var occupiedCells = CollectOccupiedCells(source);
-            bool isCancelled  = false;
+            bool isCancelled = false;
             try
             {
-                int total     = occupiedCells.Count;
+                int total = occupiedCells.Count;
                 int processed = 0;
                 foreach (var cell in occupiedCells)
                 {
-                    Classify_Rect(cell, occupiedCells, settings, sc);
+                    perCell(cell);
 
                     processed++;
                     if (processed % batch == 0)
                     {
                         float progress = (float)processed / total;
-                        isCancelled = EditorUtility.DisplayCancelableProgressBar("Classify_Rect",
+                        isCancelled = EditorUtility.DisplayCancelableProgressBar(progressTitle,
                             $"Classifying... {processed}/{total}", progress);
                         if (isCancelled) break;
 
@@ -169,6 +157,24 @@ namespace TilemapSplitter
             }
         }
 
+        /// <summary>
+        /// Compress the tilemap bounds to exclude empty rows and columns
+        /// </summary>
+        public static IEnumerator ClassifyCoroutine_Rect(Tilemap source,
+            Dictionary<ShapeType_Rect, ShapeSetting> settings, ShapeCells_Rect sc, int batch = 100)
+        {
+            sc.Vertical.Clear();
+            sc.Horizontal.Clear();
+            sc.Cross.Clear();
+            sc.TJunction.Clear();
+            sc.Corner.Clear();
+            sc.Isolate.Clear();
+
+            var occupiedCells = CollectOccupiedCells(source);
+            yield return ProcessCells(occupiedCells, batch, "Classify_Rect",
+                cell => Classify_Rect(cell, occupiedCells, settings, sc));
+        }
+
         public static IEnumerator ClassifyCoroutine_Hex(Tilemap source,
             Dictionary<ShapeType_Hex, ShapeSetting> settings, ShapeCells_Hex sc, int batch = 100)
         {
@@ -181,39 +187,17 @@ namespace TilemapSplitter
             sc.Full.Clear();
 
             var occupiedCells = CollectOccupiedCells(source);
-            bool isCancelled = false;
-            try
+            yield return ProcessCells(occupiedCells, batch, "Classify_Hex", cell =>
             {
-                int  total     = occupiedCells.Count;
-                int  processed = 0;
-                foreach (var cell in occupiedCells)
+                var offsets = GetNeighborOffsets_Hex(cell);
+                int count   = 0;
+                foreach (var offset in offsets)
                 {
-                    var offsets = GetNeighborOffsets_Hex(cell);
-                    int count   = 0;
-                    foreach (var offset in offsets)
-                    {
-                        if (occupiedCells.Contains(cell + offset))
-                            count++;
-                    }
-                    Classify_Hex(cell, count, settings, sc);
-
-                    processed++;
-                    if (processed % batch == 0)
-                    {
-                        float progress = (float)processed / total;
-                        isCancelled = EditorUtility.DisplayCancelableProgressBar("Classify_Hex",
-                            $"Classifying... {processed}/{total}", progress);
-                        if (isCancelled) break;
-
-                        yield return null;
-                    }
+                    if (occupiedCells.Contains(cell + offset))
+                        count++;
                 }
-                if (isCancelled) yield break;
-            }
-            finally
-            {
-                EditorUtility.ClearProgressBar();
-            }
+                Classify_Hex(cell, count, settings, sc);
+            });
         }
 
         /// <summary>
