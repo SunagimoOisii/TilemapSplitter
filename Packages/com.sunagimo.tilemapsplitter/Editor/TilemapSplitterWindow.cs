@@ -9,6 +9,9 @@ namespace TilemapSplitter
     using UnityEngine.Tilemaps;
     using UnityEngine.UIElements;
 
+    /// <summary>
+    /// Editor window that splits a Tilemap into multiple Tilemaps based on cell layout.
+    /// </summary>
     internal class TilemapSplitterWindow : EditorWindow
     {
         private const string PrefPrefix = "TilemapSplitter.";
@@ -39,7 +42,7 @@ namespace TilemapSplitter
 
         private Tilemap source;
 
-        private ILayoutHandler layoutHandler;
+        private ICellLayoutStrategy layoutStrategy;
 
         private readonly TilemapPreviewDrawer previewDrawer = new();
 
@@ -72,16 +75,16 @@ namespace TilemapSplitter
             if (source == null) return;
 
             var layout = source.layoutGrid.cellLayout;
-            layoutHandler = (layout == GridLayout.CellLayout.Hexagon)
-                ? new HexLayoutHandler(settingsDict_hex, RefreshPreview)
-                : new RectLayoutHandler(settingsDict_rect, RefreshPreview);
+            layoutStrategy = (layout == GridLayout.CellLayout.Hexagon)
+                ? new HexLayoutStrategy(settingsDict_hex, RefreshPreview)
+                : new RectLayoutStrategy(settingsDict_rect, RefreshPreview);
 
-            layoutHandler.CreateMergeEdgeToggle(c, () => canMergeEdges, v => canMergeEdges = v);
-            layoutHandler.CreateShapeFoldouts(c);
+            layoutStrategy.CreateMergeEdgeToggle(c, () => canMergeEdges, v => canMergeEdges = v);
+            layoutStrategy.CreateShapeFoldouts(c);
 
             CreateExecuteButton(c);
 
-            layoutHandler.SetupPreview(source, previewDrawer);
+            layoutStrategy.SetupPreview(source, previewDrawer);
         }
 
         private VisualElement CreateScrollableContainer()
@@ -178,31 +181,31 @@ namespace TilemapSplitter
 
         private IEnumerator SplitCoroutine()
         {
-            IEnumerator e = layoutHandler.Classify(source);
+            IEnumerator e = layoutStrategy.Classify(source);
             while (e.MoveNext()) yield return null;
-            layoutHandler.GenerateSplitTilemaps(source, canMergeEdges, canAttachCollider);
+            layoutStrategy.GenerateSplitTilemaps(source, canMergeEdges, canAttachCollider);
             RefreshPreview();
         }
 
         private void RefreshPreview()
         {
-            if (source == null || isRefreshingPreview || layoutHandler == null) return;
+            if (source == null || isRefreshingPreview || layoutStrategy == null) return;
             StartCoroutine(RefreshPreviewCoroutine());
 
             IEnumerator RefreshPreviewCoroutine()
             {
                 isRefreshingPreview = true;
 
-                IEnumerator e = layoutHandler.Classify(source);
+                IEnumerator e = layoutStrategy.Classify(source);
                 while (e.MoveNext())
                 {
                     yield return null;
                 }
 
-                layoutHandler.SetupPreview(source, previewDrawer);
-                layoutHandler.SetShapeCellsToPreview(previewDrawer);
+                layoutStrategy.SetupPreview(source, previewDrawer);
+                layoutStrategy.SetShapeCellsToPreview(previewDrawer);
                 SceneView.RepaintAll();
-                layoutHandler.UpdateFoldoutTitles();
+                layoutStrategy.UpdateFoldoutTitles();
 
                 isRefreshingPreview = false;
             }

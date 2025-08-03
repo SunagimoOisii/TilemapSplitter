@@ -9,7 +9,10 @@ using UnityEngine.UIElements;
 
 namespace TilemapSplitter
 {
-    internal interface ILayoutHandler
+    /// <summary>
+    /// Strategy interface that provides processing based on cell layout.
+    /// </summary>
+    internal interface ICellLayoutStrategy
     {
         void CreateMergeEdgeToggle(VisualElement container, Func<bool> getter, Action<bool> setter);
         void CreateShapeFoldouts(VisualElement container);
@@ -20,7 +23,10 @@ namespace TilemapSplitter
         void UpdateFoldoutTitles();
     }
 
-    internal class RectLayoutHandler : ILayoutHandler
+    /// <summary>
+    /// Layout strategy for rectangular grids.
+    /// </summary>
+    internal class RectLayoutStrategy : ICellLayoutStrategy
     {
         private readonly Dictionary<ShapeType_Rect, ShapeSetting> settingsDict;
         private readonly Action refreshPreview;
@@ -33,7 +39,7 @@ namespace TilemapSplitter
         private Foldout cornerFoldOut;
         private Foldout isolateFoldOut;
 
-        public RectLayoutHandler(Dictionary<ShapeType_Rect, ShapeSetting> settings, Action refreshPreview)
+        public RectLayoutStrategy(Dictionary<ShapeType_Rect, ShapeSetting> settings, Action refreshPreview)
         {
             settingsDict       = settings;
             this.refreshPreview = refreshPreview;
@@ -198,7 +204,10 @@ namespace TilemapSplitter
         }
     }
 
-    internal class HexLayoutHandler : ILayoutHandler
+    /// <summary>
+    /// Layout strategy for hexagonal grids.
+    /// </summary>
+    internal class HexLayoutStrategy : ICellLayoutStrategy
     {
         private readonly Dictionary<ShapeType_Hex, ShapeSetting> settingsDict;
         private readonly Action refreshPreview;
@@ -212,7 +221,7 @@ namespace TilemapSplitter
         private Foldout tipFoldOut;
         private Foldout hexIsolateFoldOut;
 
-        public HexLayoutHandler(Dictionary<ShapeType_Hex, ShapeSetting> settings, Action refreshPreview)
+        public HexLayoutStrategy(Dictionary<ShapeType_Hex, ShapeSetting> settings, Action refreshPreview)
         {
             settingsDict = settings;
             this.refreshPreview = refreshPreview;
