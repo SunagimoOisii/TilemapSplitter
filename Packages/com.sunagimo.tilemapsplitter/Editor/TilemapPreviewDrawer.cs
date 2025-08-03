@@ -15,27 +15,21 @@ namespace TilemapSplitter
         private Dictionary<ShapeType_Hex, ShapeSetting>  shapeSettings_Hex;
         private ShapeCells_Rect shapeCells_Rect;
         private ShapeCells_Hex  shapeCells_Hex;
-        private bool            isPointTop = true;
+        private ICellDrawer     cellDrawer;
 
         public void Setup_Rect(Tilemap source, Dictionary<ShapeType_Rect, ShapeSetting> settings)
         {
             tilemap            = source;
             shapeSettings_Rect = settings;
             shapeSettings_Hex  = null;
+            cellDrawer         = new RectCellDrawer(tilemap);
         }
         public void Setup_Hex(Tilemap source, Dictionary<ShapeType_Hex, ShapeSetting> settings)
         {
             tilemap            = source;
             shapeSettings_Hex  = settings;
             shapeSettings_Rect = null;
-            DetermineHexOrientation();
-        }
-
-        private void DetermineHexOrientation()
-        {
-            var center = tilemap.GetCellCenterWorld(Vector3Int.zero);
-            var right  = tilemap.GetCellCenterWorld(Vector3Int.right);
-            isPointTop = Mathf.Approximately(center.y, right.y);
+            cellDrawer         = new HexCellDrawer(tilemap);
         }
 
         public void SetShapeCells(ShapeCells_Rect sc) => shapeCells_Rect = sc;
@@ -100,61 +94,75 @@ namespace TilemapSplitter
 
         private void DrawCellPreviews(List<Vector3Int> cells, Color c)
         {
-            if (cells.Count == 0) return;
-
-            var layout = tilemap.layoutGrid.cellLayout;
-            if (layout is GridLayout.CellLayout.Hexagon) Draw_Hex(cells,  c);
-            else                                         Draw_Rect(cells, c);
+            if (cells.Count == 0 || cellDrawer == null) return;
+            cellDrawer.Draw(cells, c);
         }
 
-        private void Draw_Rect(List<Vector3Int> cells, Color c)
+        private interface ICellDrawer
         {
-            Handles.color = new Color(c.r, c.g, c.b, 0.4f);
-            foreach (var cell in cells)
+            void Draw(List<Vector3Int> cells, Color c);
+        }
+
+        private class RectCellDrawer : ICellDrawer
+        {
+            private readonly Tilemap tilemap;
+            public RectCellDrawer(Tilemap tilemap) => this.tilemap = tilemap;
+
+            public void Draw(List<Vector3Int> cells, Color c)
             {
-                var center = tilemap.GetCellCenterWorld(cell);
-                var right  = tilemap.GetCellCenterWorld(cell + Vector3Int.right) - center;
-                var up     = tilemap.GetCellCenterWorld(cell + Vector3Int.up)    - center;
+                Handles.color = new Color(c.r, c.g, c.b, 0.4f);
+                foreach (var cell in cells)
+                {
+                    var center = tilemap.GetCellCenterWorld(cell);
+                    var right  = tilemap.GetCellCenterWorld(cell + Vector3Int.right) - center;
+                    var up     = tilemap.GetCellCenterWorld(cell + Vector3Int.up)    - center;
 
-                var p0 = center - right * 0.5f - up * 0.5f;
-                var p1 = center + right * 0.5f - up * 0.5f;
-                var p2 = center + right * 0.5f + up * 0.5f;
-                var p3 = center - right * 0.5f + up * 0.5f;
+                    var p0 = center - right * 0.5f - up * 0.5f;
+                    var p1 = center + right * 0.5f - up * 0.5f;
+                    var p2 = center + right * 0.5f + up * 0.5f;
+                    var p3 = center - right * 0.5f + up * 0.5f;
 
-                Handles.DrawAAConvexPolygon(p0, p1, p2, p3);
+                    Handles.DrawAAConvexPolygon(p0, p1, p2, p3);
+                }
             }
         }
 
-        /// <summary>
-        /// Calculates hexagon corners directly from Grid.cellSize:
-        /// - Replaces previous midpoint-based sampling which could yield duplicate or missing vertices, causing malformed shapes
-        /// - Reduces GetCellCenterWorld calls for better performance
-        /// - Prevents distortion if an adjacent cell is missing
-        /// </summary>
-        private void Draw_Hex(List<Vector3Int> cells, Color c)
+        private class HexCellDrawer : ICellDrawer
         {
-            var layout = tilemap.layoutGrid.cellLayout;
+            private readonly Tilemap tilemap;
+            private readonly bool    isPointTop;
 
-            var size = tilemap.layoutGrid.cellSize;
-            float halfW = size.x * 0.5f;
-            float halfH = size.y * 0.5f;
-
-            foreach (var cell in cells)
+            public HexCellDrawer(Tilemap tilemap)
             {
-                Vector3 center  = tilemap.GetCellCenterWorld(cell);
-                Vector3[] verts = new Vector3[6];
+                this.tilemap = tilemap;
+                var center = tilemap.GetCellCenterWorld(Vector3Int.zero);
+                var right  = tilemap.GetCellCenterWorld(Vector3Int.right);
+                isPointTop = Mathf.Approximately(center.y, right.y);
+            }
 
-                float startDeg = isPointTop ? 30f : 0f;
-                for (int i = 0; i < 6; i++)
+            public void Draw(List<Vector3Int> cells, Color c)
+            {
+                var size = tilemap.layoutGrid.cellSize;
+                float halfW = size.x * 0.5f;
+                float halfH = size.y * 0.5f;
+
+                foreach (var cell in cells)
                 {
-                    float angleDeg = 60f * i + startDeg;
-                    float rad = Mathf.Deg2Rad * angleDeg;
-                    verts[i] = new Vector3(center.x + halfW * Mathf.Cos(rad),
-                        center.y + halfH * Mathf.Sin(rad),
-                        center.z);
+                    Vector3 center  = tilemap.GetCellCenterWorld(cell);
+                    Vector3[] verts = new Vector3[6];
+
+                    float startDeg = isPointTop ? 30f : 0f;
+                    for (int i = 0; i < 6; i++)
+                    {
+                        float angleDeg = 60f * i + startDeg;
+                        float rad = Mathf.Deg2Rad * angleDeg;
+                        verts[i] = new Vector3(center.x + halfW * Mathf.Cos(rad),
+                            center.y + halfH * Mathf.Sin(rad),
+                            center.z);
+                    }
+                    Handles.color = new Color(c.r, c.g, c.b, 0.4f);
+                    Handles.DrawAAConvexPolygon(verts);
                 }
-                Handles.color = new Color(c.r, c.g, c.b, 0.4f);
-                Handles.DrawAAConvexPolygon(verts);
             }
         }
     }
