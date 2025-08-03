@@ -19,13 +19,25 @@ TilemapSplitter is a Unity editor extension that automatically classifies tiles 
 <a name="features"></a>
 ## Features
 - Launch the dedicated window via **Tools/TilemapSplitter**
-- Classify tiles by number of neighbors into the following categories:
-  - Cross (connected in all four directions)
-  - T Junction (three connections)
-  - Corner (two connections forming a corner)
-  - Isolate (no connections)
-  - VerticalEdge / HorizontalEdge
+- Classify tiles by number of neighbors
+  - For Rectangular or Isometric layouts:
+    - Cross (connected in all four directions)
+    - T Junction (three connections)
+    - Corner (two connections forming a corner)
+    - VerticalEdge / HorizontalEdge (two connections in a straight line)
+    - Isolate (no connections)
+  - For Hexagon layout:
+    - Full (six connections)
+    - Junction5 (five connections)
+    - Junction4 (four connections)
+    - Junction3 (three connections)
+    - Edge (two connections)
+    - Tip (one connection)
+    - Isolate (no connections)
 - Each category allows configuring layer, tag and preview color
+- Optional checkboxes:
+  - **Attach Colliders** adds TilemapCollider2D, a static Rigidbody2D and CompositeCollider2D to each generated Tilemap
+  - **Merge VerticalEdge, HorizontalEdge** combines VerticalEdge and HorizontalEdge into a single Tilemap
 - Categories like Cross can be merged into VerticalEdge or HorizontalEdge via `Which obj to add to`
 - After execution, new Tilemap objects are created per category
 - Enable preview to visualize classification results in the Scene
@@ -55,8 +67,9 @@ https://github.com/SunagimoOisii/TilemapSplitter.git?path=/Packages/com.sunagimo
 1. Open the window via **Tools/TilemapSplitter**
 2. Set the target Tilemap in `Split Tilemap`
 3. Configure layer, tag and preview color for each category
-4. Optionally enable `Merge VerticalEdge, HorizontalEdge`
-   - When merging, settings for VerticalEdge take priority
+4. Enable optional checkboxes as needed:
+   - **Attach Colliders**: add TilemapCollider2D, a static Rigidbody2D and CompositeCollider2D to each generated Tilemap
+   - **Merge VerticalEdge, HorizontalEdge**: combine VerticalEdge and HorizontalEdge into a single Tilemap (VerticalEdge settings take priority)
 5. Press `Execute Splitting` to generate new Tilemaps based on the classification
 6. Use the button under `Split Tilemap` to reset settings
 
@@ -103,15 +116,25 @@ Unity の `Tilemap` を接続関係に基づき自動で分類し、用途に応
 <a name="特徴"></a>
 ## 特徴
 - メニュー **Tools/TilemapSplitter** から専用ウィンドウを起動
-- タイルの接続数に応じて以下のカテゴリへ分類
-  - Cross（上下左右すべて接続）
-  - T Junction（3 方向接続）
-  - Corner（2 方向接続で角を形成）
-  - Isolate（周囲に接続のない孤立タイル）
-  - VerticalEdge / HorizontalEdge
+- タイルの接続数に応じて分類
+  - CellLayout が Hexagon 以外の場合:
+    - Cross（上下左右すべて接続）
+    - T Junction（3 方向接続）
+    - Corner（角を形成する 2 方向接続）
+    - VerticalEdge / HorizontalEdge（直線上で 2 方向接続）
+    - Isolate（接続なし）
+  - CellLayout が Hexagon の場合:
+    - Full（6 方向接続）
+    - Junction5（5 方向接続）
+    - Junction4（4 方向接続）
+    - Junction3（3 方向接続）
+    - Edge（2 方向接続）
+    - Tip（1 方向接続）
+    - Isolate（接続なし）
 - 各カテゴリごとにレイヤー・タグ・プレビュー色を設定可能
-- Cross などの分類は `Which obj to add to` で VerticalEdge / HorizontalEdge
-  へ統合することもできる
+- `Attach Colliders` チェックボックスで生成した Tilemap に TilemapCollider2D と Rigidbody2D（Static）、CompositeCollider2D を付与
+- `Merge VerticalEdge, HorizontalEdge` チェックボックスで縦横エッジを 1 つの Tilemap に統合可能
+- Cross などの分類は `Which obj to add to` で VerticalEdge / HorizontalEdge へ統合することもできる
 - 実行後、選択したカテゴリ別に新しい Tilemap オブジェクトを生成
 - プレビューを有効にすると Scene 上で分類結果をカラー表示
 - Hexagon レイアウトでは PointTop / FlatTop 双方のプレビューに対応
@@ -142,8 +165,9 @@ https://github.com/SunagimoOisii/TilemapSplitter.git?path=/Packages/com.sunagimo
 1. メニューから **Tools/TilemapSplitter** を選択しウィンドウを開く
 2. `Split Tilemap` 欄に分割対象の Tilemap を指定
 3. 各カテゴリでレイヤー・タグ・プレビュー色を設定
-4. 必要に応じて `Merge VerticalEdge, HorizontalEdge` を有効化
-   - マージ時は VerticalEdge の設定が優先されます
+4. 任意で以下のチェックボックスを有効化
+   - **Attach Colliders**: 生成された Tilemap に TilemapCollider2D、Rigidbody2D（Static）、CompositeCollider2D を付与
+   - **Merge VerticalEdge, HorizontalEdge**: VerticalEdge と HorizontalEdge を一つの Tilemap に統合（VerticalEdge の設定が優先）
 5. `Execute Splitting` を押すと分類結果に応じた Tilemap が生成されます
 6. 設定をリセットしたい場合は `Split Tilemap` の下にあるボタンを使用
 
