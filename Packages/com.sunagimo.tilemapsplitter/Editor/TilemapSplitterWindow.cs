@@ -68,7 +68,6 @@ namespace TilemapSplitter
             CreateSourceField(c);
             CreateResetButton(c);
             CreateColliderToggle(c);
-            CreateMergeEdgeToggle(c);
 
             if (source == null) return;
 
@@ -77,6 +76,7 @@ namespace TilemapSplitter
                 ? new HexLayoutHandler(settingsDict_hex, RefreshPreview)
                 : new RectLayoutHandler(settingsDict_rect, RefreshPreview);
 
+            layoutHandler.CreateMergeEdgeToggle(c, ref canMergeEdges);
             layoutHandler.CreateShapeFoldouts(c);
 
             CreateExecuteButton(c);
@@ -138,17 +138,6 @@ namespace TilemapSplitter
             attachT.value = canAttachCollider;
             attachT.RegisterValueChangedCallback(evt => canAttachCollider = evt.newValue);
             container.Add(attachT);
-        }
-
-        private void CreateMergeEdgeToggle(VisualElement container)
-        {
-            var mergeT  = new Toggle("Merge VerticalEdge, HorizontalEdge");
-            var mergeHB = new HelpBox("When merging, VerticalEdge shapeSettings_Rect take precedence",
-                HelpBoxMessageType.Info);
-            mergeT.value = canMergeEdges;
-            mergeT.RegisterValueChangedCallback(evt => canMergeEdges = evt.newValue);
-            container.Add(mergeT);
-            container.Add(mergeHB);
         }
 
         private void CreateExecuteButton(VisualElement container)

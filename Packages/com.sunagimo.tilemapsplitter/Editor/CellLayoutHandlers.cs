@@ -11,6 +11,7 @@ namespace TilemapSplitter
 {
     internal interface ILayoutHandler
     {
+        void CreateMergeEdgeToggle(VisualElement container, ref bool canMergeEdges);
         void CreateShapeFoldouts(VisualElement container);
         IEnumerator Classify(Tilemap source);
         void GenerateSplitTilemaps(Tilemap source, bool canMergeEdges, bool canAttachCollider);
@@ -34,8 +35,18 @@ namespace TilemapSplitter
 
         public RectLayoutHandler(Dictionary<ShapeType_Rect, ShapeSetting> settings, Action refreshPreview)
         {
-            settingsDict     = settings;
+            settingsDict       = settings;
             this.refreshPreview = refreshPreview;
+        }
+
+        public void CreateMergeEdgeToggle(VisualElement container, ref bool canMergeEdges)
+        {
+            var mergeT  = new Toggle("Merge VerticalEdge, HorizontalEdge") { value = canMergeEdges };
+            var mergeHB = new HelpBox("When merging, VerticalEdge shapeSettings_Rect take precedence",
+                HelpBoxMessageType.Info);
+            mergeT.RegisterValueChangedCallback(evt => canMergeEdges = evt.newValue);
+            container.Add(mergeT);
+            container.Add(mergeHB);
         }
 
         public void CreateShapeFoldouts(VisualElement container)
@@ -205,6 +216,10 @@ namespace TilemapSplitter
         {
             settingsDict = settings;
             this.refreshPreview = refreshPreview;
+        }
+
+        public void CreateMergeEdgeToggle(VisualElement container, ref bool canMergeEdges)
+        {
         }
 
         public void CreateShapeFoldouts(VisualElement container)
