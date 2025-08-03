@@ -125,7 +125,6 @@ namespace TilemapSplitter
         private void Draw_Hex(List<Vector3Int> cells, Color c)
         {
             var layout = tilemap.layoutGrid.cellLayout;
-            if (layout != GridLayout.CellLayout.Hexagon) return;
 
             var size = tilemap.layoutGrid.cellSize;
             float halfW = size.x * 0.5f;
@@ -140,11 +139,9 @@ namespace TilemapSplitter
                 {
                     float angleDeg = 60f * i + 30f;
                     float rad = Mathf.Deg2Rad * angleDeg;
-                    verts[i] = new Vector3(
-                        center.x + halfW * Mathf.Cos(rad),
+                    verts[i] = new Vector3(center.x + halfW * Mathf.Cos(rad),
                         center.y + halfH * Mathf.Sin(rad),
-                        center.z
-                    );
+                        center.z);
                 }
                 Handles.color = new Color(c.r, c.g, c.b, 0.4f);
                 Handles.DrawAAConvexPolygon(verts);

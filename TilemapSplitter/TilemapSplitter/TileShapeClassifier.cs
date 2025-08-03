@@ -79,12 +79,12 @@ namespace TilemapSplitter
             Vector3Int.right,
         };
 
-        private static readonly Vector3Int[] neighbors_PointTop_Even =
+        private static readonly Vector3Int[] neighbors_EvenRow =
         {
             new( 1, 0, 0), new( 0, -1, 0), new(-1, -1, 0),
             new(-1, 0, 0), new(-1,  1, 0), new( 0,  1, 0)
         };
-        private static readonly Vector3Int[] neighbors_PointTop_Odd =
+        private static readonly Vector3Int[] neighbors_OddRow =
         {
             new( 1, 0, 0), new(1, -1, 0), new(0, -1, 0),
             new(-1, 0, 0), new(0,  1, 0), new(1,  1, 0)
@@ -94,7 +94,7 @@ namespace TilemapSplitter
 
         private static IReadOnlyList<Vector3Int> GetNeighborOffsets_Hex(Vector3Int cell)
         {
-            return (cell.y & 1) == 0 ? neighbors_PointTop_Even : neighbors_PointTop_Odd;
+            return (cell.y & 1) == 0 ? neighbors_EvenRow : neighbors_OddRow;
         }
 
         /// <summary>
@@ -184,8 +184,8 @@ namespace TilemapSplitter
             bool isCancelled = false;
             try
             {
-                int  total      = occupiedCells.Count;
-                int  processed  = 0;
+                int  total     = occupiedCells.Count;
+                int  processed = 0;
                 foreach (var cell in occupiedCells)
                 {
                     var offsets = GetNeighborOffsets_Hex(cell);
