@@ -36,6 +36,12 @@ namespace TilemapSplitter
         Full,
     }
 
+    internal enum HexOrientation
+    {
+        PointTop,
+        FlatTop,
+    }
+
     internal class ShapeSetting
     {
         public ShapeFlags flags;
@@ -90,11 +96,25 @@ namespace TilemapSplitter
             new(-1, 0, 0), new(0,  1, 0), new(1,  1, 0)
         };
 
+        private static readonly Vector3Int[] neighbors_FlatTop_Even =
+        {
+            new( 1, 0, 0), new( 1, -1, 0), new( 0, -1, 0),
+            new(-1, -1, 0), new(-1,  0, 0), new( 0,  1, 0)
+        };
+        private static readonly Vector3Int[] neighbors_FlatTop_Odd =
+        {
+            new( 1, 1, 0), new( 1,  0, 0), new( 0, -1, 0),
+            new(-1, 0, 0), new(-1,  1, 0), new( 0,  1, 0)
+        };
+
         private static IReadOnlyList<Vector3Int> GetNeighborOffsets_Rect() => neighbors_Rect;
 
-        private static IReadOnlyList<Vector3Int> GetNeighborOffsets_Hex(Vector3Int cell)
+        private static IReadOnlyList<Vector3Int> GetNeighborOffsets_Hex(Vector3Int cell,
+            HexOrientation orientation)
         {
-            return (cell.y & 1) == 0 ? neighbors_PointTop_Even : neighbors_PointTop_Odd;
+            return orientation == HexOrientation.PointTop
+                ? (cell.y & 1) == 0 ? neighbors_PointTop_Even : neighbors_PointTop_Odd
+                : (cell.x & 1) == 0 ? neighbors_FlatTop_Even : neighbors_FlatTop_Odd;
         }
 
         /// <summary>
@@ -170,7 +190,8 @@ namespace TilemapSplitter
         }
 
         public static IEnumerator ClassifyCoroutine_Hex(Tilemap source,
-            Dictionary<ShapeType_Hex, ShapeSetting> settings, ShapeCells_Hex sc, int batch = 100)
+            Dictionary<ShapeType_Hex, ShapeSetting> settings, ShapeCells_Hex sc,
+            HexOrientation orientation, int batch = 100)
         {
             sc.Isolate.Clear();
             sc.Tip.Clear();
@@ -188,7 +209,7 @@ namespace TilemapSplitter
                 int  processed  = 0;
                 foreach (var cell in occupiedCells)
                 {
-                    var offsets = GetNeighborOffsets_Hex(cell);
+                    var offsets = GetNeighborOffsets_Hex(cell, orientation);
                     int count   = 0;
                     foreach (var offset in offsets)
                     {

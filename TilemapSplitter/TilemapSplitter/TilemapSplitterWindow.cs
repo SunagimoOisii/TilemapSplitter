@@ -89,14 +89,17 @@ namespace TilemapSplitter
 
             if (source == null) return;
 
-            var layout = source.layoutGrid.cellLayout;
+            var layout       = source.layoutGrid.cellLayout;
+            var orientation  = GetHexOrientation(source.layoutGrid);
             if (layout == GridLayout.CellLayout.Hexagon) CreateShapeFoldouts_Hex(c);
             else                                         CreateShapeFoldouts_Rect(c);
 
             CreateExecuteButton(c);
 
-            if (layout == GridLayout.CellLayout.Hexagon) previewDrawer.Setup_Hex(source, settingsDict_hex);
-            else                                         previewDrawer.Setup_Rect(source, settingsDict_rect);
+            if (layout == GridLayout.CellLayout.Hexagon)
+                previewDrawer.Setup_Hex(source, settingsDict_hex, orientation);
+            else
+                previewDrawer.Setup_Rect(source, settingsDict_rect);
         }
 
         private VisualElement CreateScrollableContainer()
@@ -346,6 +349,13 @@ namespace TilemapSplitter
             colField.visible      = isVisible;
         }
 
+        private static HexOrientation GetHexOrientation(GridLayout grid)
+        {
+            Vector3 center = grid.CellToLocal(Vector3Int.zero);
+            Vector3 up     = grid.CellToLocal(Vector3Int.up) - center;
+            return Mathf.Approximately(up.x, 0f) ? HexOrientation.FlatTop : HexOrientation.PointTop;
+        }
+
         private static void StartCoroutine(IEnumerator e)
         {
             EditorApplication.update += Update;
@@ -358,18 +368,19 @@ namespace TilemapSplitter
 
         private IEnumerator SplitCoroutine()
         {
-            bool isHex = source.layoutGrid.cellLayout == GridLayout.CellLayout.Hexagon;
-            IEnumerator e;
-            if (isHex)
-            {
-                hexShapeCells = new ShapeCells_Hex();
-                e = TileShapeClassifier.ClassifyCoroutine_Hex(source, settingsDict_hex, hexShapeCells);
-            }
-            else
-            {
-                shapeCells = new ShapeCells_Rect();
-                e = TileShapeClassifier.ClassifyCoroutine_Rect(source, settingsDict_rect, shapeCells);
-            }
+              bool isHex = source.layoutGrid.cellLayout == GridLayout.CellLayout.Hexagon;
+              IEnumerator e;
+              if (isHex)
+              {
+                  hexShapeCells = new ShapeCells_Hex();
+                  var orientation = GetHexOrientation(source.layoutGrid);
+                  e = TileShapeClassifier.ClassifyCoroutine_Hex(source, settingsDict_hex, hexShapeCells, orientation);
+              }
+              else
+              {
+                  shapeCells = new ShapeCells_Rect();
+                  e = TileShapeClassifier.ClassifyCoroutine_Rect(source, settingsDict_rect, shapeCells);
+              }
 
             while (e.MoveNext()) yield return null;
 
@@ -394,33 +405,35 @@ namespace TilemapSplitter
             {
                 isRefreshingPreview = true;
 
-                bool isHex = source.layoutGrid.cellLayout == GridLayout.CellLayout.Hexagon;
-                IEnumerator e;
-                if (isHex)
-                {
-                    hexShapeCells = new ShapeCells_Hex();
-                    e = TileShapeClassifier.ClassifyCoroutine_Hex(source, settingsDict_hex, hexShapeCells);
-                }
-                else
-                {
-                    shapeCells = new ShapeCells_Rect();
-                    e = TileShapeClassifier.ClassifyCoroutine_Rect(source, settingsDict_rect, shapeCells);
-                }
+              bool isHex = source.layoutGrid.cellLayout == GridLayout.CellLayout.Hexagon;
+              IEnumerator e;
+              if (isHex)
+              {
+                  hexShapeCells = new ShapeCells_Hex();
+                  var orientation = GetHexOrientation(source.layoutGrid);
+                  e = TileShapeClassifier.ClassifyCoroutine_Hex(source, settingsDict_hex, hexShapeCells, orientation);
+              }
+              else
+              {
+                  shapeCells = new ShapeCells_Rect();
+                  e = TileShapeClassifier.ClassifyCoroutine_Rect(source, settingsDict_rect, shapeCells);
+              }
                 while (e.MoveNext())
                 {
                     yield return null;
                 }
 
-                if (isHex)
-                {
-                    previewDrawer.Setup_Hex(source, settingsDict_hex);
-                    previewDrawer.SetShapeCells(hexShapeCells);
-                }
-                else
-                {
-                    previewDrawer.Setup_Rect(source, settingsDict_rect);
-                    previewDrawer.SetShapeCells(shapeCells);
-                }
+                  if (isHex)
+                  {
+                      var orientation = GetHexOrientation(source.layoutGrid);
+                      previewDrawer.Setup_Hex(source, settingsDict_hex, orientation);
+                      previewDrawer.SetShapeCells(hexShapeCells);
+                  }
+                  else
+                  {
+                      previewDrawer.Setup_Rect(source, settingsDict_rect);
+                      previewDrawer.SetShapeCells(shapeCells);
+                  }
                 SceneView.RepaintAll();
                 UpdateFoldoutTitles();
 

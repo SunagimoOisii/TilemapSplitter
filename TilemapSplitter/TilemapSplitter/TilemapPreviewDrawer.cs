@@ -15,6 +15,7 @@ namespace TilemapSplitter
         private Dictionary<ShapeType_Hex, ShapeSetting>  shapeSettings_Hex;
         private ShapeCells_Rect shapeCells_Rect;
         private ShapeCells_Hex  shapeCells_Hex;
+        private HexOrientation  hexOrientation;
 
         public void Setup_Rect(Tilemap source, Dictionary<ShapeType_Rect, ShapeSetting> settings)
         {
@@ -22,11 +23,13 @@ namespace TilemapSplitter
             shapeSettings_Rect = settings;
             shapeSettings_Hex  = null;
         }
-        public void Setup_Hex(Tilemap source, Dictionary<ShapeType_Hex, ShapeSetting> settings)
+        public void Setup_Hex(Tilemap source, Dictionary<ShapeType_Hex, ShapeSetting> settings,
+            HexOrientation orientation)
         {
             tilemap            = source;
             shapeSettings_Hex  = settings;
             shapeSettings_Rect = null;
+            hexOrientation     = orientation;
         }
 
         public void SetShapeCells(ShapeCells_Rect sc) => shapeCells_Rect = sc;
@@ -130,6 +133,7 @@ namespace TilemapSplitter
             var size = tilemap.layoutGrid.cellSize;
             float halfW = size.x * 0.5f;
             float halfH = size.y * 0.5f;
+            float startDeg = hexOrientation == HexOrientation.PointTop ? 30f : 0f;
 
             foreach (var cell in cells)
             {
@@ -138,7 +142,7 @@ namespace TilemapSplitter
 
                 for (int i = 0; i < 6; i++)
                 {
-                    float angleDeg = 60f * i + 30f;
+                    float angleDeg = 60f * i + startDeg;
                     float rad = Mathf.Deg2Rad * angleDeg;
                     verts[i] = new Vector3(
                         center.x + halfW * Mathf.Cos(rad),
