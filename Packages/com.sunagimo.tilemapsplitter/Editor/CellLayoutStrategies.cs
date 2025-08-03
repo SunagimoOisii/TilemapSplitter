@@ -1,14 +1,14 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEditor;
-using UnityEditor.UIElements;
-using UnityEngine;
-using UnityEngine.Tilemaps;
-using UnityEngine.UIElements;
-
 namespace TilemapSplitter
 {
+    using System;
+    using System.Collections;
+    using System.Collections.Generic;
+    using UnityEditor;
+    using UnityEditor.UIElements;
+    using UnityEngine;
+    using UnityEngine.Tilemaps;
+    using UnityEngine.UIElements;
+
     /// <summary>
     /// Strategy interface that provides processing based on cell layout.
     /// </summary>
