@@ -192,16 +192,7 @@ namespace TilemapSplitter
 
             var occupiedCells = CollectOccupiedCells(source);
             var e = ProcessCells(occupiedCells, batch, "Classify_Hex", cell =>
-            {
-                var offsets = GetNeighborOffsets_Hex(cell);
-                int count   = 0;
-                foreach (var offset in offsets)
-                {
-                    if (occupiedCells.Contains(cell + offset))
-                        count++;
-                }
-                Classify_Hex(cell, count, settings, sc);
-            });
+            yield return ProcessCells(occupiedCells, batch, "Classify_Hex", cell =>
             while (e.MoveNext())
             {
                 yield return null;
