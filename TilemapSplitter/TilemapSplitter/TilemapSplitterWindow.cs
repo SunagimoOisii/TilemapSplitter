@@ -76,7 +76,7 @@ namespace TilemapSplitter
                 ? new HexLayoutHandler(settingsDict_hex, RefreshPreview)
                 : new RectLayoutHandler(settingsDict_rect, RefreshPreview);
 
-            layoutHandler.CreateMergeEdgeToggle(c, ref canMergeEdges);
+            layoutHandler.CreateMergeEdgeToggle(c, () => canMergeEdges, v => canMergeEdges = v);
             layoutHandler.CreateShapeFoldouts(c);
 
             CreateExecuteButton(c);
