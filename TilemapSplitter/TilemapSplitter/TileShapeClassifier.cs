@@ -171,8 +171,12 @@ namespace TilemapSplitter
             sc.Isolate.Clear();
 
             var occupiedCells = CollectOccupiedCells(source);
-            yield return ProcessCells(occupiedCells, batch, "Classify_Rect",
+            var e = ProcessCells(occupiedCells, batch, "Classify_Rect",
                 cell => Classify_Rect(cell, occupiedCells, settings, sc));
+            while (e.MoveNext())
+            {
+                yield return null;
+            }
         }
 
         public static IEnumerator ClassifyCoroutine_Hex(Tilemap source,
@@ -187,17 +191,11 @@ namespace TilemapSplitter
             sc.Full.Clear();
 
             var occupiedCells = CollectOccupiedCells(source);
-            yield return ProcessCells(occupiedCells, batch, "Classify_Hex", cell =>
+            var e = ProcessCells(occupiedCells, batch, "Classify_Hex", cell =>
+            while (e.MoveNext())
             {
-                var offsets = GetNeighborOffsets_Hex(cell);
-                int count   = 0;
-                foreach (var offset in offsets)
-                {
-                    if (occupiedCells.Contains(cell + offset))
-                        count++;
-                }
-                Classify_Hex(cell, count, settings, sc);
-            });
+                yield return null;
+            }
         }
 
         /// <summary>
