@@ -217,12 +217,12 @@ namespace TilemapSplitter
         {
             if (source != null)
             {
-                string path = AssetDatabase.GetAssetPath(source);
-                EditorPrefs.SetString(CreateKey("SourcePath"), path);
+                var id = GlobalObjectId.GetGlobalObjectIdSlow(source);
+                EditorPrefs.SetString(CreateKey("SourceId"), id.ToString());
             }
             else
             {
-                EditorPrefs.DeleteKey(CreateKey("SourcePath"));
+                EditorPrefs.DeleteKey(CreateKey("SourceId"));
             }
 
             EditorPrefs.SetBool(CreateKey("CanMergeEdges"),  canMergeEdges);
@@ -255,7 +255,15 @@ namespace TilemapSplitter
 
         private void LoadPrefs()
         {
-            if (EditorPrefs.HasKey(CreateKey("SourcePath")))
+            if (EditorPrefs.HasKey(CreateKey("SourceId")))
+            {
+                var idStr = EditorPrefs.GetString(CreateKey("SourceId"));
+                if (GlobalObjectId.TryParse(idStr, out var id))
+                {
+                    source = GlobalObjectId.GlobalObjectIdentifierToObjectSlow(id) as Tilemap;
+                }
+            }
+            else if (EditorPrefs.HasKey(CreateKey("SourcePath")))
             {
                 var path = EditorPrefs.GetString(CreateKey("SourcePath"));
                 source   = AssetDatabase.LoadAssetAtPath<Tilemap>(path);
@@ -297,6 +305,7 @@ namespace TilemapSplitter
 
         private void ResetPrefs()
         {
+            EditorPrefs.DeleteKey(CreateKey("SourceId"));
             EditorPrefs.DeleteKey(CreateKey("SourcePath"));
             EditorPrefs.DeleteKey(CreateKey("CanMergeEdges"));
             EditorPrefs.DeleteKey(CreateKey("AttachCollider"));
