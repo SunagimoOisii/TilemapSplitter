@@ -98,32 +98,25 @@ namespace TilemapSplitter
         }
 
         /// <summary>
-        /// Collect all non-empty cells from the Tilemap.
+        /// Collect only cells that contain tiles.
         /// </summary>
         private static HashSet<Vector3Int> CollectOccupiedCells(Tilemap source)
         {
-            source.CompressBounds();
-            var cellBounds    = source.cellBounds;
-            var tilesInBounds = source.GetTilesBlock(cellBounds);
+            // Avoid CompressBounds() because it modifies the tilemap bounds.
+            // Use only the cells returned by GetUsedTilesNonAlloc().
+            int usedCount = source.GetUsedTilesCount();
+            if (usedCount == 0) return new HashSet<Vector3Int>();
 
-            int width  = cellBounds.size.x;
-            int height = cellBounds.size.y;
-            var occupiedCells = new HashSet<Vector3Int>();
+            var usedTiles     = new TileBase[usedCount];
+            var usedPositions = new Vector3Int[usedCount];
+            source.GetUsedTilesNonAlloc(usedPositions, usedTiles);
 
-            for (int y = 0; y < height; y++)
+            var occupiedCells = new HashSet<Vector3Int>(usedCount);
+            for (int i = 0; i < usedCount; i++)
             {
-                for (int x = 0; x < width; x++)
-                {
-                    int index = x + y * width;
-                    if (tilesInBounds[index] != null)
-                    {
-                        var cell = new Vector3Int(cellBounds.xMin + x,
-                                                  cellBounds.yMin + y,
-                                                  cellBounds.zMin);
-                        occupiedCells.Add(cell);
-                    }
-                }
+                occupiedCells.Add(usedPositions[i]);
             }
+
             return occupiedCells;
         }
 
