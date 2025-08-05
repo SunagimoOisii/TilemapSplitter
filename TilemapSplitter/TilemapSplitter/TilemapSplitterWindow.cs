@@ -181,8 +181,12 @@ namespace TilemapSplitter
 
         private IEnumerator SplitCoroutine()
         {
-            IEnumerator e = layoutStrategy.Classify(source);
-            while (e.MoveNext()) yield return null;
+            IEnumerator<bool> e = layoutStrategy.Classify(source);
+            while (e.MoveNext())
+            {
+                if (e.Current) yield break;
+                yield return null;
+            }
             layoutStrategy.GenerateSplitTilemaps(source, canMergeEdges, canAttachCollider);
             RefreshPreview();
         }
@@ -196,9 +200,14 @@ namespace TilemapSplitter
             {
                 isRefreshingPreview = true;
 
-                IEnumerator e = layoutStrategy.Classify(source);
+                IEnumerator<bool> e = layoutStrategy.Classify(source);
                 while (e.MoveNext())
                 {
+                    if (e.Current)
+                    {
+                        isRefreshingPreview = false;
+                        yield break;
+                    }
                     yield return null;
                 }
 

@@ -127,12 +127,12 @@ namespace TilemapSplitter
             return occupiedCells;
         }
 
-        private static IEnumerator ProcessCells(HashSet<Vector3Int> occupiedCells, int batch, string progressTitle, Action<Vector3Int> perCell)
+        private static IEnumerator<bool> ProcessCells(HashSet<Vector3Int> occupiedCells, int batch, string progressTitle, Action<Vector3Int> perCell)
         {
             bool isCancelled = false;
             try
             {
-                int total = occupiedCells.Count;
+                int total     = occupiedCells.Count;
                 int processed = 0;
                 foreach (var cell in occupiedCells)
                 {
@@ -142,14 +142,16 @@ namespace TilemapSplitter
                     if (processed % batch == 0)
                     {
                         float progress = (float)processed / total;
-                        isCancelled = EditorUtility.DisplayCancelableProgressBar(progressTitle,
-                            $"Classifying... {processed}/{total}", progress);
-                        if (isCancelled) break;
-
-                        yield return null;
+                        isCancelled = EditorUtility.DisplayCancelableProgressBar(
+                            progressTitle,
+                            $"Classifying... {processed}/{total}",
+                            progress);
+                        yield return isCancelled;
+                        if (isCancelled) yield break;
                     }
                 }
-                if (isCancelled) yield break;
+
+                yield return false;
             }
             finally
             {
@@ -160,7 +162,7 @@ namespace TilemapSplitter
         /// <summary>
         /// Compress the tilemap bounds to exclude empty rows and columns
         /// </summary>
-        public static IEnumerator ClassifyCoroutine_Rect(Tilemap source,
+        public static IEnumerator<bool> ClassifyCoroutine_Rect(Tilemap source,
             Dictionary<ShapeType_Rect, ShapeSetting> settings, ShapeCells_Rect sc, int batch = 100)
         {
             sc.Vertical.Clear();
@@ -175,11 +177,11 @@ namespace TilemapSplitter
                 cell => Classify_Rect(cell, occupiedCells, settings, sc));
             while (e.MoveNext())
             {
-                yield return null;
+                yield return e.Current;
             }
         }
 
-        public static IEnumerator ClassifyCoroutine_Hex(Tilemap source,
+        public static IEnumerator<bool> ClassifyCoroutine_Hex(Tilemap source,
             Dictionary<ShapeType_Hex, ShapeSetting> settings, ShapeCells_Hex sc, int batch = 100)
         {
             sc.Isolate.Clear();
@@ -205,7 +207,7 @@ namespace TilemapSplitter
 
             while (e.MoveNext())
             {
-                yield return null;
+                yield return e.Current;
             }
         }
 
