@@ -85,6 +85,7 @@ namespace TilemapSplitter
             CreateExecuteButton(c);
 
             layoutStrategy.SetupPreview(source, previewDrawer);
+            RefreshPreview();
         }
 
         private VisualElement CreateScrollableContainer()
