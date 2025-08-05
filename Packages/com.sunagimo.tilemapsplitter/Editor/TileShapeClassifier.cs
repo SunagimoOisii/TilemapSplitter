@@ -89,49 +89,50 @@ namespace TilemapSplitter
             new( 1, 0, 0), new(1, -1, 0), new(0, -1, 0),
             new(-1, 0, 0), new(0,  1, 0), new(1,  1, 0)
         };
-        private static readonly Vector3Int[] neighbors_EvenColumn =
-        {
-            new(1,  0, 0), new(1,  1, 0), new(0,  1, 0),
-            new(-1, 0, 0), new(0, -1, 0), new(1, -1, 0)
-        };
-        private static readonly Vector3Int[] neighbors_OddColumn =
-        {
-            new(1,  0, 0), new(0,  1, 0), new(-1, 1, 0),
-            new(-1, 0, 0), new(-1,-1, 0), new(0, -1, 0)
-        };
 
         private static IReadOnlyList<Vector3Int> GetNeighborOffsets_Rect() => neighbors_Rect;
 
-        private static IReadOnlyList<Vector3Int> GetNeighborOffsets_Hex(Vector3Int cell, bool isPointTop)
+        private static IReadOnlyList<Vector3Int> GetNeighborOffsets_Hex(Vector3Int cell)
         {
-            if (isPointTop)
-                return (cell.y & 1) == 0 ? neighbors_EvenRow : neighbors_OddRow;
-            return (cell.x & 1) == 0 ? neighbors_EvenColumn : neighbors_OddColumn;
+            return (cell.y & 1) == 0 ? neighbors_EvenRow : neighbors_OddRow;
         }
 
         /// <summary>
-        /// 空でないセルの座標を収集する
+        /// Collect all non-empty cells from the Tilemap.
         /// </summary>
         private static HashSet<Vector3Int> CollectOccupiedCells(Tilemap source)
         {
-            var bounds        = source.cellBounds;
+            source.CompressBounds();
+            var cellBounds    = source.cellBounds;
+            var tilesInBounds = source.GetTilesBlock(cellBounds);
+
+            int width  = cellBounds.size.x;
+            int height = cellBounds.size.y;
             var occupiedCells = new HashSet<Vector3Int>();
-            foreach (var pos in bounds.allPositionsWithin)
+
+            for (int y = 0; y < height; y++)
             {
-                if (source.HasTile(pos))
+                for (int x = 0; x < width; x++)
                 {
-                    occupiedCells.Add(pos);
+                    int index = x + y * width;
+                    if (tilesInBounds[index] != null)
+                    {
+                        var cell = new Vector3Int(cellBounds.xMin + x,
+                                                  cellBounds.yMin + y,
+                                                  cellBounds.zMin);
+                        occupiedCells.Add(cell);
+                    }
                 }
             }
             return occupiedCells;
         }
 
-        private static IEnumerator<bool> ProcessCells(HashSet<Vector3Int> occupiedCells, int batch, string progressTitle, Action<Vector3Int> perCell)
+        private static IEnumerator ProcessCells(HashSet<Vector3Int> occupiedCells, int batch, string progressTitle, Action<Vector3Int> perCell)
         {
             bool isCancelled = false;
             try
             {
-                int total     = occupiedCells.Count;
+                int total = occupiedCells.Count;
                 int processed = 0;
                 foreach (var cell in occupiedCells)
                 {
@@ -143,22 +144,23 @@ namespace TilemapSplitter
                         float progress = (float)processed / total;
                         isCancelled = EditorUtility.DisplayCancelableProgressBar(progressTitle,
                             $"Classifying... {processed}/{total}", progress);
-                        yield return isCancelled;
-                        if (isCancelled) yield break;
+                        if (isCancelled) break;
+
+                        yield return null;
                     }
                 }
+                if (isCancelled) yield break;
             }
             finally
             {
                 EditorUtility.ClearProgressBar();
             }
-            yield return false;
         }
 
         /// <summary>
         /// Compress the tilemap bounds to exclude empty rows and columns
         /// </summary>
-        public static IEnumerator<bool> ClassifyCoroutine_Rect(Tilemap source,
+        public static IEnumerator ClassifyCoroutine_Rect(Tilemap source,
             Dictionary<ShapeType_Rect, ShapeSetting> settings, ShapeCells_Rect sc, int batch = 100)
         {
             sc.Vertical.Clear();
@@ -169,21 +171,15 @@ namespace TilemapSplitter
             sc.Isolate.Clear();
 
             var occupiedCells = CollectOccupiedCells(source);
-            var e             = ProcessCells(occupiedCells, batch, "Classify_Rect",
+            var e = ProcessCells(occupiedCells, batch, "Classify_Rect",
                 cell => Classify_Rect(cell, occupiedCells, settings, sc));
             while (e.MoveNext())
             {
-                if (e.Current)
-                {
-                    yield return true;
-                    yield break;
-                }
-                yield return false;
+                yield return null;
             }
-            yield return false;
         }
 
-        public static IEnumerator<bool> ClassifyCoroutine_Hex(Tilemap source,
+        public static IEnumerator ClassifyCoroutine_Hex(Tilemap source,
             Dictionary<ShapeType_Hex, ShapeSetting> settings, ShapeCells_Hex sc, int batch = 100)
         {
             sc.Isolate.Clear();
@@ -194,13 +190,10 @@ namespace TilemapSplitter
             sc.Junction5.Clear();
             sc.Full.Clear();
 
-            var grid        = source.layoutGrid as Grid;
-            bool isPointTop = grid == null || grid.hexagonType == GridLayout.HexagonType.PointTop;
-
             var occupiedCells = CollectOccupiedCells(source);
             var e = ProcessCells(occupiedCells, batch, "Classify_Hex", cell =>
             {
-                var offsets = GetNeighborOffsets_Hex(cell, isPointTop);
+                var offsets = GetNeighborOffsets_Hex(cell);
                 int count   = 0;
                 foreach (var offset in offsets)
                 {
@@ -212,14 +205,8 @@ namespace TilemapSplitter
 
             while (e.MoveNext())
             {
-                if (e.Current)
-                {
-                    yield return true;
-                    yield break;
-                }
-                yield return false;
+                yield return null;
             }
-            yield return false;
         }
 
         /// <summary>

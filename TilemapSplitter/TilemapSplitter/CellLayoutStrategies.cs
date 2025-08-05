@@ -16,7 +16,7 @@ namespace TilemapSplitter
     {
         void CreateMergeEdgeToggle(VisualElement container, Func<bool> getter, Action<bool> setter);
         void CreateShapeFoldouts(VisualElement container);
-        IEnumerator<bool> Classify(Tilemap source);
+        IEnumerator Classify(Tilemap source);
         void GenerateSplitTilemaps(Tilemap source, bool canMergeEdges, bool canAttachCollider);
         void SetupPreview(Tilemap source, TilemapPreviewDrawer drawer);
         void SetShapeCellsToPreview(TilemapPreviewDrawer drawer);
@@ -165,7 +165,7 @@ namespace TilemapSplitter
             colField.visible      = isVisible;
         }
 
-        public IEnumerator<bool> Classify(Tilemap source)
+        public IEnumerator Classify(Tilemap source)
         {
             shapeCells = new ShapeCells_Rect();
             return TileShapeClassifier.ClassifyCoroutine_Rect(source, settingsDict, shapeCells);
@@ -294,7 +294,7 @@ namespace TilemapSplitter
             fold.Add(colF);
         }
 
-        public IEnumerator<bool> Classify(Tilemap source)
+        public IEnumerator Classify(Tilemap source)
         {
             shapeCells = new ShapeCells_Hex();
             return TileShapeClassifier.ClassifyCoroutine_Hex(source, settingsDict, shapeCells);
