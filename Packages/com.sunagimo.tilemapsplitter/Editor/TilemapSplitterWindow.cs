@@ -11,7 +11,7 @@ namespace TilemapSplitter
     using UnityEngine.UIElements;
 
     /// <summary>
-    /// Editor window that splits a Tilemap into multiple Tilemaps based on cell layout
+    /// Editor window that splits a tilemap into multiple parts based on cell layout
     /// </summary>
     internal class TilemapSplitterWindow : EditorWindow
     {
@@ -50,6 +50,29 @@ namespace TilemapSplitter
         private bool canMergeEdges       = false;
         private bool canAttachCollider   = false;
         private bool isRefreshingPreview = false;
+
+        // Progress bar that supports cancellation
+        private sealed class CancelableProgressBar : IProgress<float>
+        {
+            private readonly string title;
+            public bool IsCancelled { get; private set; }
+
+            public CancelableProgressBar(string title)
+            {
+                this.title = title;
+            }
+
+            public void Report(float value)
+            {
+                IsCancelled = EditorUtility.DisplayCancelableProgressBar(
+                    title, $"分類中... {Mathf.RoundToInt(value * 100)}%", value);
+            }
+
+            public void Clear()
+            {
+                EditorUtility.ClearProgressBar();
+            }
+        }
 
         [MenuItem("Tools/TilemapSplitter")]
         public static void ShowWindow() => GetWindow<TilemapSplitterWindow>("Split Tilemap");
@@ -173,12 +196,18 @@ namespace TilemapSplitter
 
         private IEnumerator SplitCoroutine()
         {
-            IEnumerator<bool> e = layoutStrategy.Classify(source);
+            var progress = new CancelableProgressBar("分類");
+            IEnumerator<bool> e = layoutStrategy.Classify(source, progress, () => progress.IsCancelled);
             while (e.MoveNext())
             {
-                if (e.Current) yield break;
+                if (e.Current)
+                {
+                    progress.Clear();
+                    yield break;
+                }
                 yield return null;
             }
+            progress.Clear();
             layoutStrategy.GenerateSplitTilemaps(source, canMergeEdges, canAttachCollider);
             RefreshPreview();
         }
@@ -192,17 +221,20 @@ namespace TilemapSplitter
             {
                 isRefreshingPreview = true;
 
-                IEnumerator<bool> e = layoutStrategy.Classify(source);
+                var progress = new CancelableProgressBar("分類");
+                IEnumerator<bool> e = layoutStrategy.Classify(source, progress, () => progress.IsCancelled);
                 while (e.MoveNext())
                 {
                     if (e.Current)
                     {
+                        progress.Clear();
                         isRefreshingPreview = false;
                         yield break;
                     }
                     yield return null;
                 }
 
+                progress.Clear();
                 layoutStrategy.SetupPreview(source, previewDrawer);
                 layoutStrategy.SetShapeCellsToPreview(previewDrawer);
                 SceneView.RepaintAll();
