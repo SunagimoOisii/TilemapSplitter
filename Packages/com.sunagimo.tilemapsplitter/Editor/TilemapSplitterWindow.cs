@@ -77,7 +77,7 @@ namespace TilemapSplitter
 
             var layout = source.layoutGrid.cellLayout;
             layoutStrategy = (layout == GridLayout.CellLayout.Hexagon)
-                ? new LayoutStrategy_Hex(settingsDict_hex, RefreshPreview)
+                ? new CellLayoutStrategy_Hex(settingsDict_hex, RefreshPreview)
                 : new CellLayoutStrategy_Rect(settingsDict_rect, RefreshPreview);
 
             layoutStrategy.CreateMergeEdgeToggle(c, () => canMergeEdges, v => canMergeEdges = v);

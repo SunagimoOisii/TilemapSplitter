@@ -10,7 +10,7 @@ namespace TilemapSplitter
     /// <summary>
     /// Layout strategy for hexagonal grids
     /// </summary>
-    internal class LayoutStrategy_Hex : ICellLayoutStrategy
+    internal class CellLayoutStrategy_Hex : ICellLayoutStrategy
     {
         private readonly Dictionary<ShapeType_Hex, ShapeSetting> settingsDict;
         private readonly Action refreshPreview;
@@ -24,7 +24,7 @@ namespace TilemapSplitter
         private Foldout tipFoldOut;
         private Foldout hexIsolateFoldOut;
 
-        public LayoutStrategy_Hex(Dictionary<ShapeType_Hex, ShapeSetting> settings, Action refreshPreview)
+        public CellLayoutStrategy_Hex(Dictionary<ShapeType_Hex, ShapeSetting> settings, Action refreshPreview)
         {
             settingsDict        = settings;
             this.refreshPreview = refreshPreview;
