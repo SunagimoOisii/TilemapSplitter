@@ -42,26 +42,38 @@ namespace TilemapSplitter
                 CreateTilemapObjForCells(source, sc.Horizontal, h, HorizontalObjName, canAttachCollider);
             }
 
-            var cross   = settings[ShapeType_Rect.Cross];
-            var t       = settings[ShapeType_Rect.TJunction];
-            var corner  = settings[ShapeType_Rect.Corner];
-            var isolate = settings[ShapeType_Rect.Isolate];
-            CreateTilemapObjForCells(source, sc.Cross,     cross,   CrossObjName,     canAttachCollider);
-            CreateTilemapObjForCells(source, sc.TJunction, t,       TJunctionObjName, canAttachCollider);
-            CreateTilemapObjForCells(source, sc.Corner,    corner,  CornerObjName,    canAttachCollider);
-            CreateTilemapObjForCells(source, sc.Isolate,   isolate, IsolateObjName,   canAttachCollider);
+            var rectShapes = new[]
+            {
+                (sc.Cross,     ShapeType_Rect.Cross,     CrossObjName),
+                (sc.TJunction, ShapeType_Rect.TJunction, TJunctionObjName),
+                (sc.Corner,    ShapeType_Rect.Corner,    CornerObjName),
+                (sc.Isolate,   ShapeType_Rect.Isolate,   IsolateObjName)
+            };
+
+            foreach (var (cells, type, objName) in rectShapes)
+            {
+                CreateTilemapObjForCells(source, cells, settings[type], objName, canAttachCollider);
+            }
         }
 
         public static void GenerateSplitTilemaps_Hex(Tilemap source, ShapeCells_Hex sc,
             Dictionary<ShapeType_Hex, ShapeSetting> settings, bool canAttachCollider)
         {
-            CreateTilemapObjForCells(source, sc.Full,      settings[ShapeType_Hex.Full],      FullObjName,      canAttachCollider);
-            CreateTilemapObjForCells(source, sc.Junction5, settings[ShapeType_Hex.Junction5], Junction5ObjName, canAttachCollider);
-            CreateTilemapObjForCells(source, sc.Junction4, settings[ShapeType_Hex.Junction4], Junction4ObjName, canAttachCollider);
-            CreateTilemapObjForCells(source, sc.Junction3, settings[ShapeType_Hex.Junction3], Junction3ObjName, canAttachCollider);
-            CreateTilemapObjForCells(source, sc.Edge,      settings[ShapeType_Hex.Edge],      HexEdgeObjName,   canAttachCollider);
-            CreateTilemapObjForCells(source, sc.Tip,       settings[ShapeType_Hex.Tip],       TipObjName,       canAttachCollider);
-            CreateTilemapObjForCells(source, sc.Isolate,   settings[ShapeType_Hex.Isolate],   IsolateObjName,   canAttachCollider);
+            var hexShapes = new[]
+            {
+                (sc.Full,      ShapeType_Hex.Full,      FullObjName),
+                (sc.Junction5, ShapeType_Hex.Junction5, Junction5ObjName),
+                (sc.Junction4, ShapeType_Hex.Junction4, Junction4ObjName),
+                (sc.Junction3, ShapeType_Hex.Junction3, Junction3ObjName),
+                (sc.Edge,      ShapeType_Hex.Edge,      HexEdgeObjName),
+                (sc.Tip,       ShapeType_Hex.Tip,       TipObjName),
+                (sc.Isolate,   ShapeType_Hex.Isolate,   IsolateObjName)
+            };
+
+            foreach (var (cells, type, objName) in hexShapes)
+            {
+                CreateTilemapObjForCells(source, cells, settings[type], objName, canAttachCollider);
+            }
         }
 
         private static void CreateTilemapObjForCells(Tilemap source,
@@ -70,23 +82,12 @@ namespace TilemapSplitter
             if (cells.Count == 0) return;
 
             //Skip instantiating this tile collection when the Independent flag is not enabled in settings
-            bool isRequiredIndependentFlag = name == CrossObjName     || name == TJunctionObjName ||
-                                             name == CornerObjName    || name == IsolateObjName   ||
-                                             name == FullObjName      || name == Junction5ObjName ||
-                                             name == Junction4ObjName || name == Junction3ObjName ||
-                                             name == HexEdgeObjName   || name == TipObjName;
-            if (isRequiredIndependentFlag &&
+            if (RequiresIndependent(name) &&
                 setting.flags.HasFlag(ShapeFlags.Independent) == false) return;
 
             //Instantiate a GameObject with Tilemap and TilemapRenderer components attached
             //Copy the source transform(position, rotation, scale) and apply the specified layer and tag
-            var obj = new GameObject(name, typeof(Tilemap), typeof(TilemapRenderer));
-            obj.layer                = setting.layer;
-            obj.tag                  = setting.tag;
-            obj.transform.localScale = source.transform.localScale;
-            obj.transform.SetLocalPositionAndRotation(source.transform.localPosition,
-                source.transform.localRotation);
-            obj.transform.SetParent(source.transform.parent, false);
+            var obj = CreateTilemapObject(name, setting, source);
 
             //If there is a TilemapRenderer in the source, match its settings.
             var renderer = obj.GetComponent<TilemapRenderer>();
@@ -116,7 +117,7 @@ namespace TilemapSplitter
 
             if (canAttachCollider)
             {
-                var tmCol                = obj.AddComponent<TilemapCollider2D>();
+                var tmCol = obj.AddComponent<TilemapCollider2D>();
                 tmCol.compositeOperation = Collider2D.CompositeOperation.Merge;
 
                 var rb = obj.AddComponent<Rigidbody2D>();
@@ -127,5 +128,26 @@ namespace TilemapSplitter
 
             Undo.RegisterCreatedObjectUndo(obj, "GenerateSplitTilemaps_Rect " + name);
         }
+
+        private static GameObject CreateTilemapObject(string name, ShapeSetting setting, Tilemap source)
+        {
+            var obj = new GameObject(name, typeof(Tilemap), typeof(TilemapRenderer))
+            {
+                layer = setting.layer,
+                tag   = setting.tag
+            };
+
+            obj.transform.localScale = source.transform.localScale;
+            obj.transform.SetLocalPositionAndRotation(source.transform.localPosition,
+                source.transform.localRotation);
+            obj.transform.SetParent(source.transform.parent, false);
+
+            return obj;
+        }
+
+        private static bool RequiresIndependent(string name) =>
+            name is CrossObjName or TJunctionObjName or CornerObjName or IsolateObjName
+                or FullObjName or Junction5ObjName or Junction4ObjName
+                or Junction3ObjName or HexEdgeObjName or TipObjName;
     }
 }
