@@ -62,7 +62,7 @@ namespace TilemapSplitter
                     case ShapeType_Rect.Corner:         cornerFoldOut         = fold; break;
                     case ShapeType_Rect.Isolate:        isolateFoldOut        = fold; break;
                 }
-                TilemapSplitterWindow.AddHorizontalSeparator(container);
+                TilemapSplitterUI.AddHorizontalSeparator(container);
             }
         }
 

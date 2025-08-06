@@ -59,7 +59,7 @@ namespace TilemapSplitter
                     case ShapeType_Hex.Tip:       tipFoldOut        = fold; break;
                     case ShapeType_Hex.Isolate:   hexIsolateFoldOut = fold; break;
                 }
-                TilemapSplitterWindow.AddHorizontalSeparator(container);
+                TilemapSplitterUI.AddHorizontalSeparator(container);
             }
         }
 
