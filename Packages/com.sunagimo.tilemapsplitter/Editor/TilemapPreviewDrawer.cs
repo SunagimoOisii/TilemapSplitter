@@ -15,6 +15,8 @@ namespace TilemapSplitter
         private Dictionary<ShapeType_Hex, ShapeSetting>  shapeSettings_Hex;
         private ShapeCells_Rect shapeCells_Rect;
         private ShapeCells_Hex  shapeCells_Hex;
+        private Dictionary<ShapeType_Rect, List<Vector3Int>> cellsDict_Rect;
+        private Dictionary<ShapeType_Hex, List<Vector3Int>>  cellsDict_Hex;
         private ICellDrawer     cellDrawer;
 
         public void Setup(Tilemap source, Dictionary<ShapeType_Rect, ShapeSetting> settings)
@@ -32,8 +34,34 @@ namespace TilemapSplitter
             cellDrawer         = new CellDrawer_Hex(tilemap);
         }
 
-        public void SetShapeCells(ShapeCells_Rect sc) => shapeCells_Rect = sc;
-        public void SetShapeCells(ShapeCells_Hex sc) => shapeCells_Hex = sc;
+        public void SetShapeCells(ShapeCells_Rect sc)
+        {
+            shapeCells_Rect = sc;
+            cellsDict_Rect = new Dictionary<ShapeType_Rect, List<Vector3Int>>
+            {
+                [ShapeType_Rect.VerticalEdge]   = sc.Vertical,
+                [ShapeType_Rect.HorizontalEdge] = sc.Horizontal,
+                [ShapeType_Rect.Cross]          = sc.Cross,
+                [ShapeType_Rect.TJunction]      = sc.TJunction,
+                [ShapeType_Rect.Corner]         = sc.Corner,
+                [ShapeType_Rect.Isolate]        = sc.Isolate
+            };
+        }
+
+        public void SetShapeCells(ShapeCells_Hex sc)
+        {
+            shapeCells_Hex = sc;
+            cellsDict_Hex = new Dictionary<ShapeType_Hex, List<Vector3Int>>
+            {
+                [ShapeType_Hex.Full]      = sc.Full,
+                [ShapeType_Hex.Junction5] = sc.Junction5,
+                [ShapeType_Hex.Junction4] = sc.Junction4,
+                [ShapeType_Hex.Junction3] = sc.Junction3,
+                [ShapeType_Hex.Edge]      = sc.Edge,
+                [ShapeType_Hex.Tip]       = sc.Tip,
+                [ShapeType_Hex.Isolate]   = sc.Isolate
+            };
+        }
 
         public void Register() =>   SceneView.duringSceneGui += OnSceneGUI;
         public void Unregister() => SceneView.duringSceneGui -= OnSceneGUI;
@@ -45,54 +73,38 @@ namespace TilemapSplitter
         {
             if (tilemap == null || tilemap.gameObject.activeInHierarchy == false) return;
 
-            if (shapeSettings_Hex != null && shapeCells_Hex != null)
+            if (shapeSettings_Hex != null && cellsDict_Hex != null)
             {
-                var full = shapeSettings_Hex[ShapeType_Hex.Full];
-                var j5   = shapeSettings_Hex[ShapeType_Hex.Junction5];
-                var j4   = shapeSettings_Hex[ShapeType_Hex.Junction4];
-                var j3   = shapeSettings_Hex[ShapeType_Hex.Junction3];
-                var edge = shapeSettings_Hex[ShapeType_Hex.Edge];
-                var tip  = shapeSettings_Hex[ShapeType_Hex.Tip];
-                var i    = shapeSettings_Hex[ShapeType_Hex.Isolate];
-
-                var previewSettings = new (List<Vector3Int> cells, Color c, bool canPreview)[]
-                {
-                    (shapeCells_Hex.Full,      full.previewColor, full.canPreview),
-                    (shapeCells_Hex.Junction5, j5.previewColor,   j5.canPreview),
-                    (shapeCells_Hex.Junction4, j4.previewColor,   j4.canPreview),
-                    (shapeCells_Hex.Junction3, j3.previewColor,   j3.canPreview),
-                    (shapeCells_Hex.Edge,      edge.previewColor, edge.canPreview),
-                    (shapeCells_Hex.Tip,       tip.previewColor,  tip.canPreview),
-                    (shapeCells_Hex.Isolate,   i.previewColor,    i.canPreview)
-                };
-                foreach (var (cells, c, canPreview) in previewSettings)
+                foreach (var (cells, c, canPreview) in GetPreviewSettings(shapeSettings_Hex, cellsDict_Hex))
                 {
                     if (canPreview) DrawCellPreviews(cells, c);
                 }
             }
-            else if (shapeSettings_Rect != null && shapeCells_Rect != null)
+            else if (shapeSettings_Rect != null && cellsDict_Rect != null)
             {
-                var v       = shapeSettings_Rect[ShapeType_Rect.VerticalEdge];
-                var h       = shapeSettings_Rect[ShapeType_Rect.HorizontalEdge];
-                var cross   = shapeSettings_Rect[ShapeType_Rect.Cross];
-                var t       = shapeSettings_Rect[ShapeType_Rect.TJunction];
-                var corner  = shapeSettings_Rect[ShapeType_Rect.Corner];
-                var isolate = shapeSettings_Rect[ShapeType_Rect.Isolate];
-
-                var previewSettingsRect = new (List<Vector3Int> cells, Color c, bool canPreview)[]
-                {
-                    (shapeCells_Rect.Vertical,   v.previewColor,       v.canPreview),
-                    (shapeCells_Rect.Horizontal, h.previewColor,       h.canPreview),
-                    (shapeCells_Rect.Cross,      cross.previewColor,   cross.canPreview),
-                    (shapeCells_Rect.TJunction,  t.previewColor ,      t.canPreview),
-                    (shapeCells_Rect.Corner,     corner.previewColor,  corner.canPreview),
-                    (shapeCells_Rect.Isolate,    isolate.previewColor, isolate.canPreview)
-                };
-                foreach (var (cells, c, canPreview) in previewSettingsRect)
+                foreach (var (cells, c, canPreview) in GetPreviewSettings(shapeSettings_Rect, cellsDict_Rect))
                 {
                     if (canPreview) DrawCellPreviews(cells, c);
                 }
             }
+        }
+
+        /// <summary>
+        /// Create preview arrays from settings of each shape
+        /// </summary>
+        private static (List<Vector3Int> cells, Color c, bool canPreview)[] GetPreviewSettings<TEnum>(
+            Dictionary<TEnum, ShapeSetting> shapeSettings,
+            Dictionary<TEnum, List<Vector3Int>> shapeCells)
+            where TEnum : System.Enum
+        {
+            var result = new (List<Vector3Int> cells, Color c, bool canPreview)[shapeCells.Count];
+            int idx = 0;
+            foreach (var kv in shapeCells)
+            {
+                var s = shapeSettings[kv.Key];
+                result[idx++] = (kv.Value, s.previewColor, s.canPreview);
+            }
+            return result;
         }
 
         /// <summary>
