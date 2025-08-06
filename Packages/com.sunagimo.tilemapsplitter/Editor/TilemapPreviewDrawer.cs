@@ -13,8 +13,6 @@ namespace TilemapSplitter
         private Tilemap tilemap;
         private Dictionary<ShapeType_Rect, ShapeSetting> shapeSettings_Rect;
         private Dictionary<ShapeType_Hex, ShapeSetting>  shapeSettings_Hex;
-        private ShapeCells_Rect shapeCells_Rect;
-        private ShapeCells_Hex  shapeCells_Hex;
         private Dictionary<ShapeType_Rect, List<Vector3Int>> cellsDict_Rect;
         private Dictionary<ShapeType_Hex, List<Vector3Int>>  cellsDict_Hex;
         private ICellDrawer     cellDrawer;
@@ -36,7 +34,6 @@ namespace TilemapSplitter
 
         public void SetShapeCells(ShapeCells_Rect sc)
         {
-            shapeCells_Rect = sc;
             cellsDict_Rect = new Dictionary<ShapeType_Rect, List<Vector3Int>>
             {
                 [ShapeType_Rect.VerticalEdge]   = sc.Vertical,
@@ -47,10 +44,8 @@ namespace TilemapSplitter
                 [ShapeType_Rect.Isolate]        = sc.Isolate
             };
         }
-
         public void SetShapeCells(ShapeCells_Hex sc)
         {
-            shapeCells_Hex = sc;
             cellsDict_Hex = new Dictionary<ShapeType_Hex, List<Vector3Int>>
             {
                 [ShapeType_Hex.Full]      = sc.Full,
@@ -63,7 +58,7 @@ namespace TilemapSplitter
             };
         }
 
-        public void Register() =>   SceneView.duringSceneGui += OnSceneGUI;
+        public void Register()   => SceneView.duringSceneGui += OnSceneGUI;
         public void Unregister() => SceneView.duringSceneGui -= OnSceneGUI;
 
         /// <summary>
@@ -89,20 +84,15 @@ namespace TilemapSplitter
             }
         }
 
-        /// <summary>
-        /// Create preview arrays from settings of each shape
-        /// </summary>
-        private static (List<Vector3Int> cells, Color c, bool canPreview)[] GetPreviewSettings<TEnum>(
-            Dictionary<TEnum, ShapeSetting> shapeSettings,
-            Dictionary<TEnum, List<Vector3Int>> shapeCells)
-            where TEnum : System.Enum
+        private static (List<Vector3Int> cells, Color c, bool canPreview)[] GetPreviewSettings<T>(
+            Dictionary<T, ShapeSetting> shapeSettings, Dictionary<T, List<Vector3Int>> shapeCells) where T : System.Enum
         {
             var result = new (List<Vector3Int> cells, Color c, bool canPreview)[shapeCells.Count];
-            int idx = 0;
+            var idx    = 0;
             foreach (var kv in shapeCells)
             {
-                var s = shapeSettings[kv.Key];
-                result[idx++] = (kv.Value, s.previewColor, s.canPreview);
+                var setting = shapeSettings[kv.Key];
+                result[idx++] = (kv.Value, setting.previewColor, setting.canPreview);
             }
             return result;
         }
@@ -124,9 +114,6 @@ namespace TilemapSplitter
             void Draw(List<Vector3Int> cells, Color c);
         }
 
-        /// <summary>
-        /// Draw rectangular grids
-        /// </summary>
         private class CellDrawer_Rect : ICellDrawer
         {
             private readonly Tilemap tilemap;
@@ -152,9 +139,6 @@ namespace TilemapSplitter
             }
         }
 
-        /// <summary>
-        /// Draw hexagonal grids
-        /// </summary>
         private class CellDrawer_Hex : ICellDrawer
         {
             private readonly Tilemap tilemap;
