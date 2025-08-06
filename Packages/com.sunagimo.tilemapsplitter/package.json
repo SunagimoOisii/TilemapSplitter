@@ -8,5 +8,8 @@
         "name": "Fukada_Ryuto",
         "url": "https://github.com/SunagimoOisii"
     },
-    "license": "MIT"
+    "license": "MIT",
+    "dependencies": {
+        "com.unity.editorcoroutines": "1.0.0"
+    }
 }

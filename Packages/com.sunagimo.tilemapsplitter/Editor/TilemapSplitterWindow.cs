@@ -5,6 +5,7 @@ namespace TilemapSplitter
     using System.Collections.Generic;
     using UnityEditor;
     using UnityEditor.UIElements;
+    using Unity.EditorCoroutines.Editor;
     using UnityEngine;
     using UnityEngine.Tilemaps;
     using UnityEngine.UIElements;
@@ -153,7 +154,7 @@ namespace TilemapSplitter
                     EditorUtility.DisplayDialog("Error", "The split target isn't set", "OK");
                     return;
                 }
-                StartCoroutine(SplitCoroutine());
+                EditorCoroutineUtility.StartCoroutine(SplitCoroutine(), this);
             });
             splitB.text            = "Execute Splitting";
             splitB.style.marginTop = 10;
@@ -168,16 +169,6 @@ namespace TilemapSplitter
             separator.style.marginTop         = 5;
             separator.style.marginBottom      = 5;
             parentContainer.Add(separator);
-        }
-
-        private static void StartCoroutine(IEnumerator e)
-        {
-            EditorApplication.update += Update;
-
-            void Update()
-            {
-                if (e.MoveNext() == false) EditorApplication.update -= Update;
-            }
         }
 
         private IEnumerator SplitCoroutine()
@@ -195,7 +186,7 @@ namespace TilemapSplitter
         private void RefreshPreview()
         {
             if (source == null || isRefreshingPreview || layoutStrategy == null) return;
-            StartCoroutine(RefreshPreviewCoroutine());
+            EditorCoroutineUtility.StartCoroutine(RefreshPreviewCoroutine(), this);
 
             IEnumerator RefreshPreviewCoroutine()
             {
