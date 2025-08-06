@@ -77,8 +77,8 @@ namespace TilemapSplitter
 
             var layout = source.layoutGrid.cellLayout;
             layoutStrategy = (layout == GridLayout.CellLayout.Hexagon)
-                ? new HexLayoutStrategy(settingsDict_hex, RefreshPreview)
-                : new RectLayoutStrategy(settingsDict_rect, RefreshPreview);
+                ? new LayoutStrategy_Hex(settingsDict_hex, RefreshPreview)
+                : new LayoutStrategy_Rect(settingsDict_rect, RefreshPreview);
 
             layoutStrategy.CreateMergeEdgeToggle(c, () => canMergeEdges, v => canMergeEdges = v);
             layoutStrategy.CreateShapeFoldouts(c);
@@ -161,7 +161,7 @@ namespace TilemapSplitter
             container.Add(splitB);
         }
 
-        internal static void AddHorizontalSeparator(VisualElement parentContainer)
+        public static void AddHorizontalSeparator(VisualElement parentContainer)
         {
             var separator = new VisualElement();
             separator.style.borderBottomWidth = 1;

@@ -17,25 +17,19 @@ namespace TilemapSplitter
         private ShapeCells_Hex  shapeCells_Hex;
         private ICellDrawer     cellDrawer;
 
-        /// <summary>
-        /// Initialize for rectangular tiles
-        /// </summary>
-        public void Setup_Rect(Tilemap source, Dictionary<ShapeType_Rect, ShapeSetting> settings)
+        public void Setup(Tilemap source, Dictionary<ShapeType_Rect, ShapeSetting> settings)
         {
             tilemap            = source;
             shapeSettings_Rect = settings;
             shapeSettings_Hex  = null;
-            cellDrawer         = new RectCellDrawer(tilemap);
+            cellDrawer         = new CellDrawer_Rect(tilemap);
         }
-        /// <summary>
-        /// Initialize for hexagonal tiles
-        /// </summary>
-        public void Setup_Hex(Tilemap source, Dictionary<ShapeType_Hex, ShapeSetting> settings)
+        public void Setup(Tilemap source, Dictionary<ShapeType_Hex, ShapeSetting> settings)
         {
             tilemap            = source;
             shapeSettings_Hex  = settings;
             shapeSettings_Rect = null;
-            cellDrawer         = new HexCellDrawer(tilemap);
+            cellDrawer         = new CellDrawer_Hex(tilemap);
         }
 
         public void SetShapeCells(ShapeCells_Rect sc) => shapeCells_Rect = sc;
@@ -121,10 +115,10 @@ namespace TilemapSplitter
         /// <summary>
         /// Draw rectangular grids
         /// </summary>
-        private class RectCellDrawer : ICellDrawer
+        private class CellDrawer_Rect : ICellDrawer
         {
             private readonly Tilemap tilemap;
-            public RectCellDrawer(Tilemap tilemap) => this.tilemap = tilemap;
+            public CellDrawer_Rect(Tilemap tilemap) => this.tilemap = tilemap;
 
             public void Draw(List<Vector3Int> cells, Color c)
             {
@@ -149,24 +143,24 @@ namespace TilemapSplitter
         /// <summary>
         /// Draw hexagonal grids
         /// </summary>
-        private class HexCellDrawer : ICellDrawer
+        private class CellDrawer_Hex : ICellDrawer
         {
             private readonly Tilemap tilemap;
             private readonly bool    isPointTop;
 
-            public HexCellDrawer(Tilemap tilemap)
+            public CellDrawer_Hex(Tilemap tilemap)
             {
                 this.tilemap = tilemap;
-                var center = tilemap.GetCellCenterWorld(Vector3Int.zero);
-                var right  = tilemap.GetCellCenterWorld(Vector3Int.right);
-                isPointTop = Mathf.Approximately(center.y, right.y); //Determine if top is a point
+                var center   = tilemap.GetCellCenterWorld(Vector3Int.zero);
+                var right    = tilemap.GetCellCenterWorld(Vector3Int.right);
+                isPointTop   = Mathf.Approximately(center.y, right.y); //Determine if top is a point
             }
 
             public void Draw(List<Vector3Int> cells, Color c)
             {
-                var size = tilemap.layoutGrid.cellSize;
-                float halfW = size.x * 0.5f;
-                float halfH = size.y * 0.5f;
+                var size  = tilemap.layoutGrid.cellSize;
+                var halfW = size.x * 0.5f;
+                var halfH = size.y * 0.5f;
 
                 foreach (var cell in cells)
                 {

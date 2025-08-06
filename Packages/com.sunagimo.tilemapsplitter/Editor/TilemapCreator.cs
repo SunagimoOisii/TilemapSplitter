@@ -10,7 +10,7 @@ namespace TilemapSplitter
     /// </summary>
     internal static class TilemapCreator
     {
-        // For rectangular and isolated cells
+        //For rectangular and isolated cells
         private const string VerticalObjName   = "VerticalEdge";
         private const string HorizontalObjName = "HorizontalEdge";
         private const string MergeObjName      = "EdgeTiles";
@@ -18,7 +18,7 @@ namespace TilemapSplitter
         private const string TJunctionObjName  = "TJunctionTiles";
         private const string CornerObjName     = "CornerTiles";
         private const string IsolateObjName    = "IsolateTiles";
-        // For hexagonal cells
+        //For hexagonal cells
         private const string FullObjName      = "FullTiles";
         private const string Junction5ObjName = "Junction5Tiles";
         private const string Junction4ObjName = "Junction4Tiles";
@@ -29,7 +29,7 @@ namespace TilemapSplitter
         /// <summary>
         /// Generate tilemaps for each shape in a rectangular grid
         /// </summary>
-        public static void GenerateSplitTilemaps_Rect(Tilemap source, ShapeCells_Rect sc,
+        public static void GenerateSplitTilemaps(Tilemap source, ShapeCells_Rect sc,
             Dictionary<ShapeType_Rect, ShapeSetting> settings, bool mergeEdges, bool canAttachCollider)
         {
             if (mergeEdges)
@@ -64,7 +64,7 @@ namespace TilemapSplitter
         /// <summary>
         /// Generate tilemaps for each shape in a hexagonal grid
         /// </summary>
-        public static void GenerateSplitTilemaps_Hex(Tilemap source, ShapeCells_Hex sc,
+        public static void GenerateSplitTilemaps(Tilemap source, ShapeCells_Hex sc,
             Dictionary<ShapeType_Hex, ShapeSetting> settings, bool canAttachCollider)
         {
             var hexShapes = new[]
@@ -135,7 +135,7 @@ namespace TilemapSplitter
 
                 obj.AddComponent<CompositeCollider2D>();
             }
-            Undo.RegisterCreatedObjectUndo(obj, "GenerateSplitTilemaps_Rect " + name);
+            Undo.RegisterCreatedObjectUndo(obj, "GenerateSplitTilemaps " + name);
         }
 
         /// <summary>

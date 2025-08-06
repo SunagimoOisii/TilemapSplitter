@@ -24,7 +24,7 @@ namespace TilemapSplitter
     /// <summary>
     /// Layout strategy for rectangular grids
     /// </summary>
-    internal class RectLayoutStrategy : ICellLayoutStrategy
+    internal class LayoutStrategy_Rect : ICellLayoutStrategy
     {
         private readonly Dictionary<ShapeType_Rect, ShapeSetting> settingsDict;
         private readonly Action refreshPreview;
@@ -37,7 +37,7 @@ namespace TilemapSplitter
         private Foldout cornerFoldOut;
         private Foldout isolateFoldOut;
 
-        public RectLayoutStrategy(Dictionary<ShapeType_Rect, ShapeSetting> settings, Action refreshPreview)
+        public LayoutStrategy_Rect(Dictionary<ShapeType_Rect, ShapeSetting> settings, Action refreshPreview)
         {
             settingsDict        = settings;
             this.refreshPreview = refreshPreview;
@@ -64,10 +64,10 @@ namespace TilemapSplitter
                 (ShapeType_Rect.Corner,         "Corner"),
                 (ShapeType_Rect.Isolate,        "Isolate")
             };
-            foreach (var info in infos)
+            foreach (var (type, title) in infos)
             {
-                var fold = CreateFoldout(container, info.type, info.title);
-                switch (info.type)
+                var fold = CreateFoldout(container, type, title);
+                switch (type)
                 {
                     case ShapeType_Rect.VerticalEdge:   verticalEdgeFoldOut   = fold; break;
                     case ShapeType_Rect.HorizontalEdge: horizontalEdgeFoldOut = fold; break;
@@ -153,10 +153,7 @@ namespace TilemapSplitter
             if      (opt.HasFlag(ShapeFlags.VerticalEdge))   msg = helpV;
             else if (opt.HasFlag(ShapeFlags.HorizontalEdge)) msg = helpH;
 
-            if (string.IsNullOrEmpty(msg) == false)
-            {
-                fold.Add(new HelpBox(msg, HelpBoxMessageType.Info));
-            }
+            if (msg != null) fold.Add(new HelpBox(msg, HelpBoxMessageType.Info));
 
             bool isVisible = opt.HasFlag(ShapeFlags.Independent);
             previewToggle.visible = isVisible;
@@ -166,17 +163,17 @@ namespace TilemapSplitter
         public IEnumerator<bool> Classify(Tilemap source)
         {
             shapeCells = new ShapeCells_Rect();
-            return TileShapeClassifier.ClassifyCoroutine_Rect(source, settingsDict, shapeCells);
+            return TileShapeClassifier.ClassifyCoroutine(source, settingsDict, shapeCells);
         }
 
         public void GenerateSplitTilemaps(Tilemap source, bool canMergeEdges, bool canAttachCollider)
         {
-            TilemapCreator.GenerateSplitTilemaps_Rect(source, shapeCells, settingsDict, canMergeEdges, canAttachCollider);
+            TilemapCreator.GenerateSplitTilemaps(source, shapeCells, settingsDict, canMergeEdges, canAttachCollider);
         }
 
         public void SetupPreview(Tilemap source, TilemapPreviewDrawer drawer)
         {
-            drawer.Setup_Rect(source, settingsDict);
+            drawer.Setup(source, settingsDict);
         }
 
         public void SetShapeCellsToPreview(TilemapPreviewDrawer drawer)
@@ -205,7 +202,7 @@ namespace TilemapSplitter
     /// <summary>
     /// Layout strategy for hexagonal grids
     /// </summary>
-    internal class HexLayoutStrategy : ICellLayoutStrategy
+    internal class LayoutStrategy_Hex : ICellLayoutStrategy
     {
         private readonly Dictionary<ShapeType_Hex, ShapeSetting> settingsDict;
         private readonly Action refreshPreview;
@@ -219,7 +216,7 @@ namespace TilemapSplitter
         private Foldout tipFoldOut;
         private Foldout hexIsolateFoldOut;
 
-        public HexLayoutStrategy(Dictionary<ShapeType_Hex, ShapeSetting> settings, Action refreshPreview)
+        public LayoutStrategy_Hex(Dictionary<ShapeType_Hex, ShapeSetting> settings, Action refreshPreview)
         {
             settingsDict        = settings;
             this.refreshPreview = refreshPreview;
@@ -295,17 +292,17 @@ namespace TilemapSplitter
         public IEnumerator<bool> Classify(Tilemap source)
         {
             shapeCells = new ShapeCells_Hex();
-            return TileShapeClassifier.ClassifyCoroutine_Hex(source, settingsDict, shapeCells);
+            return TileShapeClassifier.ClassifyCoroutine(source, settingsDict, shapeCells);
         }
 
         public void GenerateSplitTilemaps(Tilemap source, bool canMergeEdges, bool canAttachCollider)
         {
-            TilemapCreator.GenerateSplitTilemaps_Hex(source, shapeCells, settingsDict, canAttachCollider);
+            TilemapCreator.GenerateSplitTilemaps(source, shapeCells, settingsDict, canAttachCollider);
         }
 
         public void SetupPreview(Tilemap source, TilemapPreviewDrawer drawer)
         {
-            drawer.Setup_Hex(source, settingsDict);
+            drawer.Setup(source, settingsDict);
         }
 
         public void SetShapeCellsToPreview(TilemapPreviewDrawer drawer)
