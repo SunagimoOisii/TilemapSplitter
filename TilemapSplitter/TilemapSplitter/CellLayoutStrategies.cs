@@ -1,9 +1,7 @@
 namespace TilemapSplitter
 {
     using System;
-    using System.Collections;
     using System.Collections.Generic;
-    using UnityEditor;
     using UnityEditor.UIElements;
     using UnityEngine;
     using UnityEngine.Tilemaps;
@@ -41,7 +39,7 @@ namespace TilemapSplitter
 
         public RectLayoutStrategy(Dictionary<ShapeType_Rect, ShapeSetting> settings, Action refreshPreview)
         {
-            settingsDict       = settings;
+            settingsDict        = settings;
             this.refreshPreview = refreshPreview;
         }
 
