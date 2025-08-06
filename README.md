@@ -59,8 +59,9 @@ https://github.com/SunagimoOisii/TilemapSplitter.git?path=/Packages/com.sunagimo
 
 <a name="manual-install"></a>
 ### Manual Install
-1. Clone this repository and place the `TilemapSplitter` folder under your `Assets`
-2. Restart Unity and **Tools/TilemapSplitter** will appear in the menu
+1. Clone this repository
+2. Copy the `Editor` folder from `Packages/com.sunagimo.tilemapsplitter` into your project's `Assets/TilemapSplitter`
+3. Restart Unity and **Tools/TilemapSplitter** will appear in the menu
 
 <a name="usage"></a>
 ## Usage
@@ -156,7 +157,7 @@ https://github.com/SunagimoOisii/TilemapSplitter.git?path=/Packages/com.sunagimo
 
 <a name="手動インストール"></a>
 ### 手動インストール
-1. `TilemapSplitter` フォルダーを `Assets` 配下へ配置します
+1. リポジトリをクローンし、`Packages/com.sunagimo.tilemapsplitter` 内の `Editor` フォルダーをプロジェクトの `Assets/TilemapSplitter` 配下へコピーします
 2. Unity を再起動するとメニューに **Tools/TilemapSplitter** が追加されます
 
 <a name="使い方"></a>
