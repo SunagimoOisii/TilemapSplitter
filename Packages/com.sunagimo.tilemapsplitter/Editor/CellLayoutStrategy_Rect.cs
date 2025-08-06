@@ -146,10 +146,11 @@ namespace TilemapSplitter
             colField.visible      = isVisible;
         }
 
-        public IEnumerator<bool> Classify(Tilemap source)
+        public IEnumerator<bool> Classify(Tilemap source, IProgress<float> progress = null,
+            Func<bool> isCancelled = null)
         {
             shapeCells = new ShapeCells_Rect();
-            return TileShapeClassifier.ClassifyCoroutine(source, settingsDict, shapeCells);
+            return TileShapeClassifier.ClassifyCoroutine(source, settingsDict, shapeCells, 100, progress, isCancelled);
         }
 
         public void GenerateSplitTilemaps(Tilemap source, bool canMergeEdges, bool canAttachCollider)
