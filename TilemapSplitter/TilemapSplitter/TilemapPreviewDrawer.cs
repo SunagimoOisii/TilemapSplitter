@@ -6,7 +6,7 @@ namespace TilemapSplitter
     using UnityEngine.Tilemaps;
 
     /// <summary>
-    /// Draw classification results in SceneView with colors.
+    /// Draw classification results in SceneView with colors
     /// </summary>
     internal class TilemapPreviewDrawer
     {
@@ -18,7 +18,7 @@ namespace TilemapSplitter
         private ICellDrawer     cellDrawer;
 
         /// <summary>
-        /// Initialize for rectangular tiles.
+        /// Initialize for rectangular tiles
         /// </summary>
         public void Setup_Rect(Tilemap source, Dictionary<ShapeType_Rect, ShapeSetting> settings)
         {
@@ -28,7 +28,7 @@ namespace TilemapSplitter
             cellDrawer         = new RectCellDrawer(tilemap);
         }
         /// <summary>
-        /// Initialize for hexagonal tiles.
+        /// Initialize for hexagonal tiles
         /// </summary>
         public void Setup_Hex(Tilemap source, Dictionary<ShapeType_Hex, ShapeSetting> settings)
         {
@@ -38,26 +38,14 @@ namespace TilemapSplitter
             cellDrawer         = new HexCellDrawer(tilemap);
         }
 
-        /// <summary>
-        /// Set drawing targets for rectangular cells.
-        /// </summary>
         public void SetShapeCells(ShapeCells_Rect sc) => shapeCells_Rect = sc;
-        /// <summary>
-        /// Set drawing targets for hexagonal cells.
-        /// </summary>
         public void SetShapeCells(ShapeCells_Hex sc) => shapeCells_Hex = sc;
 
-        /// <summary>
-        /// Start drawing to SceneView.
-        /// </summary>
         public void Register() =>   SceneView.duringSceneGui += OnSceneGUI;
-        /// <summary>
-        /// Stop drawing to SceneView.
-        /// </summary>
         public void Unregister() => SceneView.duringSceneGui -= OnSceneGUI;
 
         /// <summary>
-        /// Draw classified cells.
+        /// Draw classified cells
         /// </summary>
         private void OnSceneGUI(SceneView sv)
         {
@@ -114,7 +102,7 @@ namespace TilemapSplitter
         }
 
         /// <summary>
-        /// Draw specified cells with polygons.
+        /// Draw specified cells with polygons
         /// </summary>
         private void DrawCellPreviews(List<Vector3Int> cells, Color c)
         {
@@ -123,7 +111,7 @@ namespace TilemapSplitter
         }
 
         /// <summary>
-        /// Drawing strategy for each grid type.
+        /// Drawing strategy for each grid type
         /// </summary>
         private interface ICellDrawer
         {
@@ -131,7 +119,7 @@ namespace TilemapSplitter
         }
 
         /// <summary>
-        /// Draw rectangular grids.
+        /// Draw rectangular grids
         /// </summary>
         private class RectCellDrawer : ICellDrawer
         {
@@ -152,14 +140,14 @@ namespace TilemapSplitter
                     var p2 = center + right * 0.5f + up * 0.5f;
                     var p3 = center - right * 0.5f + up * 0.5f;
 
-                    // Draw by connecting the four corners of the cell
+                    //Draw by connecting the four corners of the cell
                     Handles.DrawAAConvexPolygon(p0, p1, p2, p3);
                 }
             }
         }
 
         /// <summary>
-        /// Draw hexagonal grids.
+        /// Draw hexagonal grids
         /// </summary>
         private class HexCellDrawer : ICellDrawer
         {
@@ -171,7 +159,7 @@ namespace TilemapSplitter
                 this.tilemap = tilemap;
                 var center = tilemap.GetCellCenterWorld(Vector3Int.zero);
                 var right  = tilemap.GetCellCenterWorld(Vector3Int.right);
-                isPointTop = Mathf.Approximately(center.y, right.y); // Determine if top is a point
+                isPointTop = Mathf.Approximately(center.y, right.y); //Determine if top is a point
             }
 
             public void Draw(List<Vector3Int> cells, Color c)
@@ -190,7 +178,7 @@ namespace TilemapSplitter
                     {
                         float angleDeg = 60f * i + startDeg;
                         float rad = Mathf.Deg2Rad * angleDeg;
-                        // Calculate each vertex position of the hexagon
+                        //Calculate each vertex position of the hexagon
                         verts[i] = new Vector3(center.x + halfW * Mathf.Cos(rad),
                             center.y + halfH * Mathf.Sin(rad),
                             center.z);

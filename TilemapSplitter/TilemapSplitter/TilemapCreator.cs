@@ -27,7 +27,7 @@ namespace TilemapSplitter
         private const string TipObjName       = "TipTiles";
 
         /// <summary>
-        /// Generate tilemaps for each shape in a rectangular grid.
+        /// Generate tilemaps for each shape in a rectangular grid
         /// </summary>
         public static void GenerateSplitTilemaps_Rect(Tilemap source, ShapeCells_Rect sc,
             Dictionary<ShapeType_Rect, ShapeSetting> settings, bool mergeEdges, bool canAttachCollider)
@@ -55,7 +55,6 @@ namespace TilemapSplitter
                 (sc.Corner,    ShapeType_Rect.Corner,    CornerObjName),
                 (sc.Isolate,   ShapeType_Rect.Isolate,   IsolateObjName)
             };
-
             foreach (var (cells, type, objName) in rectShapes)
             {
                 CreateTilemapObjForCells(source, cells, settings[type], objName, canAttachCollider);
@@ -63,7 +62,7 @@ namespace TilemapSplitter
         }
 
         /// <summary>
-        /// Generate tilemaps for each shape in a hexagonal grid.
+        /// Generate tilemaps for each shape in a hexagonal grid
         /// </summary>
         public static void GenerateSplitTilemaps_Hex(Tilemap source, ShapeCells_Hex sc,
             Dictionary<ShapeType_Hex, ShapeSetting> settings, bool canAttachCollider)
@@ -78,7 +77,6 @@ namespace TilemapSplitter
                 (sc.Tip,       ShapeType_Hex.Tip,       TipObjName),
                 (sc.Isolate,   ShapeType_Hex.Isolate,   IsolateObjName)
             };
-
             foreach (var (cells, type, objName) in hexShapes)
             {
                 CreateTilemapObjForCells(source, cells, settings[type], objName, canAttachCollider);
@@ -86,21 +84,23 @@ namespace TilemapSplitter
         }
 
         /// <summary>
-        /// Create a new tilemap by duplicating tiles in specified cells.
+        /// Create a new tilemap by duplicating tiles in specified cells
         /// </summary>
         private static void CreateTilemapObjForCells(Tilemap source,
             List<Vector3Int> cells, ShapeSetting setting, string name, bool canAttachCollider)
         {
             if (cells.Count == 0) return;
 
-            // Skip generation if the Independent flag is not set when required
-            if (RequiresIndependent(name) &&
+            //Skip generation if a tile type requires an independence flag but it is not set
+            if ((name is CrossObjName     or TJunctionObjName or CornerObjName    or IsolateObjName or
+                         FullObjName      or Junction5ObjName or Junction4ObjName or
+                         Junction3ObjName or HexEdgeObjName   or TipObjName) &&
                 setting.flags.HasFlag(ShapeFlags.Independent) == false) return;
 
-            // Create a GameObject with Tilemap and apply Transform and Layer/Tag
+            //Create a GameObject with Tilemap and apply Transform and Layer, Tag
             var obj = CreateTilemapObject(name, setting, source);
 
-            // Inherit settings if the source has a TilemapRenderer
+            //Inherit settings if the source has a TilemapRenderer
             var renderer = obj.GetComponent<TilemapRenderer>();
             if (source.TryGetComponent<TilemapRenderer>(out var oriRenderer))
             {
@@ -111,11 +111,10 @@ namespace TilemapSplitter
             }
             else
             {
-                Debug.LogWarning(
-                    "Source Tilemap lacks TilemapRenderer; generated object uses default settings.");
+                Debug.LogWarning("Source Tilemap lacks TilemapRenderer; generated object uses default settings.");
             }
 
-            // Copy tile data (sprite, color, transform)
+            //Copy tile data(sprite, color, transform)
             var tm = obj.GetComponent<Tilemap>();
             tm.tileAnchor = source.tileAnchor;
             foreach (var cell in cells)
@@ -127,7 +126,7 @@ namespace TilemapSplitter
 
             if (canAttachCollider)
             {
-                // Attach collider-related components
+                //Attach collider-related components
                 var tmCol = obj.AddComponent<TilemapCollider2D>();
                 tmCol.compositeOperation = Collider2D.CompositeOperation.Merge;
 
@@ -136,21 +135,17 @@ namespace TilemapSplitter
 
                 obj.AddComponent<CompositeCollider2D>();
             }
-
             Undo.RegisterCreatedObjectUndo(obj, "GenerateSplitTilemaps_Rect " + name);
         }
 
         /// <summary>
-        /// Create a GameObject with Tilemap and TilemapRenderer.
+        /// Create a GameObject with Tilemap and TilemapRenderer
         /// </summary>
         private static GameObject CreateTilemapObject(string name, ShapeSetting setting, Tilemap source)
         {
-            var obj = new GameObject(name, typeof(Tilemap), typeof(TilemapRenderer))
-            {
-                layer = setting.layer,
-                tag   = setting.tag
-            };
-
+            var obj   = new GameObject(name, typeof(Tilemap), typeof(TilemapRenderer));
+            obj.layer = setting.layer;
+            obj.name  = name;
             obj.transform.localScale = source.transform.localScale;
             obj.transform.SetLocalPositionAndRotation(source.transform.localPosition,
                 source.transform.localRotation);
@@ -158,13 +153,5 @@ namespace TilemapSplitter
 
             return obj;
         }
-
-        /// <summary>
-        /// Determine whether a tile name requires the Independent flag.
-        /// </summary>
-        private static bool RequiresIndependent(string name) =>
-            name is CrossObjName or TJunctionObjName or CornerObjName or IsolateObjName
-                or FullObjName or Junction5ObjName or Junction4ObjName
-                or Junction3ObjName or HexEdgeObjName or TipObjName;
     }
 }

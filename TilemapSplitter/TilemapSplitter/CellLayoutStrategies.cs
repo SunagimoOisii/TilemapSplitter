@@ -8,7 +8,7 @@ namespace TilemapSplitter
     using UnityEngine.UIElements;
 
     /// <summary>
-    /// Strategy interface that provides processing based on cell layout.
+    /// Strategy interface that provides processing based on cell layout
     /// </summary>
     internal interface ICellLayoutStrategy
     {
@@ -22,7 +22,7 @@ namespace TilemapSplitter
     }
 
     /// <summary>
-    /// Layout strategy for rectangular grids.
+    /// Layout strategy for rectangular grids
     /// </summary>
     internal class RectLayoutStrategy : ICellLayoutStrategy
     {
@@ -203,7 +203,7 @@ namespace TilemapSplitter
     }
 
     /// <summary>
-    /// Layout strategy for hexagonal grids.
+    /// Layout strategy for hexagonal grids
     /// </summary>
     internal class HexLayoutStrategy : ICellLayoutStrategy
     {
@@ -221,7 +221,7 @@ namespace TilemapSplitter
 
         public HexLayoutStrategy(Dictionary<ShapeType_Hex, ShapeSetting> settings, Action refreshPreview)
         {
-            settingsDict = settings;
+            settingsDict        = settings;
             this.refreshPreview = refreshPreview;
         }
 

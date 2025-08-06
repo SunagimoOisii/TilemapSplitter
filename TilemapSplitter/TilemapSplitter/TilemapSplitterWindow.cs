@@ -11,7 +11,7 @@ namespace TilemapSplitter
     using UnityEngine.UIElements;
 
     /// <summary>
-    /// Editor window that splits a Tilemap into multiple Tilemaps based on cell layout.
+    /// Editor window that splits a Tilemap into multiple Tilemaps based on cell layout
     /// </summary>
     internal class TilemapSplitterWindow : EditorWindow
     {
@@ -281,7 +281,8 @@ namespace TilemapSplitter
                 setting.layer      = EditorPrefs.GetInt(CreateKey($"{name}.Layer"), setting.layer);
                 setting.tag        = EditorPrefs.GetString(CreateKey($"{name}.Tag"), setting.tag);
                 setting.canPreview = EditorPrefs.GetBool(CreateKey($"{name}.CanPreview"), setting.canPreview);
-                string col = EditorPrefs.GetString(CreateKey($"{name}.Color"), ColorUtility.ToHtmlStringRGBA(setting.previewColor));
+                string col = EditorPrefs.GetString(CreateKey($"{name}.Color"),
+                    ColorUtility.ToHtmlStringRGBA(setting.previewColor));
                 if (ColorUtility.TryParseHtmlString("#" + col, out var c))
                 {
                     setting.previewColor = c;
@@ -296,7 +297,8 @@ namespace TilemapSplitter
                 setting.layer      = EditorPrefs.GetInt(CreateKey($"Hex.{name}.Layer"), setting.layer);
                 setting.tag        = EditorPrefs.GetString(CreateKey($"Hex.{name}.Tag"), setting.tag);
                 setting.canPreview = EditorPrefs.GetBool(CreateKey($"Hex.{name}.CanPreview"), setting.canPreview);
-                string col = EditorPrefs.GetString(CreateKey($"Hex.{name}.Color"), ColorUtility.ToHtmlStringRGBA(setting.previewColor));
+                string col = EditorPrefs.GetString(CreateKey($"Hex.{name}.Color"),
+                    ColorUtility.ToHtmlStringRGBA(setting.previewColor));
                 if (ColorUtility.TryParseHtmlString("#" + col, out var c))
                 {
                     setting.previewColor = c;

@@ -97,7 +97,7 @@ namespace TilemapSplitter
         }
 
         /// <summary>
-        /// Collect all non-empty cells from the Tilemap.
+        /// Collect all non-empty cells from the Tilemap
         /// </summary>
         private static HashSet<Vector3Int> CollectOccupiedCells(Tilemap source)
         {
@@ -126,7 +126,8 @@ namespace TilemapSplitter
             return occupiedCells;
         }
 
-        private static IEnumerator<bool> ProcessCells(HashSet<Vector3Int> occupiedCells, int batch, string progressTitle, Action<Vector3Int> perCell)
+        private static IEnumerator<bool> ProcessCells(HashSet<Vector3Int> occupiedCells, int batch,
+            string progressTitle, Action<Vector3Int> perCell)
         {
             bool isCancelled = false;
             try
@@ -142,9 +143,7 @@ namespace TilemapSplitter
                     {
                         float progress = (float)processed / total;
                         isCancelled = EditorUtility.DisplayCancelableProgressBar(
-                            progressTitle,
-                            $"Classifying... {processed}/{total}",
-                            progress);
+                            progressTitle, $"Classifying... {processed}/{total}", progress);
                         yield return isCancelled;
                         if (isCancelled) yield break;
                     }
