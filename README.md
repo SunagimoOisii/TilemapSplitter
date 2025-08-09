@@ -4,193 +4,139 @@
 
 <a name="english"></a>
 # English
-TilemapSplitter is a Unity editor extension that automatically classifies tiles in a Tilemap based on adjacency and reconstructs them into multiple Tilemaps for specific purposes.
-
 ## Table of Contents
-- [Features](#features)
-- [Installation](#installation)
-  - [Using UPM](#using-upm)
-  - [Manual Install](#manual-install)
-- [Usage](#usage)
-- [Notes on Isometric Layouts](#notes-on-isometric-layouts)
-- [Requirements](#requirements)
-- [License](#license)
+- [What this tool does](#What_this_tool_does)
+- [What it does better than other tools](#What_it_does_better_than_other_tools)
+- [Installation](#Installation)
+- [Usage](#Usage)
+- [Notes](#Notes)
 
-<a name="features"></a>
-## Features
-- Launch the dedicated window via **Tools/TilemapSplitter**
-- Classify tiles by number of neighbors
-  - For Rectangular or Isometric layouts:
-    - Cross (connected in all four directions)
-    - T Junction (three connections)
-    - Corner (two connections forming a corner)
-    - VerticalEdge / HorizontalEdge (two connections in a straight line)
-    - Isolate (no connections)
-  - For Hexagon layout:
-    - Full (six connections)
-    - Junction5 (five connections)
-    - Junction4 (four connections)
-    - Junction3 (three connections)
-    - Edge (two connections)
-    - Tip (one connection)
-    - Isolate (no connections)
-- Each category allows configuring layer, tag and preview color
-- Optional checkboxes:
-  - **Attach Colliders** adds TilemapCollider2D, a static Rigidbody2D and CompositeCollider2D to each generated Tilemap
-  - **Merge VerticalEdge, HorizontalEdge** combines VerticalEdge and HorizontalEdge into a single Tilemap
-- Categories like Cross can be merged into VerticalEdge or HorizontalEdge via `Which obj to add to`
-- After execution, new Tilemap objects are created per category
-- Enable preview to visualize classification results in the Scene
-- Hexagon layout preview supports both PointTop and FlatTop orientations
-- Settings persist via EditorPrefs even after closing the window
-- A reset button is available below the Split Tilemap field
+<a name="What_this_tool_does"></a>
+## What this tool does
+TilemapSplitter is a Unity editor extension that **classifies tiles by adjacency** on a given Tilemap and **reconstructs multiple Tilemaps per category** for distinct purposes.
+* **Classify by number, direction of neighbors**
+  * **Rect, Isometric**: Cross, T-Junction, Corner, VerticalEdge, HorizontalEdge, Isolate
+  * **Hexagon**: Full(6), Junction5, Junction4, Junction3, Edge(2), Tip(1), Isolate(0)
+* Per-category settings: Sorting Layer, Order in Layer, Tag, Preview color
+* Preview the classification in Scene view(color overlay)
+* **Options**:
+  * **Attach Colliders**: add TilemapCollider2D + static Rigidbody2D + CompositeCollider2D to each generated Tilemap
+  * **Merge VerticalEdge, HorizontalEdge**: combine both edge categories into one Tilemap(VerticalEdge settings take priority)
+* Category merge rule(“Which obj to add to”): e.g., merge Cross into VerticalEdge or HorizontalEdge
 
-<a name="installation"></a>
+<a name="What_it_does_better_than_other_tools"></a>
+## What it does better than other tools
+* **Post-processing at scale**: Works on an already drawn Tilemap to split by connectivity in one pass—complements RuleTile, auto-tiling(which focus on placement time)
+* **One-screen workflow**: Configure per category → preview → execute, without custom scripts or juggling multiple windows
+* **Collider-ready output**: Instantly produce physics-only or visual-only Tilemaps by toggling options
+* **GUI-level merge rules**: Non-destructive category remapping (e.g., merge Cross into VerticalEdge) without code
+> Note: Some of these are possible with custom scripts or complex setups in other tools, but TilemapSplitter focuses on making them **turn-key and repeatable** for finished maps.
+
+<a name="Installation"></a>
 ## Installation
-<a name="using-upm"></a>
-### Using UPM
-1. Open **Window > Package Manager** in Unity
-2. Click the **+** button and select **Add package from git URL...**
-3. Enter the following URL:
+### Using UPM(Git URL)
+1. Open Window → Package Manager
+2. Plus Button → Add package from git URL…
+3. Paste:
 ```
 https://github.com/SunagimoOisii/TilemapSplitter.git?path=/Packages/com.sunagimo.tilemapsplitter
 ```
-4. Press **Add** to install the package.
 
-<a name="manual-install"></a>
-### Manual Install
-1. Clone this repository
-2. Copy the `Editor` folder from `Packages/com.sunagimo.tilemapsplitter` into your project's `Assets/TilemapSplitter`
-3. Restart Unity and **Tools/TilemapSplitter** will appear in the menu
+### Manual install
+1. Clone the repo
+2. Copy Packages/com.sunagimo.tilemapsplitter/Editor to your project (e.g. Assets/TilemapSplitter)
+3. Restart Unity → Tools/TilemapSplitter appears
 
-<a name="usage"></a>
+<a name="Usage"></a>
 ## Usage
-1. Open the window via **Tools/TilemapSplitter**
-2. Set the target Tilemap in `Split Tilemap`
-3. Configure layer, tag and preview color for each category
-4. Enable optional checkboxes as needed:
-   - **Attach Colliders**: add TilemapCollider2D, a static Rigidbody2D and CompositeCollider2D to each generated Tilemap
-   - **Merge VerticalEdge, HorizontalEdge**: combine VerticalEdge and HorizontalEdge into a single Tilemap (VerticalEdge settings take priority)
-5. Press `Execute Splitting` to generate new Tilemaps based on the classification
-6. Use the button under `Split Tilemap` to reset settings
+1. Open Tools → TilemapSplitter
+2. Assign your target Tilemap in Split Tilemap
+3. Adjust per-category: Layer, Tag, Preview color
+4. Optional:
+  * Attach Colliders to generated Tilemaps
+  * Merge VerticalEdge, HorizontalEdge into a single Tilemap
+  * Use Which obj to add to to fold categories(e.g., Cross → VerticalEdge)
+5. Click Execute Splitting → Tilemaps are generated per category
+6. Use Reset(below Split Tilemap) to restore settings
 
-UseCase：
-
+### Example (Preview & Result):
 ![Image](https://github.com/user-attachments/assets/8d28e9a7-9b0e-409a-85b8-d4f6afb715c4)
 
-<a name="notes-on-isometric-layouts"></a>
-## Notes on Isometric Layouts
-Even when the Grid's Cell Layout is `Isometric` or `Isometric Z as Y`, this tool can be used.
-However, because Unity sorts tiles per Tilemap, the fine ordering between Tilemaps cannot match the original Tilemap.
-Therefore, the appearance after splitting often differs from before.<br>
-It is possible to match **to some extent** by setting the Mode and Order In Layer of the TilemapRenderer as appropriate after splitting.
-
-- SplitDifference
+<a name="Notes"></a>
+## Notes
+* **Isometric, Isometric Z-as-Y**：
+  * Unity sorts tiles per Tilemap, so fine-grained order between different Tilemaps cannot exactly match the original single-map appearance
+  * After splitting, you can often get close by tuning TilemapRenderer → Mode, Order in Layer
+- Before, After appearance (Isometric):
 <img width="1035" height="430" alt="Image" src="https://github.com/user-attachments/assets/d9410b2b-746b-4034-9e93-6e92b319b529" />
-
-<a name="requirements"></a>
-## Requirements
-- **Unity 2023** or later
-- .NET Standard 2.1
-
-<a name="license"></a>
-## License
-This repository is released under [MIT LICENSE](LICENSE).
 
 ---
 
 
 <a name="japanese"></a>
 # 日本語
-Unity の `Tilemap` を接続関係に基づき自動で分類し、用途に応じた複数の Tilemap として再構成するエディタ拡張です。
-
 ## 目次
-- [特徴](#特徴)
-- [インストール](#インストール)
-  - [UPM を利用する場合](#upm-を利用する場合)
-  - [手動インストール](#手動インストール)
-- [使い方](#使い方)
+- [何ができるのか](#何ができるのか)
+- [他のツールより何が優れているのか](#他のツールより何が優れているのか)
+- [導入方法](#導入方法)
+- [使用方法](#使用方法)
 - [注意点](#注意点)
-- [動作環境](#動作環境)
-- [ライセンス](#ライセンス)
 
-<a name="特徴"></a>
-## 特徴
-- メニュー **Tools/TilemapSplitter** から専用ウィンドウを起動
-- タイルの接続数に応じて分類
-  - CellLayout が Hexagon 以外の場合:
-    - Cross（上下左右すべて接続）
-    - T Junction（3 方向接続）
-    - Corner（角を形成する 2 方向接続）
-    - VerticalEdge / HorizontalEdge（直線上で 2 方向接続）
-    - Isolate（接続なし）
-  - CellLayout が Hexagon の場合:
-    - Full（6 方向接続）
-    - Junction5（5 方向接続）
-    - Junction4（4 方向接続）
-    - Junction3（3 方向接続）
-    - Edge（2 方向接続）
-    - Tip（1 方向接続）
-    - Isolate（接続なし）
-- 各カテゴリごとにレイヤー・タグ・プレビュー色を設定可能
-- `Attach Colliders` チェックボックスで生成した Tilemap に TilemapCollider2D と Rigidbody2D（Static）、CompositeCollider2D を付与
-- `Merge VerticalEdge, HorizontalEdge` チェックボックスで縦横エッジを 1 つの Tilemap に統合可能
-- Cross などの分類は `Which obj to add to` で VerticalEdge / HorizontalEdge へ統合することもできる
-- 実行後、選択したカテゴリ別に新しい Tilemap オブジェクトを生成
-- プレビューを有効にすると Scene 上で分類結果をカラー表示
-- Hexagon レイアウトでは PointTop / FlatTop 双方のプレビューに対応
-- 設定は EditorPrefs を介して保存され、ウィンドウを閉じても維持
-- `Split Tilemap` 欄の下にリセットボタンを配置
+<a name="何ができるのか"></a>
+## 何ができるのか
+TilemapSplitter は、指定 Tilemap のタイルを**接続関係**で自動的に分類し、**カテゴリごとに Tilemap を再構成**する Unity エディタ拡張です(動作環境は Unity 2023 以降)
+* **接続数にもとづく分類**
+  * **Rect, Isometric**：Cross, T字, Corner, VerticalEdge, HorizontalEdge, Isolate
+  * **Hexagon**：Full(6), Junction5, Junction4, Junction3, Edge(2), Tip(1), Isolate(0)
+* 各カテゴリ単位で Sorting Layer, Order, Tag, プレビューの色 を設定
+* プレビューでシーンビューに分類結果を色分け表示
+* **オプション**
+  * **Which obj to add to**：Cross を VerticalEdge へ統合などの再分類ルールを設定
+  * **Attach Colliders**：生成 Tilemap に TilemapCollider2D + Rigidbody2D(BodyType：static) + CompositeCollider2D を付与
+  * **Merge VerticalEdge, HorizontalEdge**：縦横エッジを1枚の Tilemap に統合（VerticalEdge の設定が優先）
 
-<a name="インストール"></a>
-## インストール
+<a name="他のツールより何が優れているのか"></a>
+## 他のツールより何が優れているのか
+* **後処理に強い**：描き終えた Tilemap を、接続カテゴリごとに一括分割。配置時の自動置換（RuleTile 等）を補完します。
+* **1画面で完結**：カテゴリ設定 → プレビュー → 実行までノーコードでスムーズ。
+* **コライダ用出力が即時**：物理専用／視覚専用の Tilemap をオプション切り替えだけで生成。
+* **GUIで統合ルール**：Cross を VerticalEdge に吸収、縦横エッジを結合などを非破壊で設定可能。
+> 補足：スクリプトや他ツールの応用で実現できる場合もありますが、TilemapSplitter は 完成済みマップの再編を簡単で反復可能な手順に特化しています
 
-<a name="upm-を利用する場合"></a>
-### UPM を利用する場合
-1. Unity メニューから **Window > Package Manager** を開きます
-2. 左上の **+** ボタンで **Add package from git URL...** を選択します
-3. 次の URL を入力して **Add** を押します
+<a name="導入方法"></a>
+## 導入方法
+### UPM(Git URL)
+1. Window → Package Manager
+2. プラスのボタン → Add package from git URL…
+3. 次を貼り付けて Add：
 ```
 https://github.com/SunagimoOisii/TilemapSplitter.git?path=/Packages/com.sunagimo.tilemapsplitter
 ```
-4. 取り込みが完了するとパッケージが利用可能になります
 
-<a name="手動インストール"></a>
 ### 手動インストール
-1. リポジトリをクローンし、`Packages/com.sunagimo.tilemapsplitter` 内の `Editor` フォルダーをプロジェクトの `Assets/TilemapSplitter` 配下へコピーします
-2. Unity を再起動するとメニューに **Tools/TilemapSplitter** が追加されます
+1. リポジトリをクローン
+2. Packages/com.sunagimo.tilemapsplitter/Editor をプロジェクトへコピー(例：Assets/TilemapSplitter)
+3. Unity 再起動 → Tools/TilemapSplitter がメニューに表示
 
-<a name="使い方"></a>
-## 使い方
+<a name="使用方法"></a>
+## 使用方法
+1. Tools → TilemapSplitter を開く
+2. Split Tilemap に分割対象の Tilemap を指定
+3. 各カテゴリの Layer, Tag, プレビュー色 を調整
+4. 任意設定：
+  * Attach Colliders(コライダ等の自動付与)
+  * Merge VerticalEdge, HorizontalEdge(縦横エッジの結合)
+  * Which obj to add to(例：Cross → VerticalEdge へ統合)
+5. Execute Splitting を押下 → カテゴリ別の Tilemap が生成
+6. 設定を初期化したい場合は Reset(Split Tilemap 下)を使用
 
-1. メニューから **Tools/TilemapSplitter** を選択しウィンドウを開く
-2. `Split Tilemap` 欄に分割対象の Tilemap を指定
-3. 各カテゴリでレイヤー・タグ・プレビュー色を設定
-4. 任意で以下のチェックボックスを有効化
-   - **Attach Colliders**: 生成された Tilemap に TilemapCollider2D、Rigidbody2D（Static）、CompositeCollider2D を付与
-   - **Merge VerticalEdge, HorizontalEdge**: VerticalEdge と HorizontalEdge を一つの Tilemap に統合（VerticalEdge の設定が優先）
-5. `Execute Splitting` を押すと分類結果に応じた Tilemap が生成されます
-6. 設定をリセットしたい場合は `Split Tilemap` の下にあるボタンを使用
-
-使用例：
-
+### プレビュー, 結果例：
 ![Image](https://github.com/user-attachments/assets/8d28e9a7-9b0e-409a-85b8-d4f6afb715c4)
 
 <a name="注意点"></a>
 ## 注意点
-Grid の CellLayout が `Isometric` または `Isometric Z as Y` の場合でも本ツールは使用できます。
-ただし Unity の仕様上、Tilemap 間で細かな並び替えができないため、分割後の見た目が元の Tilemap と異なる可能性が高いです。<br>
-分割後に TilemapRenderer の Mode や Order In Layer を適宜設定することで**ある程度**一致させることはできます
-
-- 分割前後のタイルの様子
+* **Isometric, Isometric Z-as-Y**：
+  * Unity では Tilemap 単位でソートされるため、分割前後でタイル同士の微妙な前後関係を完全一致させることはできません。
+  * 分割後に TilemapRenderer の Mode, Order in Layer を調整することである程度近づけられます。
+- 分割前後の見え方(Isometric 例)：
 <img width="1035" height="430" alt="Image" src="https://github.com/user-attachments/assets/d9410b2b-746b-4034-9e93-6e92b319b529" />
-
-<a name="動作環境"></a>
-## 動作環境
-
-- **Unity 2023** 以降
-- .NET Standard 2.1
-
-## ライセンス
-
-このリポジトリは [MIT LICENSE](LICENSE) の下で公開されています。
