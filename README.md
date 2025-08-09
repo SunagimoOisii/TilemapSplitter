@@ -32,6 +32,33 @@ TilemapSplitter is a Unity editor extension that **classifies tiles by adjacency
 * **GUI-level merge rules**: Non-destructive category remapping (e.g., merge Cross into VerticalEdge) without code
 > Note: Some of these are possible with custom scripts or complex setups in other tools, but TilemapSplitter focuses on making them **turn-key and repeatable** for finished maps.
 
+### Quick comparison (at a glance) 📊
+| Scenario, Capability                              | RuleTile | Manual layer split | **TilemapSplitter** |
+|----------------------------------------------------|-------------------------|--------------------|---------------------|
+| Post-process finished maps                         | △                       | ○ (time-consuming) | **◎ (designed for it)** |
+| Split by **connectivity categories**               | ×                       | △                  | **◎**              |
+| **GUI-only** category merge rules (e.g., Cross→Edge)| ×                      | ×                  | **○**              |
+| **Collider-ready** output per generated Tilemap    | ×      | △                  | **○**              |
+
+### When TilemapSplitter is the better fit
+- You already have a **finished single Tilemap** and need **role-based layers**(edges, corners, T-junctions, isolates)
+- You want **GUI-only**
+- You need a **physics-only** or **visual-only** Tilemap **right now**(auto add TilemapCollider2D, Rigidbody2D, CompositeCollider2D)
+
+### When another tool is a better fit
+- You want **placement-time** patterning or auto-replacement → keep using **RuleTile/Auto-tiling**
+- You need **runtime** procedural generation (this tool targets **Editor-time** post-processing)
+- You require **exact** cross-Tilemap draw order in Isometric (**Unity limitation**)
+
+### Works great together with
+- **RuleTile**: design at placement-time → **refactor after** with TilemapSplitter
+- **Custom Brushes, Scripted importers**: bring content in → **normalize** layers via adjacency split
+
+### Case studies (examples to copy) 💡
+- **Outline, Glow for edges**: split Vertical, Horizontal edges → apply a distinct material, effect layer
+- **Readable geometry**: isolate corners & T-junctions for decoration and level debugging
+- **Physics separation**: generate a **collider-only** Tilemap while keeping visuals clean
+
 <a name="Installation"></a>
 ## Installation
 ### Using UPM(Git URL)
@@ -102,6 +129,32 @@ TilemapSplitter は、指定 Tilemap のタイルを**接続関係**で自動的
 * **コライダ用出力が即時**：物理専用／視覚専用の Tilemap をオプション切り替えだけで生成。
 * **GUIで統合ルール**：Cross を VerticalEdge に吸収、縦横エッジを結合などを非破壊で設定可能。
 > 補足：スクリプトや他ツールの応用で実現できる場合もありますが、TilemapSplitter は 完成済みマップの再編を簡単で反復可能な手順に特化しています
+
+### 他ツールとの比較
+| 想定ケース, 機能                                | RuleTile | 手作業レイヤー分割 | **TilemapSplitter** |
+|-----------------------------------------------|-------------------------|--------------------|---------------------|
+| **完成済み**マップの後処理                      | △        | ○(工数大)        | **◎(主戦場)**     |
+| **接続カテゴリ**(エッジ, 角…)で分割              | ×        | △                  | **◎**               |
+| **GUIだけ**で統合ルール(例：Cross → Edge)       | ×        | ×                  | **○**               |
+| 生成 Tilemap ごとの**コライダ即時付与**          | ×       | △                  | **○**               |
+
+### TilemapSplitter が向いているケース
+- **1枚の完成Tilemap**を、**別レイヤーに一括分割**したい 
+- **物理専用**や**視覚専用**の Tilemap を**すぐ作りたい**(TilemapCollider2D, Rigidbody2D, CompositeCollider2D 自動付与)
+
+### 他ツールのほうが適切な場面
+- **配置時**の自動置換やパターン適用が目的
+- **ランタイム**での自動生成が必要(本ツールは**エディタ時後処理**に特化)
+- Isometric で **Tilemap間の厳密な前後一致**が必須(**Unityの仕様**で困難)
+
+### 併用で真価を発揮する例
+- **RuleTile**で配置 → **TilemapSplitter**で後処理(レイヤー再編, 物理専用 Tilemap 分離)
+- **カスタムブラシ, インポーター**で投入 → **接続分解**でレイヤー標準化
+
+### 具体例
+- **縁取り, グロー演出**：Vertical, Horizontal に位置するタイルだけ分離して別マテリアルに
+- **レベル形状の可読性向上**：角, T字だけを抽出して装飾やデバッグに活用
+- **物理と描画の責務分離**：視覚用は軽量化、**コライダ専用**レイヤーを高速生成
 
 <a name="導入方法"></a>
 ## 導入方法
