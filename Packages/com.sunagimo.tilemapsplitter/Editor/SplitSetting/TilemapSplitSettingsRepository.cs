@@ -36,38 +36,11 @@ namespace TilemapSplitter
                 data.source = AssetDatabase.LoadAssetAtPath<Tilemap>(path);
             }
 
-            data.canMergeEdges = EditorPrefs.GetBool(CreateKey("CanMergeEdges"), data.canMergeEdges);
+            data.canMergeEdges   = EditorPrefs.GetBool(CreateKey("CanMergeEdges"),   data.canMergeEdges);
             data.canAttachCollider = EditorPrefs.GetBool(CreateKey("AttachCollider"), data.canAttachCollider);
 
-            foreach (var kv in data.rectSettings)
-            {
-                string name = kv.Key.ToString();
-                var setting = kv.Value;
-                setting.flags = (ShapeFlags)EditorPrefs.GetInt(CreateKey($"{name}.Flags"), (int)setting.flags);
-                setting.layer = EditorPrefs.GetInt(CreateKey($"{name}.Layer"), setting.layer);
-                setting.tag = EditorPrefs.GetString(CreateKey($"{name}.Tag"), setting.tag);
-                setting.canPreview = EditorPrefs.GetBool(CreateKey($"{name}.CanPreview"), setting.canPreview);
-                string col = EditorPrefs.GetString(CreateKey($"{name}.Color"), ColorUtility.ToHtmlStringRGBA(setting.previewColor));
-                if (ColorUtility.TryParseHtmlString("#" + col, out var c))
-                {
-                    setting.previewColor = c;
-                }
-            }
-
-            foreach (var kv in data.hexSettings)
-            {
-                string name = kv.Key.ToString();
-                var setting = kv.Value;
-                setting.flags = (ShapeFlags)EditorPrefs.GetInt(CreateKey($"Hex.{name}.Flags"), (int)setting.flags);
-                setting.layer = EditorPrefs.GetInt(CreateKey($"Hex.{name}.Layer"), setting.layer);
-                setting.tag = EditorPrefs.GetString(CreateKey($"Hex.{name}.Tag"), setting.tag);
-                setting.canPreview = EditorPrefs.GetBool(CreateKey($"Hex.{name}.CanPreview"), setting.canPreview);
-                string col = EditorPrefs.GetString(CreateKey($"Hex.{name}.Color"), ColorUtility.ToHtmlStringRGBA(setting.previewColor));
-                if (ColorUtility.TryParseHtmlString("#" + col, out var c))
-                {
-                    setting.previewColor = c;
-                }
-            }
+            LoadShapeSettings(data.rectSettings, string.Empty);
+            LoadShapeSettings(data.hexSettings, "Hex.");
 
             return data;
         }
@@ -84,32 +57,11 @@ namespace TilemapSplitter
                 EditorPrefs.DeleteKey(CreateKey("SourceId"));
             }
 
-            EditorPrefs.SetBool(CreateKey("CanMergeEdges"), data.canMergeEdges);
+            EditorPrefs.SetBool(CreateKey("CanMergeEdges"),   data.canMergeEdges);
             EditorPrefs.SetBool(CreateKey("AttachCollider"), data.canAttachCollider);
 
-            foreach (var kv in data.rectSettings)
-            {
-                string name = kv.Key.ToString();
-                var setting = kv.Value;
-                EditorPrefs.SetInt(CreateKey($"{name}.Flags"), (int)setting.flags);
-                EditorPrefs.SetInt(CreateKey($"{name}.Layer"), setting.layer);
-                EditorPrefs.SetString(CreateKey($"{name}.Tag"), setting.tag);
-                EditorPrefs.SetBool(CreateKey($"{name}.CanPreview"), setting.canPreview);
-                EditorPrefs.SetString(CreateKey($"{name}.Color"),
-                    ColorUtility.ToHtmlStringRGBA(setting.previewColor));
-            }
-
-            foreach (var kv in data.hexSettings)
-            {
-                string name = kv.Key.ToString();
-                var setting = kv.Value;
-                EditorPrefs.SetInt(CreateKey($"Hex.{name}.Flags"), (int)setting.flags);
-                EditorPrefs.SetInt(CreateKey($"Hex.{name}.Layer"), setting.layer);
-                EditorPrefs.SetString(CreateKey($"Hex.{name}.Tag"), setting.tag);
-                EditorPrefs.SetBool(CreateKey($"Hex.{name}.CanPreview"), setting.canPreview);
-                EditorPrefs.SetString(CreateKey($"Hex.{name}.Color"),
-                    ColorUtility.ToHtmlStringRGBA(setting.previewColor));
-            }
+            SaveShapeSettings(data.rectSettings, string.Empty);
+            SaveShapeSettings(data.hexSettings, "Hex.");
         }
 
         public TilemapSplitSettings Reset()
@@ -119,25 +71,8 @@ namespace TilemapSplitter
             EditorPrefs.DeleteKey(CreateKey("CanMergeEdges"));
             EditorPrefs.DeleteKey(CreateKey("AttachCollider"));
 
-            foreach (ShapeType_Rect t in Enum.GetValues(typeof(ShapeType_Rect)))
-            {
-                string name = t.ToString();
-                EditorPrefs.DeleteKey(CreateKey($"{name}.Flags"));
-                EditorPrefs.DeleteKey(CreateKey($"{name}.Layer"));
-                EditorPrefs.DeleteKey(CreateKey($"{name}.Tag"));
-                EditorPrefs.DeleteKey(CreateKey($"{name}.CanPreview"));
-                EditorPrefs.DeleteKey(CreateKey($"{name}.Color"));
-            }
-
-            foreach (ShapeType_Hex t in Enum.GetValues(typeof(ShapeType_Hex)))
-            {
-                string name = t.ToString();
-                EditorPrefs.DeleteKey(CreateKey($"Hex.{name}.Flags"));
-                EditorPrefs.DeleteKey(CreateKey($"Hex.{name}.Layer"));
-                EditorPrefs.DeleteKey(CreateKey($"Hex.{name}.Tag"));
-                EditorPrefs.DeleteKey(CreateKey($"Hex.{name}.CanPreview"));
-                EditorPrefs.DeleteKey(CreateKey($"Hex.{name}.Color"));
-            }
+            ResetShapeSettings<ShapeType_Rect>(string.Empty);
+            ResetShapeSettings<ShapeType_Hex>("Hex.");
 
             return new TilemapSplitSettings
             {
@@ -147,6 +82,56 @@ namespace TilemapSplitter
                 canMergeEdges = false,
                 canAttachCollider = false
             };
+        }
+
+        private static void LoadShapeSettings<TEnum>(Dictionary<TEnum, ShapeSetting> settings, string prefix)
+            where TEnum : Enum
+        {
+            foreach (var kv in settings)
+            {
+                string name = kv.Key.ToString();
+                var setting = kv.Value;
+                setting.flags = (ShapeFlags)EditorPrefs.GetInt(CreateKey($"{prefix}{name}.Flags"), (int)setting.flags);
+                setting.layer = EditorPrefs.GetInt(CreateKey($"{prefix}{name}.Layer"), setting.layer);
+                setting.tag = EditorPrefs.GetString(CreateKey($"{prefix}{name}.Tag"), setting.tag);
+                setting.canPreview = EditorPrefs.GetBool(CreateKey($"{prefix}{name}.CanPreview"), setting.canPreview);
+                string col = EditorPrefs.GetString(CreateKey($"{prefix}{name}.Color"),
+                    ColorUtility.ToHtmlStringRGBA(setting.previewColor));
+                if (ColorUtility.TryParseHtmlString("#" + col, out var c))
+                {
+                    setting.previewColor = c;
+                }
+            }
+        }
+
+        private static void SaveShapeSettings<TEnum>(Dictionary<TEnum, ShapeSetting> settings, string prefix)
+            where TEnum : Enum
+        {
+            foreach (var kv in settings)
+            {
+                string name = kv.Key.ToString();
+                var setting = kv.Value;
+                EditorPrefs.SetInt(CreateKey($"{prefix}{name}.Flags"), (int)setting.flags);
+                EditorPrefs.SetInt(CreateKey($"{prefix}{name}.Layer"), setting.layer);
+                EditorPrefs.SetString(CreateKey($"{prefix}{name}.Tag"), setting.tag);
+                EditorPrefs.SetBool(CreateKey($"{prefix}{name}.CanPreview"), setting.canPreview);
+                EditorPrefs.SetString(CreateKey($"{prefix}{name}.Color"),
+                    ColorUtility.ToHtmlStringRGBA(setting.previewColor));
+            }
+        }
+
+        private static void ResetShapeSettings<TEnum>(string prefix)
+            where TEnum : Enum
+        {
+            foreach (TEnum t in Enum.GetValues(typeof(TEnum)))
+            {
+                string name = t.ToString();
+                EditorPrefs.DeleteKey(CreateKey($"{prefix}{name}.Flags"));
+                EditorPrefs.DeleteKey(CreateKey($"{prefix}{name}.Layer"));
+                EditorPrefs.DeleteKey(CreateKey($"{prefix}{name}.Tag"));
+                EditorPrefs.DeleteKey(CreateKey($"{prefix}{name}.CanPreview"));
+                EditorPrefs.DeleteKey(CreateKey($"{prefix}{name}.Color"));
+            }
         }
 
         public static Dictionary<ShapeType_Rect, ShapeSetting> CreateDefaultSettings_Rect() => new()
