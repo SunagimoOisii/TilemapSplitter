@@ -29,23 +29,27 @@ namespace TilemapSplitter
         /// <summary>
         /// Generate tilemaps for each shape in a rectangular grid
         /// </summary>
-        public static void GenerateSplitTilemaps(Tilemap source, ShapeCells_Rect sc,
+        public static List<GameObject> GenerateSplitTilemaps(Tilemap source, ShapeCells_Rect sc,
             Dictionary<ShapeType_Rect, ShapeSetting> settings, bool mergeEdges, bool canAttachCollider)
         {
+            var created = new List<GameObject>();
             if (mergeEdges)
             {
                 var mergedCells = new List<Vector3Int>(sc.Vertical);
                 var v           = settings[ShapeType_Rect.VerticalEdge];
                 v.flags         = ShapeFlags.Independent;
                 mergedCells.AddRange(sc.Horizontal);
-                CreateTilemapObjForCells(source, mergedCells, v, MergeObjName, canAttachCollider);
+                var o = CreateTilemapObjForCells(source, mergedCells, v, MergeObjName, canAttachCollider);
+                if (o != null) created.Add(o);
             }
             else
             {
                 var v = settings[ShapeType_Rect.VerticalEdge];
                 var h = settings[ShapeType_Rect.HorizontalEdge];
-                CreateTilemapObjForCells(source, sc.Vertical,   v, VerticalObjName,   canAttachCollider);
-                CreateTilemapObjForCells(source, sc.Horizontal, h, HorizontalObjName, canAttachCollider);
+                var ov = CreateTilemapObjForCells(source, sc.Vertical,   v, VerticalObjName,   canAttachCollider);
+                var oh = CreateTilemapObjForCells(source, sc.Horizontal, h, HorizontalObjName, canAttachCollider);
+                if (ov != null) created.Add(ov);
+                if (oh != null) created.Add(oh);
             }
 
             var rectShapes = new[]
@@ -57,16 +61,20 @@ namespace TilemapSplitter
             };
             foreach (var (cells, type, objName) in rectShapes)
             {
-                CreateTilemapObjForCells(source, cells, settings[type], objName, canAttachCollider);
+                var o = CreateTilemapObjForCells(source, cells, settings[type], objName, canAttachCollider);
+                if (o != null) created.Add(o);
             }
+
+            return created;
         }
 
         /// <summary>
         /// Generate tilemaps for each shape in a hexagonal grid
         /// </summary>
-        public static void GenerateSplitTilemaps(Tilemap source, ShapeCells_Hex sc,
+        public static List<GameObject> GenerateSplitTilemaps(Tilemap source, ShapeCells_Hex sc,
             Dictionary<ShapeType_Hex, ShapeSetting> settings, bool canAttachCollider)
         {
+            var created = new List<GameObject>();
             var hexShapes = new[]
             {
                 (sc.Full,      ShapeType_Hex.Full,      FullObjName),
@@ -79,23 +87,26 @@ namespace TilemapSplitter
             };
             foreach (var (cells, type, objName) in hexShapes)
             {
-                CreateTilemapObjForCells(source, cells, settings[type], objName, canAttachCollider);
+                var o = CreateTilemapObjForCells(source, cells, settings[type], objName, canAttachCollider);
+                if (o != null) created.Add(o);
             }
+
+            return created;
         }
 
         /// <summary>
         /// Create a new tilemap by duplicating tiles in specified cells
         /// </summary>
-        private static void CreateTilemapObjForCells(Tilemap source,
+        private static GameObject CreateTilemapObjForCells(Tilemap source,
             List<Vector3Int> cells, ShapeSetting setting, string name, bool canAttachCollider)
         {
-            if (cells.Count == 0) return;
+            if (cells.Count == 0) return null;
 
             //Skip generation if a tile type requires an independence flag but it is not set
             if ((name is CrossObjName     or TJunctionObjName or CornerObjName    or IsolateObjName or
                          FullObjName      or Junction5ObjName or Junction4ObjName or
                          Junction3ObjName or HexEdgeObjName   or TipObjName) &&
-                setting.flags.HasFlag(ShapeFlags.Independent) == false) return;
+                setting.flags.HasFlag(ShapeFlags.Independent) == false) return null;
 
             //Create a GameObject with Tilemap and apply Transform and Layer, Tag
             var obj = CreateTilemapObject(name, setting, source);
@@ -136,6 +147,7 @@ namespace TilemapSplitter
                 obj.AddComponent<CompositeCollider2D>();
             }
             Undo.RegisterCreatedObjectUndo(obj, "GenerateSplitTilemaps " + name);
+            return obj;
         }
 
         /// <summary>

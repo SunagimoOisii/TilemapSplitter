@@ -6,3 +6,5 @@
 ## [1.2.0]
 - Support for Hexagon layouts with classification into Full, Junction5, Junction4, Junction3, Edge, Tip, and Isolate
 
+## [1.2.1]
+- Implement public API

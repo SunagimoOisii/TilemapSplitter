@@ -104,7 +104,7 @@ namespace TilemapSplitter
                     yield return null;
                 }
                 progress.Clear();
-                layoutStrategy.GenerateSplitTilemaps(Source, CanMergeEdges, CanAttachCollider);
+                _ = layoutStrategy.GenerateSplitTilemaps(Source, CanMergeEdges, CanAttachCollider);
                 RefreshPreview(window);
             }
         }

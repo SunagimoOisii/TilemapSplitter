@@ -153,9 +153,9 @@ namespace TilemapSplitter
             return TileShapeClassifier.ClassifyCoroutine(source, settingsDict, shapeCells, 100, progress, isCancelled);
         }
 
-        public void GenerateSplitTilemaps(Tilemap source, bool canMergeEdges, bool canAttachCollider)
+        public List<GameObject> GenerateSplitTilemaps(Tilemap source, bool canMergeEdges, bool canAttachCollider)
         {
-            TilemapCreator.GenerateSplitTilemaps(source, shapeCells, settingsDict, canMergeEdges, canAttachCollider);
+            return TilemapCreator.GenerateSplitTilemaps(source, shapeCells, settingsDict, canMergeEdges, canAttachCollider);
         }
 
         public void SetupPreview(Tilemap source, TilemapPreviewDrawer drawer)

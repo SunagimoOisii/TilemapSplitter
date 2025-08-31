@@ -2,6 +2,7 @@ namespace TilemapSplitter
 {
     using System;
     using System.Collections.Generic;
+    using UnityEngine;
     using UnityEngine.Tilemaps;
     using UnityEngine.UIElements;
 
@@ -14,7 +15,7 @@ namespace TilemapSplitter
         void CreateShapeFoldouts(VisualElement container);
         IEnumerator<bool> Classify(Tilemap source, IProgress<float> progress = null,
             Func<bool> isCancelled = null);
-        void GenerateSplitTilemaps(Tilemap source, bool canMergeEdges, bool canAttachCollider);
+        List<GameObject> GenerateSplitTilemaps(Tilemap source, bool canMergeEdges, bool canAttachCollider);
         void SetupPreview(Tilemap source, TilemapPreviewDrawer drawer);
         void SetShapeCellsToPreview(TilemapPreviewDrawer drawer);
         void UpdateFoldoutTitles();

@@ -1,4 +1,4 @@
-<img width="1280" height="720" alt="Image" src="https://github.com/user-attachments/assets/3034cf0e-753f-49b7-8661-e72ede76c0c6" />
+﻿<img width="1280" height="720" alt="Image" src="https://github.com/user-attachments/assets/3034cf0e-753f-49b7-8661-e72ede76c0c6" />
 
 [English](#english) | [日本語](#japanese)
 
@@ -83,8 +83,25 @@ https://github.com/SunagimoOisii/TilemapSplitter.git?path=/Packages/com.sunagimo
   * Attach Colliders to generated Tilemaps
   * Merge VerticalEdge, HorizontalEdge into a single Tilemap
   * Use Which obj to add to to fold categories(e.g., Cross → VerticalEdge)
-5. Click Execute Splitting → Tilemaps are generated per category
-6. Use Reset(below Split Tilemap) to restore settings
+5. Click Execute Splitting �� Tilemaps are generated\n6. Use Reset(below Split Tilemap) to restore settings
+
+### Script API
+```csharp
+using TilemapSplitter;
+using UnityEngine;
+using UnityEngine.Tilemaps;
+using System.Collections.Generic;
+
+// Returns a list of generated GameObjects
+List<GameObject> created = TilemapSplitterApi.Split(
+    source: someTilemap,
+    canMergeEdges: false,      // Rect layout only: merge vertical/horizontal edges into one
+    canAttachCollider: false,  // Attach TilemapCollider2D + Rigidbody2D(Static) + CompositeCollider2D
+    progress: null,            // Optional IProgress<float> (0..1)
+    isCancelled: null          // Optional Func<bool> to cancel classification
+);
+```
+
 
 ### Example (Preview & Result):
 ![Image](https://github.com/user-attachments/assets/8d28e9a7-9b0e-409a-85b8-d4f6afb715c4)
@@ -103,93 +120,102 @@ https://github.com/SunagimoOisii/TilemapSplitter.git?path=/Packages/com.sunagimo
 <a name="japanese"></a>
 # 日本語
 ## 目次
-- [何ができるのか](#何ができるのか)
-- [他のツールより何が優れているのか](#他のツールより何が優れているのか)
-- [導入方法](#導入方法)
-- [使用方法](#使用方法)
+- [このツールでできること](#このツールでできること)
+- [他ツールとの違い](#他ツールとの違い)
+- [インストール](#インストール)
+- [使い方](#使い方)
 - [注意点](#注意点)
 
-<a name="何ができるのか"></a>
-## 何ができるのか
-TilemapSplitter は、指定 Tilemap のタイルを**接続関係**で自動的に分類し、**カテゴリごとに Tilemap を再構成**する Unity エディタ拡張です(動作環境は Unity 2023 以降)
-* **接続数にもとづく分類**
-  * **Rect, Isometric**：Cross, T字, Corner, VerticalEdge, HorizontalEdge, Isolate
-  * **Hexagon**：Full(6), Junction5, Junction4, Junction3, Edge(2), Tip(1), Isolate(0)
-* 各カテゴリ単位で Sorting Layer, Order, Tag, プレビューの色 を設定
-* プレビューでシーンビューに分類結果を色分け表示
-* **オプション**
-  * **Which obj to add to**：Cross を VerticalEdge へ統合などの再分類ルールを設定
-  * **Attach Colliders**：生成 Tilemap に TilemapCollider2D + Rigidbody2D(BodyType：static) + CompositeCollider2D を付与
-  * **Merge VerticalEdge, HorizontalEdge**：縦横エッジを1枚の Tilemap に統合（VerticalEdge の設定が優先）
+<a name="このツールでできること"></a>
+## このツールでできること
+TilemapSplitter は、対象の Tilemap 上のタイルを「隣接関係」で分類し、用途別に複数の Tilemap に再構成する Unity エディタ拡張です（動作環境: Unity 2023 以降）。
+- 分類対象（隣接数・向き）
+  - Rect, Isometric: Cross, T-Junction, Corner, VerticalEdge, HorizontalEdge, Isolate
+  - Hexagon: Full(6), Junction5, Junction4, Junction3, Edge(2), Tip(1), Isolate(0)
+- カテゴリごとの設定: Sorting Layer, Order in Layer, Tag, プレビュー色
+- Scene ビューで分類プレビュー（色のオーバーレイ）
+- オプション
+  - Attach Colliders: 生成した各 Tilemap に TilemapCollider2D + 静的 Rigidbody2D + CompositeCollider2D を付与
+  - Merge VerticalEdge, HorizontalEdge: 縦横エッジを 1 つの Tilemap に統合（VerticalEdge の設定を優先）
+  - Which obj to add to: Cross を VerticalEdge/HorizontalEdge に寄せる等のカテゴリマージ規則
 
-<a name="他のツールより何が優れているのか"></a>
-## 他のツールより何が優れているのか
-* **後処理に強い**：描き終えた Tilemap を、接続カテゴリごとに一括分割。配置時の自動置換（RuleTile 等）を補完します
-* **1画面で完結**：カテゴリ設定 → プレビュー → 実行までノーコードでスムーズ
-* **コライダ用出力が即時**：物理専用／視覚専用の Tilemap をオプション切り替えだけで生成
-* **GUIで統合ルール**：Cross を VerticalEdge に吸収、縦横エッジを結合などを非破壊で設定可能
-> 補足：スクリプトや他ツールの応用で実現できる場合もありますが、TilemapSplitter は 完成済みマップの再編を簡単で反復可能な手順に特化しています
-
-### 他ツールとの比較
-| 想定ケース, 機能                                | RuleTile | 手作業レイヤー分割 | **TilemapSplitter** |
-|-----------------------------------------------|-------------------------|--------------------|---------------------|
-| **完成済み**マップの後処理                      | △        | ○(工数大)        | **◎(主戦場)**     |
-| **接続カテゴリ**(エッジ, 角…)で分割              | ×        | △                  | **◎**               |
-| **GUIだけ**で統合ルール(例：Cross → Edge)       | ×        | ×                  | **○**               |
-| 生成 Tilemap ごとの**コライダ即時付与**          | ×       | △                  | **○**               |
+<a name="他ツールとの違い"></a>
+## 他ツールとの違い
+- 仕上げ後の一括後処理: 既に描いた Tilemap を接続カテゴリで一括分割（RuleTile/オートタイルは配置時が得意）
+- 1 画面ワークフロー: GUI だけで「設定 → プレビュー → 実行」まで完結
+- コライダー出力に即対応: 物理専用/見た目専用 Tilemap をすぐ用意
+- GUI レベルのカテゴリマージ: コード不要で非破壊に再マッピング可能（例: Cross → VerticalEdge）
 
 ### TilemapSplitter が向いているケース
-- **1枚の完成Tilemap**を、**別レイヤーに一括分割**したい 
-- **物理専用**や**視覚専用**の Tilemap を**すぐ作りたい**(TilemapCollider2D, Rigidbody2D, CompositeCollider2D 自動付与)
+- 1 枚の完成 Tilemap を役割別レイヤー（エッジ/コーナー/T 字/孤立）に分けたい
+- GUI だけで完結したい
+- すぐに物理専用 or 見た目専用の Tilemap が欲しい（コライダー自動付与）
 
-### 他ツールのほうが適切な場面
-- **配置時**の自動置換やパターン適用が目的
-- **ランタイム**での自動生成が必要(本ツールは**エディタ時後処理**に特化)
-- Isometric で **Tilemap間の厳密な前後一致**が必須(**Unityの仕様**で困難)
+### 他ツールが向いているケース
+- 配置時パターン適用や自動置換をしたい（RuleTile/オートタイル）
+- 実行時の手続き的生成が必要（このツールはエディタ時の後処理向け）
+- Isometric で分割後も完全に同一の描画順を再現したい（Unity の制約あり）
 
-### 併用で真価を発揮する例
-- **RuleTile**で配置 → **TilemapSplitter**で後処理(レイヤー再編, 物理専用 Tilemap 分離)
-- **カスタムブラシ, インポーター**で投入 → **接続分解**でレイヤー標準化
+### 併用例
+- RuleTile で作成 → TilemapSplitter で接続分割してレイヤーを整理
+- カスタムブラシ/スクリプトインポート → 接続分割で正規化
 
-### 具体例
-- **縁取り, グロー演出**：Vertical, Horizontal に位置するタイルだけ分離して別マテリアルに
-- **レベル形状の可読性向上**：角, T字だけを抽出して装飾やデバッグに活用
-- **物理と描画の責務分離**：視覚用は軽量化、**コライダ専用**レイヤーを高速生成
+### 事例
+- ふち取り・発光: 縦横エッジを分割して専用マテリアル/エフェクトに
+- 形状の読みやすさ: コーナー/T 字を分離して装飾やデバッグに
+- 物理分離: 見た目と物理を分けるため、コライダー専用 Tilemap を生成
 
-<a name="導入方法"></a>
-## 導入方法
-### UPM(Git URL)
-1. Window → Package Manager
-2. プラスのボタン → Add package from git URL…
-3. 次を貼り付けて Add：
+<a name="インストール"></a>
+## インストール
+### UPM（Git URL）
+1. Window → Package Manager を開く
+2. + ボタン → Add package from git URL…
+3. 次を貼り付けて Add:
 ```
 https://github.com/SunagimoOisii/TilemapSplitter.git?path=/Packages/com.sunagimo.tilemapsplitter
 ```
 
 ### 手動インストール
 1. リポジトリをクローン
-2. Packages/com.sunagimo.tilemapsplitter/Editor をプロジェクトへコピー(例：Assets/TilemapSplitter)
-3. Unity 再起動 → Tools/TilemapSplitter がメニューに表示
+2. `Packages/com.sunagimo.tilemapsplitter/Editor` をプロジェクトへコピー（例: `Assets/TilemapSplitter`）
+3. Unity を再起動 → `Tools/TilemapSplitter` が表示されます
 
-<a name="使用方法"></a>
-## 使用方法
+<a name="使い方"></a>
+## 使い方
 1. Tools → TilemapSplitter を開く
 2. Split Tilemap に分割対象の Tilemap を指定
-3. 各カテゴリの Layer, Tag, プレビュー色 を調整
-4. 任意設定：
-  * Attach Colliders(コライダ等の自動付与)
-  * Merge VerticalEdge, HorizontalEdge(縦横エッジの結合)
-  * Which obj to add to(例：Cross → VerticalEdge へ統合)
-5. Execute Splitting を押下 → カテゴリ別の Tilemap が生成
-6. 設定を初期化したい場合は Reset(Split Tilemap 下)を使用
+3. 各カテゴリの Layer, Tag, プレビュー色を設定
+4. 任意設定
+   - Attach Colliders（コライダー付与）
+   - Merge VerticalEdge, HorizontalEdge（縦横エッジ統合）
+   - Which obj to add to（例: Cross を VerticalEdge へ）
+5. Execute Splitting を押してカテゴリごとに Tilemap を生成
+6. 設定を初期化したい場合は Reset（Split Tilemap 下）を使用
 
-### プレビュー, 結果例：
+### スクリプト API
+```csharp
+using TilemapSplitter;
+using UnityEngine;
+using UnityEngine.Tilemaps;
+using System.Collections.Generic;
+
+// 生成された GameObject の一覧を返す
+List<GameObject> created = TilemapSplitterApi.Split(
+    source: someTilemap,
+    canMergeEdges: false,      // 矩形レイアウトのみ: 縦/横エッジを 1 つに統合
+    canAttachCollider: false,  // TilemapCollider2D + Rigidbody2D(Static) + CompositeCollider2D を付与
+    progress: null,            // 任意の IProgress<float> (0..1)
+    isCancelled: null          // 任意の Func<bool>（true で分類を中断）
+);
+```
+
+### プレビュー例・出力例
 ![Image](https://github.com/user-attachments/assets/8d28e9a7-9b0e-409a-85b8-d4f6afb715c4)
 
 <a name="注意点"></a>
 ## 注意点
-* **Isometric, Isometric Z-as-Y**：
-  * Unity では Tilemap 単位でソートされるため、分割前後でタイル同士の微妙な前後関係を完全一致させることはできません
-  * 分割後に TilemapRenderer の Mode, Order in Layer を調整することである程度近づけられます
-- 分割前後の見え方(Isometric 例)：
+- Isometric, Isometric Z-as-Y:
+  - Unity は Tilemap 単位でソートするため、分割前の 1 枚と完全一致の描画順を再現できない場合があります
+  - 分割後は TilemapRenderer の Mode や Order in Layer を調整すると近づけられることがあります
+- Before/After（Isometric の例）:
 <img width="1035" height="430" alt="Image" src="https://github.com/user-attachments/assets/d9410b2b-746b-4034-9e93-6e92b319b529" />
