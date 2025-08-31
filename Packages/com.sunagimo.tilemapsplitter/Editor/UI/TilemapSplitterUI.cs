@@ -97,7 +97,7 @@ namespace TilemapSplitter
                 }
                 if (service.Source.layoutGrid == null)
                 {
-                    EditorUtility.DisplayDialog("Error", "The selected Tilemap is not under a Grid. Please place it under a Grid GameObject.", "OK");
+                    EditorUtility.DisplayDialog("Error", "The selected Tilemap is not under a Grid. Please place it under a Grid GameObject.(Or have you deactivated the object containing the Grid component?)", "OK");
                     return;
                 }
                 if (service.Source.GetUsedTilesCount() == 0)
