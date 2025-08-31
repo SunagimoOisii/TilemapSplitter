@@ -18,16 +18,23 @@ namespace TilemapSplitter
             CreateResetButton(container, window);
             CreateColliderToggle(container, service);
 
-            if (service.Source == null || service.Source.gameObject.activeInHierarchy == false) return;
+            // Validation + guard messages
+            var (canProceed, helpBox, layoutNote) = CreateGuards(container, service);
 
-            service.SetupLayoutStrategy(window);
-            service.LayoutStrategy.CreateMergeEdgeToggle(container, () => service.CanMergeEdges, v => service.CanMergeEdges = v);
-            service.LayoutStrategy.CreateShapeFoldouts(container);
+            if (service.Source != null && service.Source.gameObject.activeInHierarchy)
+            {
+                service.SetupLayoutStrategy(window);
+                service.LayoutStrategy?.CreateMergeEdgeToggle(container, () => service.CanMergeEdges, v => service.CanMergeEdges = v);
+                service.LayoutStrategy?.CreateShapeFoldouts(container);
+            }
 
-            CreateExecuteButton(container, service, window);
+            CreateExecuteButton(container, service, window, canProceed);
 
-            service.SetupPreview();
-            service.RefreshPreview(window);
+            if (canProceed)
+            {
+                service.SetupPreview();
+                service.RefreshPreview(window);
+            }
         }
 
         private static VisualElement CreateScrollableContainer(VisualElement root)
@@ -79,7 +86,7 @@ namespace TilemapSplitter
             container.Add(attachT);
         }
 
-        private static void CreateExecuteButton(VisualElement container, TilemapSplitterService service, TilemapSplitterWindow window)
+        private static void CreateExecuteButton(VisualElement container, TilemapSplitterService service, TilemapSplitterWindow window, bool canProceed)
         {
             var splitB = new Button(() =>
             {
@@ -88,10 +95,21 @@ namespace TilemapSplitter
                     EditorUtility.DisplayDialog("Error", "Tilemap to split is not set", "OK");
                     return;
                 }
+                if (service.Source.layoutGrid == null)
+                {
+                    EditorUtility.DisplayDialog("Error", "The selected Tilemap is not under a Grid. Please place it under a Grid GameObject.", "OK");
+                    return;
+                }
+                if (service.Source.GetUsedTilesCount() == 0)
+                {
+                    EditorUtility.DisplayDialog("Warning", "The selected Tilemap has no tiles. Add tiles before splitting.", "OK");
+                    return;
+                }
                 service.ExecuteSplit(window);
             });
             splitB.text = "Execute Split";
             splitB.style.marginTop = 10;
+            splitB.SetEnabled(canProceed);
             container.Add(splitB);
         }
 
@@ -103,6 +121,44 @@ namespace TilemapSplitter
             separator.style.marginTop = 5;
             separator.style.marginBottom = 5;
             parentContainer.Add(separator);
+        }
+
+        private static (bool canProceed, HelpBox guardBox, HelpBox layoutNote) CreateGuards(VisualElement container, TilemapSplitterService service)
+        {
+            bool canProceed = true;
+
+            HelpBox guardBox = null;
+            HelpBox layoutBox = null;
+
+            if (service.Source == null)
+            {
+                guardBox = new HelpBox("Tilemap is not assigned. Please set a target Tilemap.", HelpBoxMessageType.Info);
+                canProceed = false;
+            }
+            else if (service.Source.layoutGrid == null)
+            {
+                guardBox = new HelpBox("The selected Tilemap is not under a Grid. Please place it under a Grid GameObject.", HelpBoxMessageType.Error);
+                canProceed = false;
+            }
+            else if (service.Source.GetUsedTilesCount() == 0)
+            {
+                guardBox = new HelpBox("The selected Tilemap has no tiles. Add tiles to proceed.", HelpBoxMessageType.Warning);
+                canProceed = false;
+            }
+            else
+            {
+                var layout = service.Source.layoutGrid.cellLayout;
+                // Provide notes for supported layouts. Rect/Hex are fully targeted; Isometric has known limitations.
+                if (layout == GridLayout.CellLayout.Isometric || layout == GridLayout.CellLayout.IsometricZAsY)
+                {
+                    layoutBox = new HelpBox("Isometric layout: Unity's draw-order limitations apply. Classification works, but exact cross-Tilemap ordering may not be achievable.", HelpBoxMessageType.Info);
+                }
+            }
+
+            if (guardBox != null) container.Add(guardBox);
+            if (layoutBox != null) container.Add(layoutBox);
+
+            return (canProceed, guardBox, layoutBox);
         }
     }
 }
