@@ -54,7 +54,7 @@ TilemapSplitter is a Unity editor extension that **classifies tiles by adjacency
 - **RuleTile**: design at placement-time → **refactor after** with TilemapSplitter
 - **Custom Brushes, Scripted importers**: bring content in → **normalize** layers via adjacency split
 
-### Case studies (examples to copy) 💡
+### Case studies
 - **Outline, Glow for edges**: split Vertical, Horizontal edges → apply a distinct material, effect layer
 - **Readable geometry**: isolate corners & T-junctions for decoration and level debugging
 - **Physics separation**: generate a **collider-only** Tilemap while keeping visuals clean
