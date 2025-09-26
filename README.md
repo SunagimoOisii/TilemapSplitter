@@ -83,7 +83,7 @@ https://github.com/SunagimoOisii/TilemapSplitter.git?path=/Packages/com.sunagimo
   * Attach Colliders to generated Tilemaps
   * Merge VerticalEdge, HorizontalEdge into a single Tilemap
   * Use Which obj to add to to fold categories(e.g., Cross → VerticalEdge)
-5. Click Execute Splitting �� Tilemaps are generated\n6. Use Reset(below Split Tilemap) to restore settings
+5. Click Execute Splitting -> Tilemaps are generated. Use Reset(below Split Tilemap) to restore settings
 
 ### Script API
 ```csharp
